@@ -1,0 +1,121 @@
+\documentclass[10pt, t,
+aspectratio=169,% for widescreen (16:9) presentations
+%aspectratio=43,% for traditional (4:3) presentations
+%handout%
+]{beamer}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% mode options %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\mode<presentation>{\usetheme{uniS}}
+
+% define a few pictures used throughout the slides
+\pgfdeclareimage[height=0.65\paperheight]{background}{../gfx/titleslide/bg.jpg}  % background picture for title slide
+\pgfdeclareimage[height=1cm]{unilogo}{../gfx/logos/unilogo_eng.pdf} % UniS logo for title slide
+\pgfdeclareimage[height=.72cm]{institutelogo}{../gfx/logos/ians.pdf} % institute logo for title slide
+\pgfdeclareimage[height=.5cm]{simtechlogo}{../gfx/logos/simtech.pdf} % SimTech logo for title slide
+\pgfdeclareimage[height=.92cm]{institutelogow}{../gfx/logos/ians_w.pdf} % (white) institute logo for final slide
+\pgfdeclareimage[height=.7cm]{simtechlogow}{../gfx/logos/simtech_w.pdf} % (white) SimTech logo for final slide
+\pgfdeclareimage[height=1cm]{unilogow}{../gfx/logos/unilogo_eng_w.pdf} % (white) UniS logo for final slide
+\pgfdeclareimage[width=2.5cm]{speaker}{../gfx/finalslide/speaker.png} % speaker photo for final slide
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% misc stuff %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% automatically display \sectionpage at beginning of every \section{}
+\AtBeginSection[]{%
+\begin{frame}[plain, noframenumbering]
+  \sectionpage
+\end{frame}
+% uncomment block in order to display toc after every sectionpage
+%\usepackage{multicol}
+%\begin{frame}[c, plain]
+%  \begin{footnotesize}
+%    \begin{center}
+%      \begin{minipage}{.75\textwidth}
+%        \begin{multicols}{2}
+%          \tableofcontents[currentsection]
+%        \end{multicols}
+%      \end{minipage}
+%    \end{center}
+%  \end{footnotesize}
+%\end{frame}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%% own modifications %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Subfloat
+\usepackage{subfig}
+% Fat math
+\usepackage{bm}
+% Bibliography
+\usepackage{natbib}
+
+% Clever ref
+\usepackage{cleveref}
+\crefformat{equation}{(#2#1#3)}
+\crefrangeformat{equation}{(#3#1#4) to~(#5#2#6)}
+\crefmultiformat{equation}{(#2#1#3)}{ and~(#2#1#3)}{, (#2#1#3)}{ and~(#2#1#3)}
+
+% Transparent graphic
+\newcommand{\grayOut}[3]{
+\begin{tikzpicture}
+	\only<#2>{\node[opacity=0.10] {#1};}
+	\only<#3>{\node {#1};}
+\end{tikzpicture}
+}
+
+% Blue emphasize
+\newcommand{\bemph}[1]{\textcolor{uniSblue}{\textbf{#1}}}
+
+% Blue emphasize in math mode
+\newcommand{\bmemph}[1]{\ensuremath{\textcolor{uniSblue}{#1}}}
+
+% align with less margin
+\newenvironment{smashedalign}[1][.3em]
+ {\def\mspace{#1}\par\vspace*{\mspace}\centering$\!\aligned}
+ {\endaligned$\par\vspace*{\mspace}}
+
+% Own definitions
+\input{../shortcuts/default_abbrev.tex}
+\input{../shortcuts/specific_abbrev.tex}
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% setup %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title[Short Title]{Long Title}
+\author[AUTHIOR NAME]{AUTHIOR\\ NAME}
+\institute[IANS]{Institute of Applied Analysis and Numerical Simulation}
+\def\university{University of Stuttgart, Germany}
+\def\shortuniversity{Univ. of Stuttgart}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% slides %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+\begin{frame}[plain, noframenumbering]
+  \titlepage
+\end{frame}
+
+\include{slides}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% final slide %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\finalslide{<<email>>}{<<tel>>}
+\finalslide{MAIL}{PHONE}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% appendix %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\appendix
+%
+%\begin{frame}{References}
+%   \renewcommand*{\bibfont}{\tiny}
+%   \printbibliography
+%\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% extra slides %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\newcounter{finalframe}
+%\setcounter{finalframe}{\value{framenumber}}
+%\section*{Extra slides}
+%\include{extra-slides}
+%\setcounter{framenumber}{\value{finalframe}}
+
+\end{document}

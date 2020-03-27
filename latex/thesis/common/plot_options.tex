@@ -1,0 +1,84 @@
+
+%##########################################################################
+% Bilder aus Inkscape
+\usepackage{import}
+\usepackage{color}
+
+%##########################################################################
+% PGFplots
+\usepackage{pgfplots}
+\usepgfplotslibrary{patchplots}
+\usetikzlibrary{calc}
+
+\usetikzlibrary{matrix}
+% Group in subplots
+\usepgfplotslibrary{groupplots}
+% boxplots
+\usepgfplotslibrary{statistics}
+
+% define cycle list
+\definecolor{color1}{rgb}{0.00000,0.00000,0.00000}%
+\definecolor{color2}{rgb}{0.85000,0.32500,0.09800}%
+\definecolor{color3}{rgb}{0.92900,0.69400,0.12500}%
+\definecolor{color4}{rgb}{0.49400,0.18400,0.55600}%
+\definecolor{color5}{rgb}{0.46600,0.67400,0.18800}%
+\definecolor{color6}{rgb}{0.30100,0.74500,0.93300}%
+\definecolor{color7}{rgb}{0.63500,0.07800,0.18400}%
+\definecolor{color8}{rgb}{0.00000,0.44700,0.74100}%
+\pgfplotsset{cycle list = {%
+	color1,%
+	color2,%
+	color3,%
+	color4,%
+	color5,%
+	color6,%
+	color7,%
+	color8,%
+	}
+}
+\definecolor{mblue}{rgb}{0.00000,0.44700,0.74100}%
+
+%% Default line width
+\pgfplotsset{
+  every axis plot/.append style={line width=1pt,},
+}
+\pgfplotsset{/pgfplots/group/every plot/.append style = {
+   	axis line style = semithick,
+   	every tick/.style={black,semithick,},
+  },
+}
+\pgfplotsset{every axis/.append style={
+    ymajorgrids,
+    xmajorgrids,
+    grid style={dashed, lightgray,semithick},
+   },
+}
+
+% Multiplot settings
+\pgfplotsset{/pgfplots/group/every plot/.append style = {
+    height = 5.5cm, width = 5.75cm,
+    ylabel near ticks,
+  }
+}
+
+% text in legend entry
+% source: https://tex.stackexchange.com/a/204519
+\pgfplotsset{
+    legend image with text/.style={
+        legend image code/.code={%
+            \node[anchor=center] at (0.3cm,0cm) {#1};
+        }
+    },
+}
+
+% contour legend entry
+\pgfplotsset{
+	/pgfplots/contour legend/.style={
+		legend image code/.code={
+			\draw[color=red, line width=0.8pt] (0.3cm,0.05cm) circle (0.2cm);
+			\draw[color=orange, line width=0.8pt] (0.3cm,0.05cm) circle (0.125cm);
+			\draw[color=yellow, line width=0.8pt] (0.3cm,0.05cm) circle (0.05cm);
+		},
+	},
+}
+

@@ -1,0 +1,295 @@
+\documentclass[twoside,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper,bindingoffset=0.5cm,inner=2.5cm,outer=2cm,top=2.5cm,bottom=2.5cm]{geometry}
+%\usepackage[a4paper,bindingoffset=1cm,inner=2cm,outer=2cm,top=2.5cm,bottom=2.5cm]{geometry} %,showframe
+\usepackage{helvet}
+\usepackage[T1]{fontenc}
+\renewcommand{\familydefault}{\sfdefault}
+% \usepackage[german,ngerman]{babel}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{amsmath,amsthm,amstext,amssymb,bm}
+\usepackage{xcolor,color}
+\usepackage{pifont}
+\usepackage{array}
+\usepackage{upgreek}
+\usepackage{enumerate}
+\usepackage{pgf}
+\usepackage{mathrsfs}
+\usepackage{subfig}
+\usepackage{tabularx}
+\usepackage[numbers]{natbib}
+\usepackage{multirow}
+\usepackage{makecell}
+%%% Title page
+\usepackage{common/titlePageST}
+%%% Appendix in TOC
+\usepackage[toc,page]{appendix}
+%%% Setstrech on title page
+\usepackage{setspace}
+%%% Tilde in URL in literature
+\usepackage{url}
+%%% multiple rows
+\usepackage{multirow}
+%%% fancy column and row seperators
+\usepackage{hhline}
+%%% custom items in enumerate and itemize
+\usepackage{enumitem}
+
+\clubpenalty=5000
+\widowpenalty=5000
+
+\setlength{\emergencystretch}{2cm}
+%----------------------------------------------------------------------------------------
+%	abbreviation includes
+%----------------------------------------------------------------------------------------
+\input{common/default_abbrev}
+\input{common/specific_abbrev}
+%%% Clever refing
+\usepackage[capitalise,noabbrev]{cleveref}
+
+%----------------------------------------------------------------------------------------
+%	References with cleveref
+%----------------------------------------------------------------------------------------
+\crefformat{equation}{(#2#1#3)}
+
+%----------------------------------------------------------------------------------------
+%	Theorem environments
+%----------------------------------------------------------------------------------------
+\newtheorem{theorem}{Theorem}
+\newtheorem{example}{Example}
+\newtheorem{corollary}{Corollary}
+
+%----------------------------------------------------------------------------------------
+%	fancyhdr
+%----------------------------------------------------------------------------------------
+\usepackage{fancyhdr}
+
+\makeatletter
+\newcommand{\theauthor}{AUTHOR NAME} %FILLIN
+\makeatother
+
+\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\footrulewidth}{0.3pt}
+\fancyfoot[OL,ER]{University of Stuttgart} % inner
+\fancyfoot[OR,EL]{\thepage} % outer
+\fancyhead[OL,ER]{\theauthor} % inner 
+\fancyhead[OR,EL]{IANS -- Institute of Applied Analysis and Numerical Simulation} % outer
+\fancyfoot[C]{}
+
+% \headsep=4mm
+% \footskip=4mm
+\parindent=0mm
+\parskip=6pt
+% \renewcommand{\footskip}{3pt}
+
+%----------------------------------------------------------------------------------------
+%	Something
+%----------------------------------------------------------------------------------------
+\usepackage{textpos}
+\setlength{\TPHorizModule}{1mm}%
+\setlength{\TPVertModule}{1mm}%
+% \headsep=5mm
+% \footskip=5mm
+\pagestyle{fancy}
+\newcommand{\articleheading}[3]{
+{\large #1}\\[3mm]
+{\Large\bf #2}\\[3mm]
+{\large #3}
+}
+
+%----------------------------------------------------------------------------------------
+%	Start Document
+%----------------------------------------------------------------------------------------
+\begin{document}
+\pagenumbering{roman}
+%----------------------------------------------------------------------------------------
+%
+% TITLE PAGE
+%
+%----------------------------------------------------------------------------------------
+%------------------------------------------
+\begin{titlePageST}
+%------------------------------------------
+\makeLogo%
+{-10pt}{
+\includegraphics[width=0.7\textwidth]{figures/logos/simtech.pdf}
+}%
+{0pt}{
+	\begin{center}
+		\includegraphics[width=0.4\textwidth]{figures/logos/ians.pdf}
+	\end{center}}%
+{0pt}{
+\begin{flushright}
+	\vspace{-10pt}
+	\includegraphics[width=0.9\textwidth]{figures/logos/unistuttgart_logo_englisch_cmyk.eps}
+\end{flushright}}%
+\vspace{35pt}%
+%------------------------------------------
+\makeHeader%
+[Research Group: Numerical Mathematics] %
+{Institute of Applied Analysis and Numerical Simulation} %
+\vspace{50pt}%
+%------------------------------------------
+\makeTitle%
+{Simulation Technology Degree Course} %
+{Bachelor/Master Thesis} %FILLIN
+\vspace{80pt}%
+%------------------------------------------
+\makeTitleThesis%
+%[An approach using DuMuX] %
+{...} %FILLIN
+\vspace{90pt}%
+%------------------------------------------
+\begin{supervisorST}{3}%
+\addSuper%
+{First Reviewer}%
+{Prof. Dr. B. Haasdonk}%
+{Institute of Applied Analysis and\\[-0.2cm]
+Numerical Simulation (IANS)}%
+\addSuper%
+{Second Reviewer}%
+{...}%FILLIN
+{...}%FILLIN
+\addSuper%
+{Advisor}%
+{Patrick Buchfink, M.Sc.}%
+{Institute of Applied Analysis and\\[-0.2cm]
+Numerical Simulation (IANS)}%
+\end{supervisorST}%
+\vspace{80pt}%
+%------------------------------------------
+\begin{authorST}{Submitted by}%
+\addAuthorInfo{Author}{...} %FILLIN
+\addAuthorInfo{Student ID}{...} %FILLIN
+\addAuthorInfo{SimTech ID}{...} %FILLIN
+\addAuthorInfo{Submission Date}{...} %FILLIN
+\end{authorST}%
+%------------------------------------------
+\end{titlePageST}
+%----------------------------------------------------------------------------------------
+\clearpage
+\newpage\thispagestyle{plain}\null
+\newpage\thispagestyle{plain}
+
+%----------------------------------------------------------------------------------------
+%
+% ABSTRACT
+%
+%----------------------------------------------------------------------------------------
+\section*{Abstract}
+...
+\clearpage
+\newpage\thispagestyle{plain}\null
+\newpage\thispagestyle{plain}
+
+%----------------------------------------------------------------------------------------
+%
+% ACKNOWLEDGEMENTS
+%
+%----------------------------------------------------------------------------------------
+\section*{Acknowledgements}
+...
+\clearpage
+\newpage\thispagestyle{plain}\null
+\newpage\thispagestyle{plain}
+
+%----------------------------------------------------------------------------------------
+%
+% TOC
+%
+%----------------------------------------------------------------------------------------
+\setcounter{tocdepth}{2}
+\tableofcontents
+\clearpage
+\newpage\thispagestyle{plain}\null
+%----------------------------------------------------------------------------------------
+%
+% Begin with document content
+%
+%----------------------------------------------------------------------------------------
+\newpage
+\pagenumbering{arabic} 
+%----------------------------------------------------------------------------------------
+%
+% Introduction
+%
+%----------------------------------------------------------------------------------------
+\section{Introduction}
+
+\subsection{Outline of this thesis}
+
+\subsection{Nomenclature}
+
+%----------------------------------------------------------------------------------------
+%
+% Content
+%
+%----------------------------------------------------------------------------------------
+\newpage
+\section{Chapter 1}
+
+%----------------------------------------------------------------------------------------
+%
+% Resume
+%
+%----------------------------------------------------------------------------------------
+\clearpage\newpage\null %empty page
+\newpage
+\section{R\'esum\'e}
+\subsection{Summary and conclusion}
+
+\subsection{Outlook}
+
+%----------------------------------------------------------------------------------------
+%
+% Appendices
+%
+%----------------------------------------------------------------------------------------
+\clearpage\newpage\null %empty page
+\newpage
+\begin{appendices}
+\addtocontents{toc}{\protect\setcounter{tocdepth}{1}}
+\section{First Appendix Section}
+
+\newpage~\newpage
+\section{Declaration of authorship}
+
+\vspace{3cm}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|p{13cm}|}
+\hline\\
+	I hereby certify
+	\begin{enumerate}
+		\item that this thesis has been composed by me and is based on my own work, unless stated otherwise,
+		\item that all direct or indirect sources used are acknowledged as references and all extracts from work of others, either verbatim or in spirit, are stated as such,
+		\item that neither the thesis itself nor parts of this thesis have been part of another examination procedure,
+		\item that neither the thesis itself nor parts of this thesis have been published and
+		\item that all copies of this thesis, either digital or printed, coincide.
+	\end{enumerate}
+	Therewith, this declaration of authorship is in accordance with the examination regulations from 29th July 2013 of the master's program \emph{Simulation Technology} of the University of Stuttgart.\\\\
+\hline
+\end{tabular}
+\end{table}
+
+\vspace{4cm}
+\hrulefill\\
+Name
+\hspace{7cm}
+Date, City, Signature
+\end{appendices}
+%----------------------------------------------------------------------------------------
+%
+% BIBLIOGRAPHY
+%
+%----------------------------------------------------------------------------------------
+\clearpage\newpage\null %empty page
+\newpage
+\addtocontents{toc}{\protect\setcounter{tocdepth}{1}}
+\addcontentsline{toc}{section}{References}
+\bibliographystyle{abbrvnat}
+\bibliography{common/literatur.bib}
+
+\end{document}

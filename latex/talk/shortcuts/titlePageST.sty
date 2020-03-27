@@ -1,0 +1,155 @@
+%----------------------------------------------------------------------------------------
+%	INITIALIZE
+%----------------------------------------------------------------------------------------
+%	Last update 29.05.2015 by Hamzeh Kraus.
+%
+%	Package "geometry" has to be included.
+%	Spacing optimized on font-package "fourier".
+%
+%	For questions or Bug-Reports
+%	mailto: hamzeh.kraus@simtech.uni-stuttgart.de
+%
+%	Copyright by SRC SimTech 2015
+%----------------------------------------------------------------------------------------
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{titlePageST}
+%----------------------------------------------------------------------------------------
+%	IMPORT
+%----------------------------------------------------------------------------------------
+\RequirePackage{xcolor}
+\RequirePackage{graphicx}
+\RequirePackage{xstring}
+%----------------------------------------------------------------------------------------
+%	COLOR
+%----------------------------------------------------------------------------------------
+%	Colors based on the Simulation Technology logo
+%----------------------------------------------------------------------------------------
+\definecolor{simBlue1}{HTML}{002C52}
+\definecolor{simBlue2}{HTML}{004884}
+%----------------------------------------------------------------------------------------
+%	TITLEPAGE ENVIRONMENT
+%----------------------------------------------------------------------------------------
+%	Environment with unique geometry and pagestyle
+%----------------------------------------------------------------------------------------
+\newenvironment{titlePageST}{
+\normalfont\normalsize
+\begin{center}
+}{
+\end{center} 
+\thispagestyle{empty}
+\newpage
+}
+%----------------------------------------------------------------------------------------
+%	LOGO
+%----------------------------------------------------------------------------------------
+% 	Makes Header Logos
+%
+%	@param 1: Logo SimTech
+%	@param 2: Logo Insititute
+%	@param 3: Logo University
+%----------------------------------------------------------------------------------------
+\newcommand{\makeLogo}[6]{
+\vspace*{-50pt}
+\begin{minipage}{0.32\textwidth}
+  	\hspace{#1}#2
+\end{minipage}
+\begin{minipage}{0.32\textwidth}
+  	\hspace{#3}#4
+\end{minipage}
+\begin{minipage}{0.32\textwidth}
+	\hspace{#5}#6
+\end{minipage}\\%
+}
+%----------------------------------------------------------------------------------------
+%	INSTITUTE HEADER
+%----------------------------------------------------------------------------------------
+% 	Adds institute and professorship to header
+%	
+%   @param 1: Professorship Chair (Optional - Blank in initial state)
+%	@param 2: Institute name
+%----------------------------------------------------------------------------------------
+\newcommand{\makeHeader}[2][\ ]{
+\Large{#2}\\[10pt]
+\large{#1}\\%
+}
+%----------------------------------------------------------------------------------------
+%	THESIS INFORMATION
+%----------------------------------------------------------------------------------------
+% 	Adds type of thesis and course of studies to titlepage
+%
+%	@param 1: Type of thesis
+%	@param 2: Course of studies
+%----------------------------------------------------------------------------------------
+\newcommand{\makeTitle}[2]{%
+\LARGE{#1}\\[10pt]%
+\Large #2\\%
+}
+%----------------------------------------------------------------------------------------
+%	THESIS TITLE
+%----------------------------------------------------------------------------------------
+% 	Adds thesis title and optionaly a subtitle
+%
+%	@param 1: Subtitle (Optional - Blank in initial state)
+%	@param 2: Title
+%----------------------------------------------------------------------------------------
+\newcommand{\makeTitleThesis}[2][\ ]{
+\huge{\color{simBlue1}\textbf{#2}}\\[10pt]
+\Large{\color{simBlue2}#1}\\%
+}
+%----------------------------------------------------------------------------------------
+%	SUPERVISOR
+%----------------------------------------------------------------------------------------
+% 	Initialize supervisor width and space
+%----------------------------------------------------------------------------------------
+\newcommand{\superWidth}{1}
+\newcommand{\superSpace}{0}
+%----------------------------------------------------------------------------------------
+% 	Adds supervisors to titlepage with options of two to three unique supervisors
+%
+%	@param 1: Title
+%	@param 2: Supervisor name
+%	@param 3: Institute
+%----------------------------------------------------------------------------------------
+\newcommand{\addSuper}[3]{
+\IfStrEq{\superWidth}{1}{}{\begin{minipage}[t]{\superWidth\textwidth}}
+	{\color{simBlue1}#1}\\[5pt]
+	{\large #2}\\[3pt]
+	{\small #3}
+\IfStrEq{\superWidth}{1}{}{\end{minipage}\hspace{\superSpace pt}}%
+}
+%----------------------------------------------------------------------------------------
+%	Makes supervisor environment with width and spacing adjusted to fourier onft
+%
+%	@param 1: Number of maximum supervisors
+%----------------------------------------------------------------------------------------
+\newenvironment{supervisorST}[1]{
+\IfEqCase{#1}{%
+{2}{%
+\renewcommand{\superWidth}{0.47}%
+\renewcommand{\superSpace}{23}}%
+{3}{%
+\renewcommand{\superWidth}{0.3}%
+\renewcommand{\superSpace}{19}}%
+}
+}{\\}%
+%----------------------------------------------------------------------------------------
+%	AUTHOR INFORMATION
+%----------------------------------------------------------------------------------------
+% 	Adds author specific information
+%
+%	@param 1: Title
+%	@param 2: Entry %----------------------------------------------------------------------------------------
+\newcommand{\addAuthorInfo}[2]{
+{\normalsize \color{simBlue1}#1}&{\normalsize #2}\\%
+}
+%----------------------------------------------------------------------------------------
+%	Makes author environment
+%
+%	@param 1: Author box header
+%----------------------------------------------------------------------------------------
+\newenvironment{authorST}[1]{
+{\small #1}\\[10pt]
+\begin{tabular}{ll}
+}{
+\end{tabular}\\
+}

@@ -1,0 +1,256 @@
+%%% Standard Math
+% todo function
+\newcommand{\todo}[1]{\textcolor{red}{#1}}
+
+% spaces
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\Rpos}{\ensuremath{\mathbb{R}_{>0}}}
+\newcommand{\Rnneg}{\ensuremath{\mathbb{R}_{\geq 0}}}
+% Complex numbers
+%		Problem: \C does not work with XeLaTeX
+\newcommand{\Cn}{\ensuremath{\mathbb{C}}}
+% imaginary unit
+\newcommand{\imagUnit}{\ensuremath{{1i}}}
+
+% formation
+\newcommand{\txtfrac}[2]{\ensuremath{{#1}/{#2}}}
+
+% braces
+\newcommand{\lb}{\left(}
+\newcommand{\rb}{\right)}
+\newcommand{\lsb}{\left[}
+\newcommand{\rsb}{\right]}
+\newcommand{\lcb}{\left\{}
+\newcommand{\rcb}{\right\}}
+
+% Operators
+\DeclareMathOperator*{\argmin}{\operatornamewithlimits{argmin}}
+\DeclareMathOperator*{\argmax}{\operatornamewithlimits{argmax}}
+\let\Re\relax
+\DeclareMathOperator{\Re}{Re}
+\newcommand{\Reb}[1]{\ensuremath{\Re\lb{#1}\rb}}
+\let\Im\relax
+\DeclareMathOperator{\Im}{Im}
+\newcommand{\Imb}[1]{\ensuremath{\Im\lb{#1}\rb}}
+\DeclareMathOperator*{\rank}{rank}
+\newcommand{\rankb}[1]{\rank\lb{#1}\rb}
+\DeclareMathOperator*{\img}{img}
+\DeclareMathOperator*{\trace}{trace}
+\DeclareMathOperator*{\mspan}{span} % Math SPAN
+\DeclareMathOperator*{\colspan}{colspan}
+\DeclareMathOperator*{\diag}{diag}
+\DeclareMathOperator*{\blkdiag}{blkdiag}
+\newcommand{\detb}[1]{\ensuremath{\det{\lb #1 \rb}}}
+\newcommand{\blkdiagb}[1]{\ensuremath{\blkdiag{\lb #1 \rb}}}
+\newcommand{\diagb}[1]{\ensuremath{\diag{\lb #1 \rb}}}
+\newcommand{\dimb}[1]{\ensuremath{\dim{\lb #1 \rb}}}
+\newcommand{\expb}[1]{\ensuremath{\exp{\lb #1 \rb}}}
+\newcommand{\imgb}[1]{\ensuremath{\img{\lb #1 \rb}}}
+\newcommand{\colspanb}[1]{\ensuremath{\colspan{\lb #1 \rb}}}
+\newcommand{\traceb}[1]{\trace\lb{#1}\rb}
+\newcommand{\spanb}[1]{\ensuremath{\mspan{\lcb #1 \rcb}}}
+\newcommand{\sinb}[1]{\ensuremath{\sin{\lb #1 \rb}}}
+\newcommand{\abs}[1]{\ensuremath{\left|{#1}\right|}}
+\newcommand{\minimize}[1]{\underset{#1}{\operatorname{minimize}}}
+\newcommand{\maximize}[1]{\underset{#1}{\operatorname{maximize}}}
+
+%%% Fat alphabet
+% Small letters
+\newcommand{\fa}{\ensuremath{\bm{a}}}
+\newcommand{\fb}{\ensuremath{\bm{b}}}
+\newcommand{\fc}{\ensuremath{\bm{c}}}
+\newcommand{\fd}{\ensuremath{\bm{d}}}
+\newcommand{\fe}{\ensuremath{\bm{e}}}
+\newcommand{\ff}{\ensuremath{\bm{f}}}
+\newcommand{\fg}{\ensuremath{\bm{g}}}
+\newcommand{\fh}{\ensuremath{\bm{h}}}
+\newcommand{\fati}{\ensuremath{\bm{i}}}
+\newcommand{\fj}{\ensuremath{\bm{j}}}
+\newcommand{\fk}{\ensuremath{\bm{k}}}
+\newcommand{\fl}{\ensuremath{\bm{l}}}
+\newcommand{\fm}{\ensuremath{\bm{m}}}
+\newcommand{\fn}{\ensuremath{\bm{n}}}
+\newcommand{\fo}{\ensuremath{\bm{o}}}
+\newcommand{\fp}{\ensuremath{\bm{p}}}
+\newcommand{\fq}{\ensuremath{\bm{q}}}
+\newcommand{\fr}{\ensuremath{\bm{r}}}
+\newcommand{\fs}{\ensuremath{\bm{s}}}
+\newcommand{\ft}{\ensuremath{\bm{t}}}
+\newcommand{\fu}{\ensuremath{\bm{u}}}
+\newcommand{\fv}{\ensuremath{\bm{v}}}
+\newcommand{\fw}{\ensuremath{\bm{w}}}
+\newcommand{\fx}{\ensuremath{\bm{x}}}
+\newcommand{\fy}{\ensuremath{\bm{y}}}
+\newcommand{\fz}{\ensuremath{\bm{z}}}
+
+% Capital letters
+\newcommand{\fA}{\ensuremath{\bm{A}}}
+\newcommand{\fB}{\ensuremath{\bm{B}}}
+\newcommand{\fC}{\ensuremath{\bm{C}}}
+\newcommand{\fD}{\ensuremath{\bm{D}}}
+\newcommand{\fE}{\ensuremath{\bm{E}}}
+\newcommand{\fF}{\ensuremath{\bm{F}}}
+\newcommand{\fG}{\ensuremath{\bm{G}}}
+\newcommand{\fH}{\ensuremath{\bm{H}}}
+\newcommand{\fI}{\ensuremath{\bm{I}}}
+\newcommand{\fJ}{\ensuremath{\bm{J}}}
+\newcommand{\fK}{\ensuremath{\bm{K}}}
+\newcommand{\fL}{\ensuremath{\bm{L}}}
+\newcommand{\fM}{\ensuremath{\bm{M}}}
+\newcommand{\fN}{\ensuremath{\bm{N}}}
+\newcommand{\fO}{\ensuremath{\bm{O}}}
+\newcommand{\fP}{\ensuremath{\bm{P}}}
+\newcommand{\fQ}{\ensuremath{\bm{Q}}}
+\newcommand{\fR}{\ensuremath{\bm{R}}}
+\newcommand{\fS}{\ensuremath{\bm{S}}}
+\newcommand{\fT}{\ensuremath{\bm{T}}}
+\newcommand{\fU}{\ensuremath{\bm{U}}}
+\newcommand{\fV}{\ensuremath{\bm{V}}}
+\newcommand{\fW}{\ensuremath{\bm{W}}}
+\newcommand{\fX}{\ensuremath{\bm{X}}}
+\newcommand{\fY}{\ensuremath{\bm{Y}}}
+\newcommand{\fZ}{\ensuremath{\bm{Z}}}
+
+% Greek small letters
+\newcommand{\falpha}{\ensuremath{\bm{\alpha}}}
+\newcommand{\fbeta}{\ensuremath{\bm{\beta}}}
+\newcommand{\fgamma}{\ensuremath{\bm{\gamma}}}
+\newcommand{\fdelta}{\ensuremath{\bm{\delta}}}
+\newcommand{\fepsilon}{\ensuremath{\bm{\vareps}}}
+\newcommand{\fzeta}{\ensuremath{\bm{\zeta}}}
+\newcommand{\feta}{\ensuremath{\bm{\eta}}}
+\newcommand{\ftheta}{\ensuremath{\bm{\theta}}}
+\newcommand{\flota}{\ensuremath{\bm{\lota}}}
+\newcommand{\fkappa}{\ensuremath{\bm{\kappa}}}
+\newcommand{\flambda}{\ensuremath{\bm{\lambda}}}
+\newcommand{\fmu}{\ensuremath{\bm{\mu}}}
+\newcommand{\fnu}{\ensuremath{\bm{\nu}}}
+\newcommand{\fxi}{\ensuremath{\bm{\xi}}}
+% skipped omikron
+\newcommand{\fpi}{\ensuremath{\bm{\pi}}}
+\newcommand{\frho}{\ensuremath{\bm{\rho}}}
+\newcommand{\fsigma}{\ensuremath{\bm{\sigma}}}
+\newcommand{\ftau}{\ensuremath{\bm{\tau}}}
+\newcommand{\fupsilon}{\ensuremath{\bm{\upsilon}}}
+\newcommand{\fphi}{\ensuremath{\bm{\varphi}}}
+\newcommand{\fchi}{\ensuremath{\bm{\chi}}}
+\newcommand{\fpsi}{\ensuremath{\bm{\psi}}}
+\newcommand{\fomega}{\ensuremath{\bm{\omega}}}
+
+% some Greek capital letters
+\newcommand{\fGamma}{\ensuremath{\bm{\Gamma}}}
+\newcommand{\fDelta}{\ensuremath{\bm{\Delta}}}
+\newcommand{\fTheta}{\ensuremath{\bm{\Theta}}}
+\newcommand{\fLambda}{\ensuremath{\bm{\Lambda}}}
+\newcommand{\fXi}{\ensuremath{\bm{\Xi}}}
+\newcommand{\fPi}{\ensuremath{\bm{\Pi}}}
+\newcommand{\fSigma}{\ensuremath{\bm{\Sigma}}}
+\newcommand{\fUpsilon}{\ensuremath{\bm{\Upsilon}}}
+\newcommand{\fPhi}{\ensuremath{\bm{\varPhi}}}
+\newcommand{\fPsi}{\ensuremath{\bm{\Psi}}}
+\newcommand{\fOmega}{\ensuremath{\bm{\varOmega}}}
+
+% Numbers
+\newcommand{\fzero}{\ensuremath{\bm{0}}}
+\newcommand{\fone}{\ensuremath{\bm{1}}}
+
+%%% Standard mathematical operators
+% (real) Transpose operator
+%		Problem: \T does not work with XeLaTeX
+\newcommand{\rT}[1]{\ensuremath{#1^{\textsf{T}}}}
+\newcommand{\rTb}[1]{\ensuremath{\rT{\lb#1\rb}}}
+\newcommand{\rTsb}[1]{\ensuremath{\rT{\lsb#1\rsb}}}
+
+% Conjugate transpose
+\newcommand{\cT}[1]{\ensuremath{#1^{\ast}}}
+\newcommand{\cTb}[1]{\ensuremath{\cT{\lb{}#1\rb}}}
+
+% Hermitian operator
+\newcommand{\Her}[1]{\ensuremath{{#1}^{\textsf{H}}}}
+\newcommand{\Herb}[1]{\ensuremath{\Her{\lb{}#1\rb}}}
+
+% Symplectic inverse
+\newcommand{\si}[1]{\ensuremath{#1^{+}}}
+\newcommand{\sib}[1]{\ensuremath{\si{\lb{}#1\rb}}}
+
+% orthogonal complement
+\newcommand{\orth}[1]{\ensuremath{#1^{\perp}}}
+
+% Inverse operator
+\newcommand{\inv}[1]{\ensuremath{{#1}^{\textsf{-1}}}}
+\newcommand{\invb}[1]{\ensuremath{\inv{\lb{#1}\rb}}}
+
+% Inverse transposed operator
+\newcommand{\invT}[1]{\ensuremath{{#1}^{\textsf{-T}}}}
+\newcommand{\invTb}[1]{\ensuremath{\invT{\lb{#1}\rb}}}
+
+% Gradients
+\newcommand{\grad}[1][]{\ensuremath{\nabla_{#1}}}
+
+% Divergence
+\let\div\relax
+\DeclareMathOperator{\div}{div}
+\newcommand{\divb}[2][]{\ensuremath{\div_{#1}\lb{#2}\rb}}
+
+% parial derivative
+\newcommand{\deldel}[1]{\ensuremath{\frac{\partial}{\partial #1}}}
+\newcommand{\deldelt}{\ensuremath{\deldel{t}}}
+\newcommand{\deldelfx}{\ensuremath{\deldel{\fx}}}
+
+% second-order partial derivative
+\newcommand{\sodeldel}[1]{\ensuremath{\frac{\partial^2}{\partial^2 #1}}} % Second-Order DELDEL
+
+% Derivatives written out
+\newcommand{\dd}[2][]{\ensuremath{\frac{\mathrm{d}^{#1}}{\mathrm{d}#2}}}
+\newcommand{\ddfx}{\ensuremath{\dd{\fx}}}
+\newcommand{\ddfy}{\ensuremath{\dd{\fy}}}
+\newcommand{\ddt}{\ensuremath{\dd{t}}}
+\newcommand{\dds}{\ensuremath{\dd{s}}}
+
+% Second order derivative written out
+\newcommand{\soddt}{\dd[2]{t^2}}
+
+% Integral operators
+\newcommand{\intd}[1]{\ensuremath{\mathrm{d}#1}} % integral d (\d already in use)
+\newcommand{\ds}{\ensuremath{\intd{s}}}
+
+% Symplectic matrix
+\newcommand{\Jtwo}[1]{\ensuremath{\mathbb{J}_{2#1}}}
+\newcommand{\TJtwo}[1]{\ensuremath{\rT{\mathbb{J}}_{2#1}}}
+\newcommand{\Jtn}{\ensuremath{\Jtwo{n}}}
+\newcommand{\TJtn}{\ensuremath{\TJtwo{n}}}
+\newcommand{\Jtk}{\ensuremath{\Jtwo{k}}}
+\newcommand{\TJtk}{\ensuremath{\TJtwo{k}}}
+\newcommand{\J}{\ensuremath{\mathbb{J}}}
+
+% Identity matrix
+\newcommand{\I}[1]{\ensuremath{\fI_{#1}}}
+\newcommand{\In}{\ensuremath{\I{n}}}
+
+% Matrix of zeros
+\newcommand{\Z}[1]{\ensuremath{\fzero}_{#1}}
+\newcommand{\Zn}{\ensuremath{\Z{n}}}
+
+% Matrix of ones
+\newcommand{\Ones}[1]{\ensuremath{\fone}_{#1}}
+
+% Norms
+\newcommand{\norm}[1]{\left\lVert{#1}\right\rVert}
+\newcommand{\wnorm}[2]{\ensuremath{\norm{#2}_{#1}}} % weighted norm
+\newcommand{\Fnorm}[1]{\wnorm{\mathrm{F}}{#1}}
+\newcommand{\tnorm}[1]{\wnorm{\mathrm{2}}{#1}} % two norm
+
+% Inner products
+\newcommand{\ip}[2]{\left\langle #1,\; #2 \right\rangle}
+\newcommand{\wip}[3]{\ip{#2}{#3}_{#1}}
+
+% Special matrices
+\newcommand{\sq}[1]{\ensuremath{{#1}^{\frac{1}{2}}}}
+\newcommand{\isq}[1]{\ensuremath{{#1}^{-\frac{1}{2}}}}
+
+% standard ODE stuff
+\newcommand{\tInit}{\ensuremath{t_{\mathrm{0}}}}
+\newcommand{\tEnd}{\ensuremath{t_{\mathrm{end}}}}
+\newcommand{\ftInterval}{\ensuremath{[\tInit, \tEnd]}} % finite time interval
+\newcommand{\fxInit}{\ensuremath{\fx_{\mathrm{0}}}}
