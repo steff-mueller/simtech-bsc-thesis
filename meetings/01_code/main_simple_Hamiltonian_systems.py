@@ -7,7 +7,7 @@ from simple_Hamiltonian_systems import HarmonicOscillator
 from simple_Hamiltonian_systems import SimplePendulum
 
 def plot_Ham_sys(X, t, all_Ham):
-    fig, ax = plt.subplots(nrows=1, ncols=2)
+    fig, ax = plt.subplots(nrows=1, ncols=2, constrained_layout=True)
     # plot phase-space diagram
     ax[0].plot(X[0,:], X[1,:])
     ax[0].scatter(X[0,0], X[1,0], marker='o')
