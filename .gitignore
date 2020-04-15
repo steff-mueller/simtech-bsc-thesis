@@ -236,3 +236,6 @@ TSWLatexianTemp*
 
 # pgfplots contour
 *contourtmp*
+
+# python virtual environment
+.venv/
