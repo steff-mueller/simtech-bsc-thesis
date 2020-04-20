@@ -110,7 +110,7 @@ class HarmonicOscillator(QuadraticHamiltonianSystem):
 
         X = np.array([
             q0*np.cos(omega0*(t-t0)) + p0*np.sin(omega0*(t-t0)),
-            -mu['m']*omega0*(q0*np.sin(omega0*(t-t0)) + p0*np.cos(omega0*(t-t0)))
+            -mu['m']*omega0*q0*np.sin(omega0*(t-t0)) + p0*np.cos(omega0*(t-t0))
         ])
 
         return X, t
