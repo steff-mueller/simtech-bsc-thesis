@@ -1,0 +1,61 @@
+% Encoding: UTF-8
+
+@Unpublished{Unterthiner2016,
+  author   = {Thomas Unterthiner, Sepp Hochreiter},
+  title    = {Understanding Very Deep Networks via Volume Conservation},
+  note     = {ICLR 2016 workshop submission},
+  year     = {2016},
+  file     = {:Understanding_Very_Deep_Networks_via_Volume_Conservation_Unterthiner_Hochreiter.pdf:PDF},
+  groups   = {Hamiltonian ML, Volume-Preserving NNs, Symplectic Nets},
+  keywords = {rank5},
+  review   = {Paper which explains the relation to ResNets},
+}
+
+@Article{Deco1995,
+  author   = {Gustavo Deco and Wilfried Brauer},
+  title    = {Nonlinear higher-order statistical decorrelation by volume-conserving neural architectures},
+  journal  = {Neural Networks},
+  year     = {1995},
+  volume   = {8},
+  number   = {4},
+  pages    = {525 - 535},
+  issn     = {0893-6080},
+  abstract = {A neural network learning paradigm based on information theory is proposed as a way to perform, in an unsupervised fashion, redundancy reduction among the elements of the output layer without loss of information from the sensory input. The model developed performs nonlinear decorrelation up to higher orders of the cumulant tensors and results in probabilistically independent components of the output layer. This means that we don't need to assume Gaussian distribution at either the input or the output. The theory presented is related to the unsupervised learning theory of Barlow, which proposes redundancy reduction as the goal of cognition. When nonlinear units are used (sigmoid or higher-order pi-neurons), nonlinear principal component analysis is obtained. In this case, nonlinear manifolds can be reduced to minimum dimension manifolds. If such units are used the network performs a generalized principal component analysis in the sense that non-Gaussian distributions can be linearly decorrelated and higher orders of the correlation tensors are also taken into account. The basic structure of the architecture involves a general transformation that is volume conserving and therefore the entropy, yielding a map without loss of information. Minimization of the mutual information among the output neurons eliminates the redundancy between the outputs and results in statistical decorrelation of the extracted features. This is known as factorial learning. To sum up, this paper presents a model of factorial learning for general nonlinear transformations of an arbitrary non-Gaussian (or Gaussian) environment with statistically nonlinearly correlated input. Simulations demonstrate the effectiveness of this method.},
+  doi      = {https://doi.org/10.1016/0893-6080(94)00108-X},
+  file     = {:Nonlinear_higher-order_statistical_decorrelation_by_volume-conserving_neural_architectures_Deco_Brauer.pdf:PDF},
+  groups   = {Volume-Preserving NNs, Symplectic Decorrelation, Symplectic Nets},
+  keywords = {Nonlinear decorrelation, Volume-conserving architectures, Factorial learning},
+  review   = {Original source of the symplectic ANN structure based on the block matrix [[I, W],[0, I]] with W symmetric.
+Interesting equations: (7),(8),(9)},
+  url      = {http://www.sciencedirect.com/science/article/pii/089360809400108X},
+}
+
+@Unpublished{Jin2020,
+  author        = {{Jin}, Pengzhan and {Zhu}, Aiqing and {Karniadakis}, George Em and {Tang}, Yifa},
+  title         = {{Symplectic networks: Intrinsic structure-preserving networks for identifying Hamiltonian systems}},
+  note          = {Preprint},
+  month         = {Jan},
+  year          = {2020},
+  adsnote       = {Provided by the SAO/NASA Astrophysics Data System},
+  adsurl        = {https://ui.adsabs.harvard.edu/abs/2020arXiv200103750J},
+  archiveprefix = {arXiv},
+  eid           = {arXiv:2001.03750},
+  eprint        = {2001.03750},
+  file          = {:Symplection_networks_Jin_et_al.pdf:PDF},
+  groups        = {Symplectic Nets},
+  journal       = {arXiv e-prints},
+  keywords      = {Computer Science - Machine Learning, Physics - Computational Physics, Statistics - Machine Learning},
+  pages         = {arXiv:2001.03750},
+  primaryclass  = {cs.LG},
+  review        = {Paper investigated in the BSc thesis},
+  url           = {https://arxiv.org/abs/2001.03750},
+}
+
+@Comment{jabref-meta: databaseType:bibtex;}
+
+@Comment{jabref-meta: fileDirectory:.;}
+
+@Comment{jabref-meta: groupstree:
+0 AllEntriesGroup:;
+1 ExplicitGroup:Symplectic Nets\;0\;;
+}
