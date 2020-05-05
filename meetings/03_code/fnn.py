@@ -13,7 +13,7 @@ from simple_Hamiltonian_systems import HarmonicOscillator
 
 dt = 0.1 # time step
 
-def generate_training_data(n=1000):
+def generate_training_data(n=1000, device=None):
     model = HarmonicOscillator()
 
     # generate random phase points in [-2,2]x[-2,2]
@@ -30,12 +30,12 @@ def generate_training_data(n=1000):
 
     # convert to `torch.tensor`
     torch.set_default_dtype(torch.float64)
-    X_train = torch.tensor(X_train, requires_grad=True)
-    Y_train = torch.tensor(Y_train)
+    X_train = torch.tensor(X_train, requires_grad=True).to(device)
+    Y_train = torch.tensor(Y_train).to(device)
 
     return (X_train, Y_train)
 
-def train_fnn(loss_fn, X_train, Y_train, epochs=1000, liveloss=True):
+def train_fnn(loss_fn, X_train, Y_train, epochs=1000, liveloss=True, device=None):
     # train basic FNN
     nn_model = torch.nn.Sequential(
         torch.nn.Linear(2, 50),
@@ -43,7 +43,7 @@ def train_fnn(loss_fn, X_train, Y_train, epochs=1000, liveloss=True):
         torch.nn.Linear(50, 50),
         torch.nn.Sigmoid(),
         torch.nn.Linear(50, 2)
-    )
+    ).to(device)
 
     learning_rate = 1e-1
 
@@ -68,7 +68,7 @@ def train_fnn(loss_fn, X_train, Y_train, epochs=1000, liveloss=True):
 
     return nn_model
 
-def integrate(model, q0 = 1., p0 = 0., t_start = 0., t_end = np.pi):
+def integrate(model, q0 = 1., p0 = 0., t_start = 0., t_end = np.pi, device=None):
     t_curr = t_start
     q_curr = q0
     p_curr = p0
@@ -77,7 +77,7 @@ def integrate(model, q0 = 1., p0 = 0., t_start = 0., t_end = np.pi):
     X = np.array([[q_curr, p_curr]])
 
     while t_curr < t_end:
-        y = model(torch.tensor([[q_curr, p_curr]]))
+        y = model(torch.tensor([[q_curr, p_curr]]).to(device))
         q_curr = y.data[0][0].item()
         p_curr = y.data[0][1].item()
 
