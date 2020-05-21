@@ -1,6 +1,6 @@
 import unittest
 import torch
-from linearsymplectic import UpperLinearSymplectic, LowerLinearSymplectic
+from linearsymplectic import UpperLinearSymplectic, LowerLinearSymplectic, LinearSymplectic
 
 class TestLinearSympletic(unittest.TestCase):
     def test_upper(self):
@@ -65,6 +65,46 @@ class TestLinearSympletic(unittest.TestCase):
         module.bias.data = bias
 
         expected = matrix.mm(input) + bias
+        actual = module.forward(input)
+        
+        torch.testing.assert_allclose(actual, expected)
+
+    def test_linear(self):
+        module = LinearSymplectic(n=2, d=2, h=0.1)
+
+        matrix1 = torch.tensor(
+            [[1, 0, 2, 3],
+            [0, 1, 3, 1],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1]],
+            dtype=torch.float
+        )
+
+        matrix2 = torch.tensor(
+            [[1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [2, 3, 1, 0],
+            [3, 1, 0, 1]],
+            dtype=torch.float
+        )
+
+        bias = torch.tensor(
+            [[1],
+            [3],
+            [6],
+            [-3]],
+            dtype=torch.float
+        ) 
+
+        input = torch.ones(4,1)
+
+        module[0].S.data = module[1].S.data = torch.tensor(
+            [[2,3],
+            [3,1]]
+        )
+        module[1].bias.data = bias
+
+        expected = matrix2.mm(matrix1.mm(input)) + bias
         actual = module.forward(input)
         
         torch.testing.assert_allclose(actual, expected)
