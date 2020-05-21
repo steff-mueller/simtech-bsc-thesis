@@ -16,23 +16,19 @@ class LinearSymplectic(nn.Module):
 
     # from https://github.com/pytorch/pytorch/blob/master/torch/nn/modules/linear.py#L79
     def reset_parameters(self):
-        nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
+        nn.init.kaiming_uniform_(self.S, a=math.sqrt(5))
         if self.bias is not None:
             fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.weight)
             bound = 1 / math.sqrt(fan_in)
             nn.init.uniform_(self.bias, -bound, bound)
 
     def forward(self, input):
-        symmetric_matrix = (self.S + self.S.t())/2
+        symmetric_matrix = (self.S + self.S.t())/2.
 
-        x_top = input[1:d]
-        x_bottom = input[d+1:2*d]
+        x_top = input[0:self.d]
+        x_bottom = input[self.d:2*self.d]
 
         result_top = x_top + symmetric_matrix.mm(x_bottom)
         result_bottom = x_bottom
 
-        return result_top.cat(result_bottom) + self.bias
-
-
-
-
+        return torch.cat([result_top, result_bottom]) + self.bias
