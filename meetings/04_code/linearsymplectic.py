@@ -58,7 +58,7 @@ class LinearSymplectic(nn.Sequential):
 
         # add upper and lower linear symplectic unit alternately
         for i in range(n):
-            is_last = (i+1) == n # only add bias to last linear symplectic unit.
+            is_last = (i+1) == n and bias # only add bias to last linear symplectic unit.
             if (i % 2 == 0):
                 dict['upper_linear_symp{}'.format(i)] = UpperLinearSymplectic(d, h, bias=is_last)
             else:
