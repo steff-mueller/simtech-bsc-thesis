@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 
+import math
 from collections import OrderedDict
 
 class UpperLinearSymplectic(nn.Module):
@@ -18,9 +19,9 @@ class UpperLinearSymplectic(nn.Module):
 
     def reset_parameters(self):
         with torch.no_grad():
-            self.S.zero_()
+            nn.init.kaiming_uniform_(self.S, a=math.sqrt(5))
             if self.bias is not None:
-                self.bias.zero_()
+                nn.init.uniform_(self.bias, -2, 2)
 
     def forward(self, input):
         symmetric_matrix = self.h*(self.S + self.S.t())/2.

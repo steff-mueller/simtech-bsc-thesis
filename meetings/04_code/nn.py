@@ -18,12 +18,12 @@ from nonlinearsymplectic import UpperNonlinearSymplectic, LowerNonlinearSymplect
 
 dt = 0.1 # time step
 
-# TODO set salt (fix randomness)
 def generate_training_data(n=1000, device=None):
     model = HarmonicOscillator()
 
     # generate random phase points in [-2,2]x[-2,2]
-    X_train = np.random.uniform(-2, 2, size=(n,2))
+    rg = np.random.default_rng(seed=0)
+    X_train = rg.uniform(-2, 2, size=(n,2))
 
     def time_step(x_train):
         # compute one time step h

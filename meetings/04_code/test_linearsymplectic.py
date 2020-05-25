@@ -112,23 +112,5 @@ class TestLinearSympletic(unittest.TestCase):
         
         torch.testing.assert_allclose(torch.reshape(actual, (4,1)), expected)
 
-    def test_upper_initial_is_identity(self):
-        module = UpperLinearSymplectic(d=2, h=0.1)
-        input = torch.ones(1,4)
-
-        expected = input
-        actual = module.forward(input)
-        
-        torch.testing.assert_allclose(actual, expected)
-
-    def test_lower_initial_is_identity(self):
-        module = LowerLinearSymplectic(d=2, h=0.1)
-        input = torch.ones(1,4)
-
-        expected = input
-        actual = module.forward(input)
-        
-        torch.testing.assert_allclose(actual, expected)
-
 if __name__ == '__main__':
     unittest.main()
