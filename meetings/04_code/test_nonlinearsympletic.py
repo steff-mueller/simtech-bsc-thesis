@@ -5,7 +5,8 @@ from nonlinearsymplectic import UpperNonlinearSymplectic, LowerNonlinearSymplect
 
 class TestNonlinearSymplectic(unittest.TestCase):
     def test_upper(self):
-        module = UpperNonlinearSymplectic(d=2, h=0.1)
+        h = 0.1
+        module = UpperNonlinearSymplectic(d=2, h=h)
 
         p = torch.ones(2,1)
         q = torch.ones(2,1)
@@ -26,13 +27,14 @@ class TestNonlinearSymplectic(unittest.TestCase):
 
         module.bias.data = torch.reshape(bias, (-1,))
 
-        expected = torch.cat([p + sigmoid(q), q]) + bias
+        expected = torch.cat([p + h*sigmoid(q), q]) + bias
         actual = module.forward(torch.reshape(input, (1,4)))
         
         torch.testing.assert_allclose(torch.reshape(actual, (4,1)), expected)
     
     def test_lower(self):
-        module = LowerNonlinearSymplectic(d=2, h=0.1)
+        h = 0.1
+        module = LowerNonlinearSymplectic(d=2, h=h)
 
         p = torch.ones(2,1)
         q = torch.ones(2,1)
@@ -53,7 +55,7 @@ class TestNonlinearSymplectic(unittest.TestCase):
 
         module.bias.data = torch.reshape(bias, (-1,))
 
-        expected = torch.cat([p, sigmoid(p) + q]) + bias
+        expected = torch.cat([p, h*sigmoid(p) + q]) + bias
         actual = module.forward(torch.reshape(input, (1,4)))
         
         torch.testing.assert_allclose(torch.reshape(actual, (4,1)), expected)

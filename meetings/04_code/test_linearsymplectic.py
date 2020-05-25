@@ -4,11 +4,12 @@ from linearsymplectic import UpperLinearSymplectic, LowerLinearSymplectic, Linea
 
 class TestLinearSympletic(unittest.TestCase):
     def test_upper(self):
-        module = UpperLinearSymplectic(d=2, h=0.1)
+        h = 0.1
+        module = UpperLinearSymplectic(d=2, h=h)
 
         matrix = torch.tensor(
-            [[1, 0, 2, 3],
-            [0, 1, 3, 1],
+            [[1, 0, h*2, h*3],
+            [0, 1, h*3, h*1],
             [0, 0, 1, 0],
             [0, 0, 0, 1]],
             dtype=torch.float
@@ -37,13 +38,14 @@ class TestLinearSympletic(unittest.TestCase):
         torch.testing.assert_allclose(torch.reshape(actual, (4,1)), expected)
 
     def test_lower(self):
-        module = LowerLinearSymplectic(d=2, h=0.1)
+        h = 0.1
+        module = LowerLinearSymplectic(d=2, h=h)
 
         matrix = torch.tensor(
             [[1, 0, 0, 0],
             [0, 1, 0, 0],
-            [2, 3, 1, 0],
-            [3, 1, 0, 1]],
+            [h*2, h*3, 1, 0],
+            [h*3, h*1, 0, 1]],
             dtype=torch.float
         )
 
@@ -70,11 +72,12 @@ class TestLinearSympletic(unittest.TestCase):
         torch.testing.assert_allclose(torch.reshape(actual, (4,1)), expected)
 
     def test_linear(self):
-        module = LinearSymplectic(n=2, d=2, h=0.1)
+        h = 0.1
+        module = LinearSymplectic(n=2, d=2, h=h)
 
         matrix1 = torch.tensor(
-            [[1, 0, 2, 3],
-            [0, 1, 3, 1],
+            [[1, 0, h*2, h*3],
+            [0, 1, h*3, h*1],
             [0, 0, 1, 0],
             [0, 0, 0, 1]],
             dtype=torch.float
@@ -83,8 +86,8 @@ class TestLinearSympletic(unittest.TestCase):
         matrix2 = torch.tensor(
             [[1, 0, 0, 0],
             [0, 1, 0, 0],
-            [2, 3, 1, 0],
-            [3, 1, 0, 1]],
+            [h*2, h*3, 1, 0],
+            [h*3, h*1, 0, 1]],
             dtype=torch.float
         )
 

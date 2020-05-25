@@ -23,7 +23,7 @@ class UpperLinearSymplectic(nn.Module):
                 self.bias.zero_()
 
     def forward(self, input):
-        symmetric_matrix = (self.S + self.S.t())/2.
+        symmetric_matrix = self.h*(self.S + self.S.t())/2.
 
         x_top = input[:, 0:self.d]
         x_bottom = input[:, self.d:2*self.d]
