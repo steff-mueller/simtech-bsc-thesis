@@ -24,12 +24,12 @@ class TestNonlinearSymplectic(unittest.TestCase):
             [3,1]]
         )
 
-        module.bias.data = bias
+        module.bias.data = torch.reshape(bias, (-1,))
 
         expected = torch.cat([p + sigmoid(q), q]) + bias
-        actual = module.forward(input)
+        actual = module.forward(torch.reshape(input, (1,4)))
         
-        torch.testing.assert_allclose(actual, expected)
+        torch.testing.assert_allclose(torch.reshape(actual, (4,1)), expected)
     
     def test_lower(self):
         module = LowerNonlinearSymplectic(d=2, h=0.1)
@@ -51,12 +51,12 @@ class TestNonlinearSymplectic(unittest.TestCase):
             [3,1]]
         )
 
-        module.bias.data = bias
+        module.bias.data = torch.reshape(bias, (-1,))
 
         expected = torch.cat([p, sigmoid(p) + q]) + bias
-        actual = module.forward(input)
+        actual = module.forward(torch.reshape(input, (1,4)))
         
-        torch.testing.assert_allclose(actual, expected)
+        torch.testing.assert_allclose(torch.reshape(actual, (4,1)), expected)
 
 if __name__ == '__main__':
     unittest.main()

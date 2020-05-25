@@ -29,12 +29,12 @@ class TestLinearSympletic(unittest.TestCase):
             [3,1]]
         )
 
-        module.bias.data = bias
+        module.bias.data = torch.reshape(bias, (-1,))
 
         expected = matrix.mm(input) + bias
-        actual = module.forward(input)
+        actual = module.forward(torch.reshape(input, (1,4)))
         
-        torch.testing.assert_allclose(actual, expected)
+        torch.testing.assert_allclose(torch.reshape(actual, (4,1)), expected)
 
     def test_lower(self):
         module = LowerLinearSymplectic(d=2, h=0.1)
@@ -62,12 +62,12 @@ class TestLinearSympletic(unittest.TestCase):
             [3,1]]
         )
 
-        module.bias.data = bias
+        module.bias.data = torch.reshape(bias, (-1,))
 
         expected = matrix.mm(input) + bias
-        actual = module.forward(input)
+        actual = module.forward(torch.reshape(input, (1,4)))
         
-        torch.testing.assert_allclose(actual, expected)
+        torch.testing.assert_allclose(torch.reshape(actual, (4,1)), expected)
 
     def test_linear(self):
         module = LinearSymplectic(n=2, d=2, h=0.1)
@@ -102,9 +102,27 @@ class TestLinearSympletic(unittest.TestCase):
             [[2,3],
             [3,1]]
         )
-        module[1].bias.data = bias
+        module[1].bias.data = torch.reshape(bias, (-1,))
 
         expected = matrix2.mm(matrix1.mm(input)) + bias
+        actual = module.forward(torch.reshape(input, (1,4)))
+        
+        torch.testing.assert_allclose(torch.reshape(actual, (4,1)), expected)
+
+    def test_upper_initial_is_identity(self):
+        module = UpperLinearSymplectic(d=2, h=0.1)
+        input = torch.ones(1,4)
+
+        expected = input
+        actual = module.forward(input)
+        
+        torch.testing.assert_allclose(actual, expected)
+
+    def test_lower_initial_is_identity(self):
+        module = LowerLinearSymplectic(d=2, h=0.1)
+        input = torch.ones(1,4)
+
+        expected = input
         actual = module.forward(input)
         
         torch.testing.assert_allclose(actual, expected)
