@@ -22,6 +22,7 @@ RUN apt update  \
 ENV VIRTUAL_ENV=/opt/venv
 RUN python3 -m virtualenv --python=/usr/bin/python3 $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+ENV PKG_CONFIG_PATH="$VIRTUAL_ENV/lib/pkgconfig/"
 
 # # https://bitbucket.org/fenics-project/dolfin/issues/1069/petsc-311-patch-vecscattercreatewithdata
 # sympy==1.2 does not work!
