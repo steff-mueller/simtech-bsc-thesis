@@ -24,9 +24,8 @@ RUN python3 -m virtualenv --python=/usr/bin/python3 $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV PKG_CONFIG_PATH="$VIRTUAL_ENV/lib/pkgconfig/"
 
-# # https://bitbucket.org/fenics-project/dolfin/issues/1069/petsc-311-patch-vecscattercreatewithdata
-# sympy==1.2 does not work!
-RUN PETSC_DIR=/usr/lib/petscdir/3.12 pip install petsc4py==3.12.0 fenics-ffc==2019.1.0.post0 sympy==1.1.1
+# https://bitbucket.org/fenics-project/dolfin/issues/1069/petsc-311-patch-vecscattercreatewithdata
+RUN PETSC_DIR=/usr/lib/petscdir/3.12 pip install petsc4py==3.12.0 fenics-ffc==2019.1.0.post0
 
 WORKDIR /tmp/fenics-build
 RUN wget -nc --quiet https://github.com/pybind/pybind11/archive/v${PYBIND11_VERSION}.tar.gz \
@@ -48,6 +47,6 @@ RUN cmake ../ -DCMAKE_INSTALL_PREFIX=$VIRTUAL_ENV \
 WORKDIR /tmp//fenics-build
 RUN pip install dolfin/python
 
-# Install other python dependencies
+# Install python dependencies
 COPY requirements.txt .
 RUN pip install -r requirements.txt
