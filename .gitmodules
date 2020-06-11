@@ -1,0 +1,3 @@
+[submodule "hamiltonian-python-models"]
+	path = models
+	url = https://gitlab.mathematik.uni-stuttgart.de/buchfipk/hamiltonian-python-models.git
