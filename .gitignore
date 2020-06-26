@@ -239,3 +239,6 @@ TSWLatexianTemp*
 
 # python virtual environment
 .venv/
+
+# Distribution / packaging
+*.egg-info/
