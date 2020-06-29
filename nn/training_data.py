@@ -1,14 +1,20 @@
 import torch
 import numpy as np
 
-def generate_training_data(n, model, mu, dt = 0.1, min = -2, max = +2, device=None):
+def generate_training_data(n, model, mu, dt = 0.1, 
+    qmin = -2, qmax = +2, 
+    pmin = -2, pmax = +2,
+    device=None):
+
     # do not change original dictionary
     mu = mu.copy()
 
     # TODO implmenet generic way to generate random values (in a subset)
     # generate random phase points in [-2,2]x[-2,2]
     rg = np.random.default_rng(seed=0)
-    X_train = rg.uniform(min, max, size=(n,2))
+    q = rg.uniform(qmin, qmax, size=(n,1))
+    p = rg.uniform(pmin, pmax, size=(n,1))
+    X_train = np.hstack((q,p))
 
     def time_step(x_train):
         # TODO implement generic way to set initial values
