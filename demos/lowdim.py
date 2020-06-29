@@ -47,12 +47,42 @@ def plot_Ham_sys(td_x, td_x_surrogate):
     ])
     return fig
 
+def plot_q(td_x, td_x_surrogate):
+    fig = plt.figure(figsize=[15, 5])
+    ax = plt.axes()
+
+    ax.plot(list(td_x.all_t()), list(td_x.all_vec_q()), '.-')
+    ax.plot(list(td_x_surrogate.all_t()), list(td_x_surrogate.all_vec_q()), '.-')
+    ax.legend([
+        'solution trajectory',
+        'surrogate trajectory'
+    ])
+    return fig
+
+def plot_p(td_x, td_x_surrogate):
+    fig = plt.figure(figsize=[15, 5])
+    ax = plt.axes()
+
+    ax.plot(list(td_x.all_t()), list(td_x.all_vec_p()), '.-')
+    ax.plot(list(td_x_surrogate.all_t()), list(td_x_surrogate.all_vec_p()), '.-')
+    ax.legend([
+        'solution trajectory',
+        'surrogate trajectory'
+    ])
+    return fig
+
 def log_plot(model, surrogate_model, mu, q0, p0, dt, writer, epoch):
-    td_x, td_Ham = model.solve(0, 4, dt, mu)
-    td_x_surrogate = integrate(surrogate_model, q0, p0, 0, 4, dt)
+    td_x, td_Ham = model.solve(0, 100, dt, mu)
+    td_x_surrogate = integrate(surrogate_model, q0, p0, 0, 100, dt)
 
     plt = plot_Ham_sys(td_x, td_x_surrogate)
     writer.add_figure('PhaseSpace', plt, epoch)
+
+    qplt = plot_q(td_x, td_x_surrogate)
+    writer.add_figure('q', qplt, epoch)
+
+    pplt = plot_p(td_x, td_x_surrogate)
+    writer.add_figure('p', pplt, epoch)  
 
 if __name__ == '__main__':
     # initialize TensorBoard writer
@@ -80,7 +110,7 @@ if __name__ == '__main__':
     criterion = torch.nn.MSELoss()
     optimizer = torch.optim.Adam(surrogate_model.parameters(), lr=1e-1)
 
-    iter = 10000
+    iter = 1000
     for epoch in range(iter):
        print('training step: %d/%d' % (epoch, iter))
        y1 = surrogate_model(x)
