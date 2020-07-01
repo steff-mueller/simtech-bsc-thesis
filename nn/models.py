@@ -33,7 +33,7 @@ class HarmonicSympNet(nn.Sequential):
             modules.append(HarmonicUnit(dt))
         
         modules.append(LinearSymplectic(sub_layers, dim, dt))
-        super(SympNet, self).__init__(*modules)
+        super(HarmonicSympNet, self).__init__(*modules)
 
 # TODO implement fully connected layer
 #class FNN(nn:Sequential):

@@ -8,7 +8,7 @@ from models.vectors import PhaseSpaceVectorList, NumpyPhaseSpace
 from models.lowdim import SimplePendulum, HarmonicOscillator
 
 from nn.training_data import generate_training_data
-from nn.models import SympNet
+from nn.models import SympNet, HarmonicSympNet
 
 def integrate(model, q0, p0, t_start, t_end, dt, device=None):
     phase_space = NumpyPhaseSpace(2)
@@ -119,7 +119,8 @@ if __name__ == '__main__':
         qmin=-np.sqrt(2), qmax=np.sqrt(2),
         pmin=-np.pi/2, pmax=np.pi/2)
 
-    surrogate_model = SympNet(layers = 8, sub_layers = 5, dim = 1, dt = 0.1)
+    #surrogate_model = SympNet(layers = 8, sub_layers = 5, dim = 1, dt = 0.1)
+    surrogate_model = HarmonicSympNet(layers = 8, sub_layers = 5, dim = 1, dt = 0.1)
     criterion = torch.nn.MSELoss()
     optimizer = torch.optim.Adam(surrogate_model.parameters(), lr=1e-1)
 
