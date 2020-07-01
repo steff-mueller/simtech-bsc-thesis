@@ -71,7 +71,16 @@ def plot_p(td_x, td_x_surrogate):
     ])
     return fig
 
-def log_plot(model, surrogate_model, mu, q0, p0, dt, writer, epoch):
+def plot_spatial_error(coord, loss):
+    fig = plt.figure()
+    ax = plt.axes()
+    ax.set_xlabel('p0')
+    ax.set_ylabel('q0')
+    s = ax.scatter(coord[:,0], coord[:,1], c=loss, s=20)
+    fig.colorbar(s)
+    return fig
+
+def log_plot(model, surrogate_model, mu, q0, p0, dt, writer, x, y, y1, epoch):
     td_x, td_Ham = model.solve(0, 100, dt, mu)
     td_x_surrogate = integrate(surrogate_model, q0, p0, 0, 100, dt)
 
@@ -82,7 +91,11 @@ def log_plot(model, surrogate_model, mu, q0, p0, dt, writer, epoch):
     writer.add_figure('q', qplt, epoch)
 
     pplt = plot_p(td_x, td_x_surrogate)
-    writer.add_figure('p', pplt, epoch)  
+    writer.add_figure('p', pplt, epoch) 
+
+    diff = torch.norm(y-y1, p=2, dim=1)
+    plt_loss = plot_spatial_error(x.detach().numpy(), diff.detach().numpy())
+    writer.add_figure("Loss/Spatial", plt_loss, epoch)
 
 if __name__ == '__main__':
     # initialize TensorBoard writer
@@ -112,18 +125,20 @@ if __name__ == '__main__':
 
     iter = 1000
     for epoch in range(iter):
-       print('training step: %d/%d' % (epoch, iter))
-       y1 = surrogate_model(x)
-       loss = criterion(y1, y)
-       writer.add_scalar("Loss/train", loss, epoch)
-       optimizer.zero_grad()
-       loss.backward()
-       optimizer.step()
+        print('training step: %d/%d' % (epoch, iter))
+        y1 = surrogate_model(x)
+        loss = criterion(y1, y)  
+        writer.add_scalar("Loss/train", loss, epoch)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
 
-       if (epoch % 200) == 0:
-           log_plot(model, surrogate_model, mu, q0, p0, dt, writer, epoch)
+        if (epoch % 200) == 0:
+            log_plot(model, surrogate_model, mu, q0, p0, dt, writer, 
+                x, y, y1, epoch)
 
-    log_plot(model, surrogate_model, mu, q0, p0, dt, writer, iter)  
+    log_plot(model, surrogate_model, mu, q0, p0, dt, writer, 
+        x, y, y1, iter)  
 
     writer.add_graph(surrogate_model, torch.tensor([[q0, p0]]))
 
