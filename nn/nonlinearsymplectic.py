@@ -31,14 +31,14 @@ class HarmonicUnit(nn.Module):
     def reset_parameters(self):
         with torch.no_grad():
             nn.init.uniform_(self.dt, -self.h, self.h)
-            nn.init.uniform_(self.m, 0, 1)
-            nn.init.uniform_(self.omega, 0, 1)
+            nn.init.uniform_(self.m, 0.1, 1)
+            nn.init.uniform_(self.omega, 0.1, 1)
 
     def forward(self, input):
         q0 = input[:,0]
         p0 = input[:,1]
 
-        q = q0*torch.cos(self.omega*self.dt) + p0*torch.sin(self.omega*self.dt)
+        q = q0*torch.cos(self.omega*self.dt) + p0/(self.m*self.omega)*torch.sin(self.omega*self.dt)
         p = -self.m*self.omega*q0*torch.sin(self.omega*self.dt) + p0*torch.cos(self.omega*self.dt)
 
         return torch.stack([q,p], dim=1)
