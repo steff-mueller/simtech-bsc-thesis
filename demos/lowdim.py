@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
+from models.dyn_sys import TimeDataList
 from models.vectors import PhaseSpaceVectorList, NumpyPhaseSpace
 from models.lowdim import SimplePendulum, HarmonicOscillator
 
@@ -81,6 +82,29 @@ def plot_spatial_error(coord, loss):
     fig.colorbar(s)
     return fig
 
+def plot_hamiltonian(td_Ham, td_x_surrogate, model, mu):
+    td_Ham_surrogate = TimeDataList()
+    for t,x in td_x_surrogate:
+        td_Ham_surrogate.append(t, model.Ham(x, mu))
+
+    fig = plt.figure(figsize=[15, 5])
+    ax = plt.axes()
+
+    ax.plot(td_Ham._t, td_Ham._data - td_Ham._data[0])
+    ax.plot(td_Ham_surrogate._t, td_Ham_surrogate._data - td_Ham._data[0])
+    ax.set_title('Hamiltonian vs. time')
+    ax.set_xlabel(r'time $t$')
+    ax.set_ylabel(r'Ham. $H(x(t,\mu), \mu) - H(x(t_0,\mu), \mu)$')
+    ax.set_yscale('log')
+    ax.legend([
+        'solution Hamiltonian',
+        'surrogate Hamiltonian'
+    ])
+    ax.relim()
+    ax.autoscale_view()
+
+    return fig
+
 def log_plot(model, surrogate_model, mu, q0, p0, dt, writer, x, y, y1, epoch):
     td_x, td_Ham = model.solve(0, 100, dt, mu)
     td_x_surrogate = integrate(surrogate_model, q0, p0, 0, 100, dt)
@@ -92,11 +116,14 @@ def log_plot(model, surrogate_model, mu, q0, p0, dt, writer, x, y, y1, epoch):
     writer.add_figure('q', qplt, epoch)
 
     pplt = plot_p(td_x, td_x_surrogate)
-    writer.add_figure('p', pplt, epoch) 
+    writer.add_figure('p', pplt, epoch)
+
+    ham_plt = plot_hamiltonian(td_Ham, td_x_surrogate, model, mu)
+    writer.add_figure('Hamiltonian', ham_plt, epoch) 
 
     diff = torch.norm(y-y1, p=2, dim=1)
     plt_loss = plot_spatial_error(x.detach().numpy(), diff.detach().numpy())
-    writer.add_figure("Loss/Spatial", plt_loss, epoch)
+    writer.add_figure('Loss/Spatial', plt_loss, epoch)
 
 if __name__ == '__main__':
     # initialize TensorBoard writer
@@ -129,6 +156,7 @@ if __name__ == '__main__':
     iter = 1000
     for epoch in range(iter):
         print('training step: %d/%d' % (epoch, iter))
+  
         y1 = surrogate_model(x)
         loss = criterion(y1, y)  
         writer.add_scalar("Loss/train", loss, epoch)
