@@ -9,6 +9,7 @@ from models.lowdim import SimplePendulum, HarmonicOscillator
 
 from nn.training_data import generate_training_data
 from nn.models import SympNet, HarmonicSympNet
+from nn.symplecticloss import symplectic_mse_loss
 
 def integrate(model, q0, p0, t_start, t_end, dt, device=None):
     phase_space = NumpyPhaseSpace(2)
@@ -121,6 +122,7 @@ if __name__ == '__main__':
 
     #surrogate_model = SympNet(layers = 8, sub_layers = 5, dim = 1, dt = 0.1)
     surrogate_model = HarmonicSympNet(layers = 8, sub_layers = 5, dim = 1, dt = 0.1)
+
     criterion = torch.nn.MSELoss()
     optimizer = torch.optim.Adam(surrogate_model.parameters(), lr=1e-1)
 
@@ -131,7 +133,14 @@ if __name__ == '__main__':
         loss = criterion(y1, y)  
         writer.add_scalar("Loss/train", loss, epoch)
         optimizer.zero_grad()
-        loss.backward()
+
+        # retain_graph=True to calculate symplectic loss afterwards
+        loss.backward(retain_graph=True)
+
+        # calculate and log symplectic loss
+        symplectic_loss = symplectic_mse_loss(x, y1)
+        writer.add_scalar('Loss/symplectic', symplectic_loss, epoch)
+
         optimizer.step()
 
         if (epoch % 200) == 0:
