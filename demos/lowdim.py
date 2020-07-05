@@ -22,7 +22,9 @@ def integrate(model, q0, p0, t_start, t_end, dt, device=None):
 
     result.append(t_curr, phase_space.new_vector(q_curr, p_curr))
     
-    while t_curr < t_end:
+    # replicate behavior of original models 
+    # and thus interpret t_end as an open interval
+    while t_curr < t_end - 2*dt:
         y = model(torch.tensor([[q_curr, p_curr]]).to(device))
 
         t_curr += dt
