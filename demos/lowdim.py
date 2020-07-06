@@ -145,7 +145,8 @@ if __name__ == '__main__':
     q0 = np.pi/2
     p0 = 0.
     mu = {'m': 1., 'g': 1., 'l': 1., 'q0': q0, 'p0': p0}
-    x, y = generate_training_data(10000, model, mu, dt, 
+    n = 10000
+    x, y = generate_training_data(n, model, mu, dt, 
         qmin=-np.sqrt(2), qmax=np.sqrt(2),
         pmin=-np.pi/2, pmax=np.pi/2)
 
@@ -156,6 +157,14 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(surrogate_model.parameters(), lr=1e-1)
 
     iter = 1000
+
+    writer.add_text('hyperparameters', str({
+        'model': model.__class__.__name__,
+        'surrogate_model': surrogate_model.__class__.__name__,
+        'training/size': n,
+        'epochs': iter
+    }))
+
     for epoch in range(iter):
         print('training step: %d/%d' % (epoch, iter))
   
