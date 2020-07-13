@@ -29,8 +29,7 @@ def generate_training_data(n, model, mu, dt = 0.1,
     Y_train = np.apply_along_axis(time_step, 1, X_train)
 
     # convert numpy array to `torch.tensor`
-    torch.set_default_dtype(torch.float64)
-    X_train = torch.tensor(X_train, requires_grad=True).to(device)
-    Y_train = torch.tensor(Y_train).to(device)
+    X_train = torch.tensor(X_train, requires_grad=True, dtype=torch.float32).to(device)
+    Y_train = torch.tensor(Y_train, dtype=torch.float32).to(device)
 
     return (X_train, Y_train)

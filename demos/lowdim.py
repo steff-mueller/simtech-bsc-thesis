@@ -1,135 +1,156 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-from models.dyn_sys import TimeDataList
-from models.vectors import PhaseSpaceVectorList, NumpyPhaseSpace
 from models.lowdim import SimplePendulum, HarmonicOscillator
 
 from nn.training_data import generate_training_data
 from nn.models import SympNet, HarmonicSympNet
 from nn.symplecticloss import symplectic_mse_loss
 
-def integrate(model, q0, p0, t_start, t_end, dt, device=None):
-    phase_space = NumpyPhaseSpace(2)
-    result = PhaseSpaceVectorList()
+from utils.plot2d import *
 
-    t_curr = t_start
-    q_curr = q0
-    p_curr = p0
+class SamplingParameters:
+    def __init__(self, mu, qmin=-1, qmax=+1, pmin=-1, pmax=+1):
+        self.n = 10000
 
-    result.append(t_curr, phase_space.new_vector(q_curr, p_curr))
+        self.qmin = qmin
+        self.qmax = qmax
+
+        self.pmin = pmin
+        self.pmax = pmax
+
+        self.mu = mu
+
+class Configuration:
+    def __init__(self, experiment, name, mu, t_start, t_end):
+        self.experiment = experiment
+        self.name = name
+        self.mu = mu
+        self.t_start = t_start
+        self.t_end = t_end
+
+        # cache solution
+        self._td_x, self._td_Ham = self.experiment.model.solve(self.t_start, self.t_end, self.experiment.dt, self.mu)
+
+    def run(self, epoch):
+        td_x_surrogate = self.experiment.surrogate_model.integrate(mu['q0'], mu['p0'], 
+            self.t_start, self.t_end, self.experiment.dt)
+
+        # plot results
+        plt = plot_Ham_sys(self._td_x, td_x_surrogate)
+        self.experiment.writer.add_figure(self.name + '/PhaseSpace', plt, epoch)
+
+        qplt = plot_q(self._td_x, td_x_surrogate)
+        self.experiment.writer.add_figure(self.name + '/q', qplt, epoch)
+
+        pplt = plot_p(self._td_x, td_x_surrogate)
+        self.experiment.writer.add_figure(self.name + '/p', pplt, epoch)
+
+        ham_plt = plot_hamiltonian(self._td_Ham, td_x_surrogate, self.experiment.model, self.mu)
+        self.experiment.writer.add_figure(self.name + '/Hamiltonian', ham_plt, epoch) 
+
+class Experiment:
+
+    def __init__(self, model, surrogate_model, sampling_params):
+        self.dt = 0.1
+        self.epochs = 2000
+        self.model = model
+        self.surrogate_model = surrogate_model
+
+        self._sampling_params = sampling_params
+        self._configurations = []
+        self._init_writer()
+
+    def _init_writer(self):
+        self.writer = SummaryWriter(comment='lowdim')
+        # TODO log all parameters, e.g. sampling parameters...
+        self.writer.add_text('hyperparameters', str({
+            'model': self.model.__class__.__name__,
+            'surrogate_model': self.surrogate_model.__class__.__name__,
+            'training/size': self._sampling_params.n,
+            'epochs': self.epochs
+        }))
+
+    def _get_training_data(self):
+        return generate_training_data(self._sampling_params.n, 
+            self.model, 
+            self._sampling_params.mu, 
+            self.dt, 
+            qmin=self._sampling_params.qmin, 
+            qmax=self._sampling_params.qmax,
+            pmin=self._sampling_params.pmin, 
+            pmax=self._sampling_params.pmax)
+
+    def _run_configurations(self, epoch):
+        for configuration in self._configurations:
+            configuration.run(epoch)
+
+    def _log_loss(self, loss, x, y1, y, epoch):
+        self.writer.add_scalar("Loss/train", loss, epoch)
+
+        # calculate and log symplectic loss
+        symplectic_loss = symplectic_mse_loss(x, y1)
+        self.writer.add_scalar('Loss/symplectic', symplectic_loss, epoch)
+
+        # calculate and log spatial loss
+        diff = torch.norm(y-y1, p=2, dim=1)
+        plt_loss = plot_spatial_error(x.detach().numpy(), diff.detach().numpy())
+        self.writer.add_figure('Loss/Spatial', plt_loss, epoch)
+
+    def add_configuration(self, name, mu, t_start, t_end):
+        self._configurations.append(Configuration(self, name, mu, t_start, t_end))
+
+    def run(self):
+        x,y = self._get_training_data()
+        criterion = torch.nn.MSELoss()
+        optimizer = torch.optim.Adam(surrogate_model.parameters(), lr=1e-1)
+
+        for epoch in range(self.epochs):
+            print('training step: %d/%d' % (epoch, self.epochs))
     
-    # replicate behavior of original models 
-    # and thus interpret t_end as an open interval
-    while t_curr < t_end - 2*dt:
-        y = model(torch.tensor([[q_curr, p_curr]]).to(device))
+            y1 = self.surrogate_model(x)
+            loss = criterion(y1, y)        
+            optimizer.zero_grad()
 
-        t_curr += dt
-        q_curr = y.data[0][0].item()
-        p_curr = y.data[0][1].item()
+            # retain_graph=True to calculate symplectic loss afterwards
+            loss.backward(retain_graph=True)
+            self._log_loss(loss, x, y1, y, epoch)
 
-        result.append(t_curr, phase_space.new_vector(q_curr, p_curr))  
+            optimizer.step()
 
-    return result
+            if (epoch % 200) == 0:
+                self._run_configurations(epoch)
 
-def plot_Ham_sys(td_x, td_x_surrogate):
-    fig = plt.figure()
-    ax = plt.axes()
-    # plot phase-space diagram
-    ax.plot(list(td_x.all_vec_q()), list(td_x.all_vec_p()))
-    ax.plot(list(td_x_surrogate.all_vec_q()), list(td_x_surrogate.all_vec_p()))
-    ax.scatter(td_x._data[0].vec_q, td_x._data[0].vec_p, marker='o')
-    ax.scatter(td_x._data[-1].vec_q, td_x._data[-1].vec_p, marker='s')
-    ax.legend([
-        'solution trajectory',
-        'surrogate trajectory',
-        'initial value',
-        'final value'
-    ])
-    return fig
+        self._run_configurations(self.epochs)
+        self.writer.add_graph(self.surrogate_model, x)
+        self.writer.flush()
 
-def plot_q(td_x, td_x_surrogate):
-    fig = plt.figure(figsize=[15, 5])
-    ax = plt.axes()
-
-    ax.plot(list(td_x.all_t()), list(td_x.all_vec_q()), '.-')
-    ax.plot(list(td_x_surrogate.all_t()), list(td_x_surrogate.all_vec_q()), '.-')
-    ax.legend([
-        'solution trajectory',
-        'surrogate trajectory'
-    ])
-    return fig
-
-def plot_p(td_x, td_x_surrogate):
-    fig = plt.figure(figsize=[15, 5])
-    ax = plt.axes()
-
-    ax.plot(list(td_x.all_t()), list(td_x.all_vec_p()), '.-')
-    ax.plot(list(td_x_surrogate.all_t()), list(td_x_surrogate.all_vec_p()), '.-')
-    ax.legend([
-        'solution trajectory',
-        'surrogate trajectory'
-    ])
-    return fig
-
-def plot_spatial_error(coord, loss):
-    fig = plt.figure()
-    ax = plt.axes()
-    ax.set_xlabel('p0')
-    ax.set_ylabel('q0')
-    s = ax.scatter(coord[:,0], coord[:,1], c=loss, s=20)
-    fig.colorbar(s)
-    return fig
-
-def plot_hamiltonian(td_Ham, td_x_surrogate, model, mu):
-    td_Ham_surrogate = TimeDataList()
-    for t,x in td_x_surrogate:
-        td_Ham_surrogate.append(t, model.Ham(x, mu))
-
-    fig = plt.figure(figsize=[15, 5])
-    ax = plt.axes()
-
-    ax.plot(td_Ham._t, td_Ham._data - td_Ham._data[0])
-    ax.plot(td_Ham_surrogate._t, td_Ham_surrogate._data - td_Ham._data[0])
-    ax.set_title('Hamiltonian vs. time')
-    ax.set_xlabel(r'time $t$')
-    ax.set_ylabel(r'Ham. $H(x(t,\mu), \mu) - H(x(t_0,\mu), \mu)$')
-    ax.set_yscale('log')
-    ax.legend([
-        'solution Hamiltonian',
-        'surrogate Hamiltonian'
-    ])
-    ax.relim()
-    ax.autoscale_view()
-
-    return fig
-
-def log_plot(model, surrogate_model, mu, q0, p0, dt, writer, x, y, y1, epoch):
-    td_x, td_Ham = model.solve(0, 100, dt, mu)
-    td_x_surrogate = integrate(surrogate_model, q0, p0, 0, 100, dt)
-
-    plt = plot_Ham_sys(td_x, td_x_surrogate)
-    writer.add_figure('PhaseSpace', plt, epoch)
-
-    qplt = plot_q(td_x, td_x_surrogate)
-    writer.add_figure('q', qplt, epoch)
-
-    pplt = plot_p(td_x, td_x_surrogate)
-    writer.add_figure('p', pplt, epoch)
-
-    ham_plt = plot_hamiltonian(td_Ham, td_x_surrogate, model, mu)
-    writer.add_figure('Hamiltonian', ham_plt, epoch) 
-
-    diff = torch.norm(y-y1, p=2, dim=1)
-    plt_loss = plot_spatial_error(x.detach().numpy(), diff.detach().numpy())
-    writer.add_figure('Loss/Spatial', plt_loss, epoch)
 
 if __name__ == '__main__':
-    # initialize TensorBoard writer
-    writer = SummaryWriter(comment='lowdim')
+    model = SimplePendulum()
+    surrogate_model = SympNet(layers = 8, sub_layers = 5, dim = 1, dt = 0.1)
+
+    mu = {'m': 1., 'g': 1., 'l': 1., 'q0': np.pi/2, 'p0': 0.}
+    sampling_params = SamplingParameters(mu,
+        qmin=-np.sqrt(2), qmax=np.sqrt(2),
+        pmin=-np.pi/2, pmax=np.pi/2)
+    sampling_params.n = 40
+
+    expm = Experiment(model, surrogate_model, sampling_params)
+    expm.dt = 0.1
+    expm.epochs = 500
+
+    expm.add_configuration('swinging_case',
+        {'m': 1., 'g': 1., 'l': 1., 'q0': np.pi/2, 'p0': 0.}, 
+        t_start = 0, t_end = 100)
+
+    expm.add_configuration('rotating_case',
+        {'m': 1., 'g': 1., 'l': 1., 'q0': np.pi, 'p0': 1.}, 
+        t_start = 0, t_end = 100)
+
+    expm.run()
 
     # model = HarmonicOscillator()
     # dt = 0.1
@@ -140,55 +161,4 @@ if __name__ == '__main__':
     #   qmin = -2, qmax = 2,
     #   pmin = -2, pmax = 2)
 
-    model = SimplePendulum()
-    dt = 0.1
-    q0 = np.pi/2
-    p0 = 0.
-    mu = {'m': 1., 'g': 1., 'l': 1., 'q0': q0, 'p0': p0}
-    n = 10000
-    x, y = generate_training_data(n, model, mu, dt, 
-        qmin=-np.sqrt(2), qmax=np.sqrt(2),
-        pmin=-np.pi/2, pmax=np.pi/2)
-
-    #surrogate_model = SympNet(layers = 8, sub_layers = 5, dim = 1, dt = 0.1)
-    surrogate_model = HarmonicSympNet(layers = 8, sub_layers = 5, dim = 1, dt = 0.1)
-
-    criterion = torch.nn.MSELoss()
-    optimizer = torch.optim.Adam(surrogate_model.parameters(), lr=1e-1)
-
-    iter = 1000
-
-    writer.add_text('hyperparameters', str({
-        'model': model.__class__.__name__,
-        'surrogate_model': surrogate_model.__class__.__name__,
-        'training/size': n,
-        'epochs': iter
-    }))
-
-    for epoch in range(iter):
-        print('training step: %d/%d' % (epoch, iter))
-  
-        y1 = surrogate_model(x)
-        loss = criterion(y1, y)  
-        writer.add_scalar("Loss/train", loss, epoch)
-        optimizer.zero_grad()
-
-        # retain_graph=True to calculate symplectic loss afterwards
-        loss.backward(retain_graph=True)
-
-        # calculate and log symplectic loss
-        symplectic_loss = symplectic_mse_loss(x, y1)
-        writer.add_scalar('Loss/symplectic', symplectic_loss, epoch)
-
-        optimizer.step()
-
-        if (epoch % 200) == 0:
-            log_plot(model, surrogate_model, mu, q0, p0, dt, writer, 
-                x, y, y1, epoch)
-
-    log_plot(model, surrogate_model, mu, q0, p0, dt, writer, 
-        x, y, y1, iter)  
-
-    writer.add_graph(surrogate_model, torch.tensor([[q0, p0]]))
-
-    writer.flush()
+    #surrogate_model = HarmonicSympNet(layers = 8, sub_layers = 5, dim = 1, dt = 0.1)
