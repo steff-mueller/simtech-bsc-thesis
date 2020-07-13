@@ -19,12 +19,12 @@ class UpperLinearSymplectic(nn.Module):
 
     def reset_parameters(self):
         with torch.no_grad():
-            nn.init.kaiming_uniform_(self.S, a=math.sqrt(5))
+            nn.init.normal_(self.S, 0., 0.01)
             if self.bias is not None:
-                nn.init.uniform_(self.bias, -2, 2)
+                nn.init.constant_(self.bias, 0)
 
     def forward(self, input):
-        symmetric_matrix = self.h*(self.S + self.S.t())/2.
+        symmetric_matrix = self.h*(self.S + self.S.t())
 
         x_top = input[:, 0:self.d]
         x_bottom = input[:, self.d:2*self.d]

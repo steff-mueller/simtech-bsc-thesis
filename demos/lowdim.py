@@ -1,3 +1,5 @@
+import argparse
+
 import numpy as np
 
 import torch
@@ -105,7 +107,7 @@ class Experiment:
     def run(self):
         x,y = self._get_training_data()
         criterion = torch.nn.MSELoss()
-        optimizer = torch.optim.Adam(surrogate_model.parameters(), lr=1e-1)
+        optimizer = torch.optim.Adam(surrogate_model.parameters(), lr=1e-2)
 
         for epoch in range(self.epochs):
             print('training step: %d/%d' % (epoch, self.epochs))
@@ -129,18 +131,23 @@ class Experiment:
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Run experiments.')
+    parser.add_argument('--epochs', default=500, type=int)
+    parser.add_argument('--training-size', '-n', default=40, type=int)
+    args = parser.parse_args()
+
     model = SimplePendulum()
-    surrogate_model = SympNet(layers = 8, sub_layers = 5, dim = 1, dt = 0.1)
+    surrogate_model = SympNet(layers = 5, sub_layers = 4, dim = 1, dt = 0.1)
 
     mu = {'m': 1., 'g': 1., 'l': 1., 'q0': np.pi/2, 'p0': 0.}
     sampling_params = SamplingParameters(mu,
         qmin=-np.sqrt(2), qmax=np.sqrt(2),
         pmin=-np.pi/2, pmax=np.pi/2)
-    sampling_params.n = 40
+    sampling_params.n = args.training_size
 
     expm = Experiment(model, surrogate_model, sampling_params)
     expm.dt = 0.1
-    expm.epochs = 500
+    expm.epochs = args.epochs
 
     expm.add_configuration('swinging_case',
         {'m': 1., 'g': 1., 'l': 1., 'q0': np.pi/2, 'p0': 0.}, 
