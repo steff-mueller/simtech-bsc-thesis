@@ -39,7 +39,7 @@ class UpperLinearSymplectic(nn.Module):
         return result
 
     def _matrix_calc_top(self, symmetric_matrix, x_top, x_bottom):
-        return x_top + symmetric_matrix.mm(x_bottom.t()).t()
+        return x_top + x_bottom.mm(symmetric_matrix)
     
     def _matrix_calc_bottom(self, symmetric_matrix, x_top, x_bottom):
         return x_bottom
@@ -49,7 +49,7 @@ class LowerLinearSymplectic(UpperLinearSymplectic):
        return x_top
    
    def _matrix_calc_bottom(self, symmetric_matrix, x_top, x_bottom):
-       return symmetric_matrix.mm(x_top.t()).t() + x_bottom
+       return x_top.mm(symmetric_matrix) + x_bottom
 
 class LinearSymplectic(nn.Sequential):
     def __init__(self, n, d, h, bias=True):
