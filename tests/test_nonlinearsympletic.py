@@ -7,8 +7,7 @@ from nn.symplecticloss import symplectic_mse_loss
 
 class TestNonlinearSymplectic(unittest.TestCase):
     def test_upper(self):
-        h = 0.1
-        module = UpperNonlinearSymplectic(d=2, h=h)
+        module = UpperNonlinearSymplectic(dim=4)
 
         p = torch.ones(2,1)
         q = torch.ones(2,1)
@@ -22,21 +21,15 @@ class TestNonlinearSymplectic(unittest.TestCase):
             dtype=torch.float
         )
 
-        module.S.data = torch.tensor(
-            [[2,3],
-            [3,1]]
-        )
-
         module.bias.data = torch.reshape(bias, (-1,))
 
-        expected = torch.cat([p + h*sigmoid(q), q]) + bias
+        expected = torch.cat([p + sigmoid(q), q]) + bias
         actual = module.forward(torch.reshape(input, (1,4)))
         
         torch.testing.assert_allclose(torch.reshape(actual, (4,1)), expected)
     
     def test_lower(self):
-        h = 0.1
-        module = LowerNonlinearSymplectic(d=2, h=h)
+        module = LowerNonlinearSymplectic(dim=4)
 
         p = torch.ones(2,1)
         q = torch.ones(2,1)
@@ -50,14 +43,9 @@ class TestNonlinearSymplectic(unittest.TestCase):
             dtype=torch.float
         )
 
-        module.S.data = torch.tensor(
-            [[2,3],
-            [3,1]]
-        )
-
         module.bias.data = torch.reshape(bias, (-1,))
 
-        expected = torch.cat([p, h*sigmoid(p) + q]) + bias
+        expected = torch.cat([p, sigmoid(p) + q]) + bias
         actual = module.forward(torch.reshape(input, (1,4)))
         
         torch.testing.assert_allclose(torch.reshape(actual, (4,1)), expected)

@@ -33,42 +33,34 @@ class StepIntegrator:
         return result
 
 class SympNet(nn.Sequential, StepIntegrator):
-    # TODO make dim consistens as in `models`, phase space has dimension 2, not 1!
-    def __init__(self, layers, sub_layers, dim, dt = 0.1):
+
+    def __init__(self, layers, sub_layers, dim):
         modules = []
 
         # Add upper and lower nonlinear symplectic unit alternately
         # and a linear symplectic unit in-between
         for k in range(layers):
-            modules.append(LinearSymplectic(sub_layers, dim, dt))
+            modules.append(LinearSymplectic(sub_layers, dim))
             if k % 2 == 0:
-                modules.append(LowerNonlinearSymplectic(dim, dt, bias=False))
+                modules.append(LowerNonlinearSymplectic(dim, bias=False))
             else:
-                modules.append(UpperNonlinearSymplectic(dim, dt, bias=False))
+                modules.append(UpperNonlinearSymplectic(dim, bias=False))
         
-        modules.append(LinearSymplectic(sub_layers, dim, dt))
+        modules.append(LinearSymplectic(sub_layers, dim))
         super(SympNet, self).__init__(*modules)
 
-class LinearSympNet(nn.Sequential, StepIntegrator):
-    # TODO make dim consistens as in `models`, phase space has dimension 2, not 1!
-    def __init__(self, layers, sub_layers, dim, dt = 0.1):
-        modules = []
-
-        for k in range(layers):
-            modules.append(LinearSymplectic(sub_layers, dim, dt))
-        
-        super(LinearSympNet, self).__init__(*modules)
+class LinearSympNet(LinearSymplectic, StepIntegrator):
+    pass
 
 class HarmonicSympNet(nn.Sequential, StepIntegrator):
-    # TODO make dim consistens as in `models`, phase space has dimension 2, not 1!
     def __init__(self, layers, sub_layers, dim, dt = 0.1):
         modules = []
 
         for k in range(layers):
-            modules.append(LinearSymplectic(sub_layers, dim, dt))
+            modules.append(LinearSymplectic(sub_layers, dim))
             modules.append(HarmonicUnit(dt))
         
-        modules.append(LinearSymplectic(sub_layers, dim, dt))
+        modules.append(LinearSymplectic(sub_layers, dim))
         super(HarmonicSympNet, self).__init__(*modules)
 
 # TODO implement fully connected layer

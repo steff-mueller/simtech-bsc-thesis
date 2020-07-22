@@ -137,7 +137,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     model = SimplePendulum()
-    surrogate_model = SympNet(layers = 5, sub_layers = 4, dim = 1, dt = 0.1)
+    surrogate_model = SympNet(layers = 5, sub_layers = 4, dim = 2)
 
     mu = {'m': 1., 'g': 1., 'l': 1., 'q0': np.pi/2, 'p0': 0.}
     sampling_params = SamplingParameters(mu,

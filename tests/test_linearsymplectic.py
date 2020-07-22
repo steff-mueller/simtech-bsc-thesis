@@ -4,12 +4,11 @@ from nn.linearsymplectic import UpperLinearSymplectic, LowerLinearSymplectic, Li
 
 class TestLinearSympletic(unittest.TestCase):
     def test_upper(self):
-        h = 0.1
-        module = UpperLinearSymplectic(d=2, h=h)
+        module = UpperLinearSymplectic(dim=4)
 
         matrix = torch.tensor(
-            [[1, 0, h*4, h*7],
-            [0, 1, h*7, h*2],
+            [[1, 0, 4, 7],
+            [0, 1, 7, 2],
             [0, 0, 1, 0],
             [0, 0, 0, 1]],
             dtype=torch.float
@@ -27,7 +26,8 @@ class TestLinearSympletic(unittest.TestCase):
 
         module.S.data = torch.tensor(
             [[2,3],
-            [4,1]]
+            [4,1]],
+            dtype=torch.float
         )
 
         module.bias.data = torch.reshape(bias, (-1,))
@@ -39,13 +39,13 @@ class TestLinearSympletic(unittest.TestCase):
 
     def test_lower(self):
         h = 0.1
-        module = LowerLinearSymplectic(d=2, h=h)
+        module = LowerLinearSymplectic(dim=4)
 
         matrix = torch.tensor(
             [[1, 0, 0, 0],
             [0, 1, 0, 0],
-            [h*4, h*7, 1, 0],
-            [h*7, h*2, 0, 1]],
+            [4, 7, 1, 0],
+            [7, 2, 0, 1]],
             dtype=torch.float
         )
 
@@ -61,7 +61,8 @@ class TestLinearSympletic(unittest.TestCase):
 
         module.S.data = torch.tensor(
             [[2,3],
-            [4,1]]
+            [4,1]],
+            dtype=torch.float
         )
 
         module.bias.data = torch.reshape(bias, (-1,))
@@ -73,11 +74,11 @@ class TestLinearSympletic(unittest.TestCase):
 
     def test_linear(self):
         h = 0.1
-        module = LinearSymplectic(n=2, d=2, h=h)
+        module = LinearSymplectic(n=2, dim=4)
 
         matrix1 = torch.tensor(
-            [[1, 0, h*4, h*7],
-            [0, 1, h*7, h*2],
+            [[1, 0, 4, 7],
+            [0, 1, 7, 2],
             [0, 0, 1, 0],
             [0, 0, 0, 1]],
             dtype=torch.float
@@ -86,8 +87,8 @@ class TestLinearSympletic(unittest.TestCase):
         matrix2 = torch.tensor(
             [[1, 0, 0, 0],
             [0, 1, 0, 0],
-            [h*4, h*7, 1, 0],
-            [h*7, h*2, 0, 1]],
+            [4, 7, 1, 0],
+            [7, 2, 0, 1]],
             dtype=torch.float
         )
 
@@ -103,7 +104,8 @@ class TestLinearSympletic(unittest.TestCase):
 
         module[0].S.data = module[1].S.data = torch.tensor(
             [[2,3],
-            [4,1]]
+            [4,1]],
+            dtype=torch.float
         )
         module[1].bias.data = torch.reshape(bias, (-1,))
 

@@ -1,20 +1,30 @@
-from nn.linearsymplectic import UpperLinearSymplectic
+from nn.linearsymplectic import SymplecticTriangularUnit
 import torch
 from torch import sigmoid, nn
 
-class UpperNonlinearSymplectic(UpperLinearSymplectic):
-    def _matrix_calc_top(self, symmetric_matrix, x_top, x_bottom):
-        return x_top + self.h*sigmoid(x_bottom)
+class UpperNonlinearSymplectic(SymplecticTriangularUnit):
+    def __init__(self, dim, bias=False):
+        super(UpperNonlinearSymplectic, self).__init__(dim, bias, reset_params=False)
+        self.a = nn.Parameter(torch.Tensor(self.dim_half))
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        super().reset_parameters()
+        with torch.no_grad():
+            nn.init.normal_(self.a, 0., 0.01)
+
+    def _matrix_calc_top(self, x_top, x_bottom):
+        return x_top + torch.diag(self.a)*sigmoid(x_bottom)
     
-    def _matrix_calc_bottom(self, symmetric_matrix, x_top, x_bottom):
+    def _matrix_calc_bottom(self, x_top, x_bottom):
         return x_bottom
 
-class LowerNonlinearSymplectic(UpperLinearSymplectic):
-    def _matrix_calc_top(self, symmetric_matrix, x_top, x_bottom):
+class LowerNonlinearSymplectic(UpperNonlinearSymplectic):
+    def _matrix_calc_top(self, x_top, x_bottom):
         return x_top
    
-    def _matrix_calc_bottom(self, symmetric_matrix, x_top, x_bottom):
-        return self.h*sigmoid(x_top) + x_bottom
+    def _matrix_calc_bottom(self, x_top, x_bottom):
+        return torch.diag(self.a)*sigmoid(x_top) + x_bottom
 
 # TODO only supports 2 dimensions at the moment.
 class HarmonicUnit(nn.Module):
