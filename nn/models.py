@@ -8,26 +8,31 @@ from models.vectors import NumpyPhaseSpace, PhaseSpaceVectorList
 
 class StepIntegrator:
 
-    # TODO hard-coded for 2 dimensions right now...
     def integrate(self, q0, p0, t_start, t_end, dt, device=None):
-        phase_space = NumpyPhaseSpace(2)
+        assert self.dim, 'self.dim is not set'
+
+        dim_half = int(self.dim/2)
+        phase_space = NumpyPhaseSpace(self.dim)
         result = PhaseSpaceVectorList()
 
         t_curr = t_start
-        q_curr = q0
-        p_curr = p0
+        x_curr = torch.cat([
+            torch.tensor(q0, dtype=torch.float32).reshape(1,dim_half), 
+            torch.tensor(p0, dtype=torch.float32).reshape(1,dim_half), 
+            ], dim=1).to(device)
 
-        result.append(t_curr, phase_space.new_vector(q_curr, p_curr))
+        result.append(t_curr, phase_space.new_vector(q0, p0))
         
         # replicate behavior of original models 
         # and thus interpret t_end as an open interval
         while t_curr <= t_end - dt:
-            y = self.__call__(torch.tensor([[q_curr, p_curr]]).to(device))
-
+            x_curr = self.__call__(x_curr)
             t_curr += dt
-            q_curr = y.data[0][0].item()
-            p_curr = y.data[0][1].item()
 
+            # TODO why detach() required if original x_curr does not require grad?
+            x_curr_numpy = x_curr.detach().numpy()
+            q_curr = x_curr_numpy[0, 0:dim_half]
+            p_curr = x_curr_numpy[0, dim_half:self.dim]
             result.append(t_curr, phase_space.new_vector(q_curr, p_curr))  
 
         return result
@@ -35,6 +40,7 @@ class StepIntegrator:
 class SympNet(nn.Sequential, StepIntegrator):
 
     def __init__(self, layers, sub_layers, dim):
+        self.dim = dim
         modules = []
 
         # Add upper and lower nonlinear symplectic unit alternately
@@ -54,6 +60,7 @@ class LinearSympNet(LinearSymplectic, StepIntegrator):
 
 class HarmonicSympNet(nn.Sequential, StepIntegrator):
     def __init__(self, layers, sub_layers, dim, dt = 0.1):
+        self.dim = dim
         modules = []
 
         for k in range(layers):

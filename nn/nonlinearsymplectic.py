@@ -14,7 +14,7 @@ class UpperNonlinearSymplectic(SymplecticTriangularUnit):
             nn.init.normal_(self.a, 0., 0.01)
 
     def _matrix_calc_top(self, x_top, x_bottom):
-        return x_top + torch.diag(self.a)*sigmoid(x_bottom)
+        return x_top + self.a*sigmoid(x_bottom)
     
     def _matrix_calc_bottom(self, x_top, x_bottom):
         return x_bottom
@@ -24,7 +24,7 @@ class LowerNonlinearSymplectic(UpperNonlinearSymplectic):
         return x_top
    
     def _matrix_calc_bottom(self, x_top, x_bottom):
-        return torch.diag(self.a)*sigmoid(x_top) + x_bottom
+        return self.a*sigmoid(x_top) + x_bottom
 
 # TODO only supports 2 dimensions at the moment.
 class HarmonicUnit(nn.Module):
