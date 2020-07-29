@@ -5,7 +5,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from models.wave import OscillatingModeLinearWaveProblem, FixedEndsLinearWaveProblem
 
-from nn.models import SympNet
+from nn.models import SympNet, ConvLinearSympNet
 
 from utils.plot2d import *
 
@@ -20,7 +20,8 @@ class WaveExperiment:
         self.n_x = n_x
         self.model = OscillatingModeLinearWaveProblem(self.l, self.n_x)
 
-        self.surrogate_model = SympNet(layers = 5, sub_layers = 4, dim = 2*self.n_x)
+        self.surrogate_model = ConvLinearSympNet(4, 2*self.n_x)
+        #self.surrogate_model = SympNet(layers = 5, sub_layers = 4, dim = 2*self.n_x)
 
     def _compute_solution(self):
         self.mu = {'c': .5}
@@ -58,11 +59,6 @@ class WaveExperiment:
         self._compute_solution()
         x,y = self._get_training_data()
 
-        # TODO remove debugging
-        torch.set_printoptions(profile="full")
-        print(x[0,:])
-        print(y[0,:])
-
         criterion = torch.nn.MSELoss()
         optimizer = torch.optim.Adam(self.surrogate_model.parameters(), lr=1e-2)
 
@@ -84,11 +80,6 @@ class WaveExperiment:
         self._plot(self.epochs)
         self.writer.add_graph(self.surrogate_model, x)
         self.writer.flush()
-
-        # TODO remove debugging
-        t = self.surrogate_model(x[0,:].reshape(1,2*self.n_x))
-        print(t)
-    
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run experiments.')

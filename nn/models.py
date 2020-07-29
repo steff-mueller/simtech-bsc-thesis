@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from nn.linearsymplectic import LinearSymplectic
+from nn.linearsymplectic import LinearSymplectic, LowerSymplecticConv1d, UpperSymplecticConv1d
 from nn.nonlinearsymplectic import LowerNonlinearSymplectic, UpperNonlinearSymplectic, HarmonicUnit
 
 from models.vectors import NumpyPhaseSpace, PhaseSpaceVectorList
@@ -57,6 +57,22 @@ class SympNet(nn.Sequential, StepIntegrator):
 
 class LinearSympNet(LinearSymplectic, StepIntegrator):
     pass
+
+# TODO add bias
+class ConvLinearSympNet(nn.Sequential, StepIntegrator):
+    def __init__(self, layers, dim):
+        self.dim = dim
+
+        modules = []
+
+        for k in range(layers):
+            if k % 2 == 0:
+                modules.append(UpperSymplecticConv1d(dim, bias=False))
+            else:
+                modules.append(LowerSymplecticConv1d(dim, bias=False))
+
+        super(ConvLinearSympNet, self).__init__(*modules)
+        
 
 class HarmonicSympNet(nn.Sequential, StepIntegrator):
     def __init__(self, layers, sub_layers, dim, dt = 0.1):

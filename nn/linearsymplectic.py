@@ -87,3 +87,40 @@ class LinearSymplectic(nn.Sequential):
                 dict['lower_linear_symp{}'.format(i)] = LowerLinearSymplectic(dim, bias=is_last)
 
         super(LinearSymplectic, self).__init__(dict)
+
+# TODO right now hard-coded symmetric kernel size 3
+class UpperSymplecticConv1d(SymplecticTriangularUnit):
+    def __init__(self, dim, bias=True):
+        super(UpperSymplecticConv1d, self).__init__(dim, bias, reset_params=False)
+        self.k1 = nn.Parameter(torch.Tensor(1))
+        self.k2 = nn.Parameter(torch.Tensor(1))
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        super().reset_parameters()
+        with torch.no_grad():
+            nn.init.normal_(self.k1, 0, 0.01)
+            nn.init.normal_(self.k2, 0, 0.01)
+
+    def conv1d_(self, x_half):
+        n = x_half.shape[0] 
+        x_half = x_half.reshape((n, 1, self.dim_half))
+        kernel = torch.stack([self.k2, self.k1, self.k2]).reshape((1,1,3))
+
+        conv_result = nn.functional.conv1d(x_half, kernel, padding=1)
+        conv_result = conv_result.reshape(n, self.dim_half)
+
+        return conv_result
+
+    def _matrix_calc_top(self, x_top, x_bottom):
+        return x_top + self.conv1d_(x_bottom)
+    
+    def _matrix_calc_bottom(self, x_top, x_bottom):
+        return x_bottom
+
+class LowerSymplecticConv1d(UpperSymplecticConv1d):
+    def _matrix_calc_top(self, x_top, x_bottom):
+        return x_top
+   
+    def _matrix_calc_bottom(self, x_top, x_bottom):
+        return self.conv1d_(x_top) + x_bottom
