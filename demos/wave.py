@@ -7,7 +7,8 @@ from models.wave import OscillatingModeLinearWaveProblem, FixedEndsLinearWavePro
 
 from nn.models import SympNet, ConvLinearSympNet
 
-from utils.plot2d import *
+from utils.plot2d import plot_hamiltonian
+from utils.plot_wave import *
 
 class WaveExperiment:
     def __init__(self, epochs, n_x):
@@ -20,7 +21,7 @@ class WaveExperiment:
         self.n_x = n_x
         self.model = OscillatingModeLinearWaveProblem(self.l, self.n_x)
 
-        self.surrogate_model = ConvLinearSympNet(4, 2*self.n_x)
+        self.surrogate_model = ConvLinearSympNet(8, 2*self.n_x)
         #self.surrogate_model = SympNet(layers = 5, sub_layers = 4, dim = 2*self.n_x)
 
     def _compute_solution(self):
@@ -53,7 +54,27 @@ class WaveExperiment:
         self.writer.add_figure('/Hamiltonian', ham_plt, epoch) 
 
         # Plot q and p for left, middle and right knot
-        # TODO
+        q_left = plot_q_over_time(self.td_x, td_x_surrogate, 0)
+        self.writer.add_figure('left/q', q_left, epoch)
+        p_left = plot_p_over_time(self.td_x, td_x_surrogate, 0)
+        self.writer.add_figure('left/p', p_left, epoch)
+        
+        q_mid = plot_q_over_time(self.td_x, td_x_surrogate, int(self.n_x/2))
+        self.writer.add_figure('middle/q', q_mid, epoch)
+        p_mid = plot_p_over_time(self.td_x, td_x_surrogate, int(self.n_x/2))
+        self.writer.add_figure('middle/p', p_mid, epoch)
+
+        q_right = plot_q_over_time(self.td_x, td_x_surrogate, self.n_x-1)
+        self.writer.add_figure('right/q', q_right, epoch)
+        p_right = plot_p_over_time(self.td_x, td_x_surrogate, self.n_x-1)
+        self.writer.add_figure('right/p', p_right, epoch)
+
+        # Plot q and p for t=1, t=5 and t=9
+        for t in [1, 5, 9]:
+            q_t = plot_q_over_domain(self, self.td_x, td_x_surrogate, t)
+            self.writer.add_figure('t{}/q'.format(t), q_t, epoch)
+            p_t = plot_p_over_domain(self, self.td_x, td_x_surrogate, t)
+            self.writer.add_figure('t{}/p'.format(t), p_t, epoch)
         
     def run(self):
         self._compute_solution()
