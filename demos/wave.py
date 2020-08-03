@@ -11,8 +11,9 @@ from utils.plot2d import plot_hamiltonian
 from utils.plot_wave import *
 
 class WaveExperiment:
-    def __init__(self, epochs, n_x):
+    def __init__(self, epochs, n_x, print_params):
         self.epochs = epochs
+        self.print_params = print_params
         
         self.writer = SummaryWriter(comment='wave')
         # TODO add parameters logging
@@ -21,7 +22,7 @@ class WaveExperiment:
         self.n_x = n_x
         self.model = OscillatingModeLinearWaveProblem(self.l, self.n_x)
 
-        self.surrogate_model = ConvLinearSympNet(8, 2*self.n_x)
+        self.surrogate_model = ConvLinearSympNet(3, 2*self.n_x)
         #self.surrogate_model = SympNet(layers = 5, sub_layers = 4, dim = 2*self.n_x)
 
     def _compute_solution(self):
@@ -102,11 +103,17 @@ class WaveExperiment:
         self.writer.add_graph(self.surrogate_model, x)
         self.writer.flush()
 
+        if self.print_params:
+            for name, param in self.surrogate_model.named_parameters():
+                if param.requires_grad:
+                    print(name, param.data)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run experiments.')
     parser.add_argument('--epochs', default=500, type=int)
     parser.add_argument('--nx', default=100, type=int)
+    parser.add_argument('--print-params', default=False, nargs='?', const=True, type=bool)
     args = parser.parse_args()
 
-    expm = WaveExperiment(args.epochs, args.nx)
+    expm = WaveExperiment(args.epochs, args.nx, args.print_params)
     expm.run()

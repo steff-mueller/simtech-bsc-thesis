@@ -58,7 +58,6 @@ class SympNet(nn.Sequential, StepIntegrator):
 class LinearSympNet(LinearSymplectic, StepIntegrator):
     pass
 
-# TODO add bias
 class ConvLinearSympNet(nn.Sequential, StepIntegrator):
     def __init__(self, layers, dim):
         self.dim = dim
@@ -67,9 +66,9 @@ class ConvLinearSympNet(nn.Sequential, StepIntegrator):
 
         for k in range(layers):
             if k % 2 == 0:
-                modules.append(UpperSymplecticConv1d(dim, bias=False))
+                modules.append(UpperSymplecticConv1d(dim, bias=k==(layers-1)))
             else:
-                modules.append(LowerSymplecticConv1d(dim, bias=False))
+                modules.append(LowerSymplecticConv1d(dim, bias=k==(layers-1)))
 
         super(ConvLinearSympNet, self).__init__(*modules)
         
