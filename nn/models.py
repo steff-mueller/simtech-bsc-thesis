@@ -8,11 +8,11 @@ from models.vectors import NumpyPhaseSpace, PhaseSpaceVectorList
 
 class StepIntegrator:
 
-    def integrate(self, q0, p0, t_start, t_end, dt, device=None):
+    def integrate(self, q0, p0, t_start, t_end, dt, device=None, custom_phase_space=None):
         assert self.dim, 'self.dim is not set'
 
         dim_half = int(self.dim/2)
-        phase_space = NumpyPhaseSpace(self.dim)
+        phase_space = NumpyPhaseSpace(self.dim) if custom_phase_space is None else custom_phase_space
         result = PhaseSpaceVectorList()
 
         t_curr = t_start

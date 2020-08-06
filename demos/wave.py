@@ -1,14 +1,27 @@
 import argparse
 
+import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
+from models.vectors import NumpyPhaseSpace
 from models.wave import OscillatingModeLinearWaveProblem, FixedEndsLinearWaveProblem
 
 from nn.models import SympNet, ConvLinearSympNet
 
 from utils.plot2d import plot_hamiltonian
 from utils.plot_wave import *
+
+class Dirichlet1dNumpyPhaseSpace(NumpyPhaseSpace):
+    def __init__(self, dim):
+        super(Dirichlet1dNumpyPhaseSpace, self).__init__(dim+4)
+
+    def new_vector(self, vec_q, vec_p):
+        # insert zero Dirichlet values at boundaries
+        vec_q = np.insert(vec_q, [0, len(vec_q)], 0)
+        vec_p = np.insert(vec_p, [0, len(vec_p)], 0)
+
+        return super().new_vector(vec_q, vec_p)
 
 class WaveExperiment:
     def __init__(self, epochs, n_x, print_params):
@@ -22,8 +35,9 @@ class WaveExperiment:
         self.n_x = n_x
         self.model = OscillatingModeLinearWaveProblem(self.l, self.n_x)
 
-        self.surrogate_model = ConvLinearSympNet(3, 2*self.n_x)
-        #self.surrogate_model = SympNet(layers = 5, sub_layers = 4, dim = 2*self.n_x)
+        self.dim = 2*self.n_x-4 # -4 because Dirichlet boundary values removed
+        self.surrogate_model = ConvLinearSympNet(3, self.dim)
+        #self.surrogate_model = SympNet(layers = 5, sub_layers = 4, dim = dim)
 
     def _compute_solution(self):
         self.mu = {'c': .5}
@@ -34,6 +48,9 @@ class WaveExperiment:
     def _get_training_data(self):
         assert hasattr(self, 'td_x'), 'Call _compute_solution() before calling _get_training_data()'
         data = self.td_x.all_data_to_numpy()
+
+        # delete Dirichlet boundary values from training data
+        data = np.delete(data, [0, self.n_x-1, self.n_x, 2*self.n_x-1], axis=1)
 
         T_training = 4
         n_training = int(T_training / self.dt)
@@ -47,8 +64,8 @@ class WaveExperiment:
 
     def _plot(self, epoch):
         x0 = self.model.initial_value(self.mu)
-        td_x_surrogate = self.surrogate_model.integrate(x0.vec_q, x0.vec_p, 
-            0, self.T, self.dt)
+        td_x_surrogate = self.surrogate_model.integrate(x0.vec_q[1:-1], x0.vec_p[1:-1], 
+            0, self.T, self.dt, custom_phase_space=Dirichlet1dNumpyPhaseSpace(self.dim))
 
         # Plot Hamiltonian
         ham_plt = plot_hamiltonian(self.td_Ham, td_x_surrogate, self.model, self.mu)
