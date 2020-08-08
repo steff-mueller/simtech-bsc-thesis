@@ -24,25 +24,32 @@ class Dirichlet1dNumpyPhaseSpace(NumpyPhaseSpace):
         return super().new_vector(vec_q, vec_p)
 
 class WaveExperiment:
-    def __init__(self, epochs, n_x, print_params):
-        self.epochs = epochs
-        self.print_params = print_params
+    def __init__(self, args):
+        self.epochs = args.epochs
+        self.n_x = args.nx
+        self.print_params = args.print_params
+        self.dt = args.dt
         
         self.writer = SummaryWriter(comment='wave')
         # TODO add parameters logging
 
         self.l = 1
-        self.n_x = n_x
-        self.model = OscillatingModeLinearWaveProblem(self.l, self.n_x)
+        self._init_model(args.model)
 
         self.dim = 2*self.n_x-4 # -4 because Dirichlet boundary values removed
         self.surrogate_model = ConvLinearSympNet(3, self.dim)
-        #self.surrogate_model = SympNet(layers = 5, sub_layers = 4, dim = dim)
 
-    def _compute_solution(self):
-        self.mu = {'c': .5}
+    def _init_model(self, model_name):
+        if model_name == 'standing_wave':
+            self.mu = {'c': .5}
+            self.model = OscillatingModeLinearWaveProblem(self.l, self.n_x)
+        elif model_name == 'transport':
+            self.mu = {'c': .1, 'q0_supp': self.l/4}
+            self.model = FixedEndsLinearWaveProblem(self.l, self.n_x)
+
+    def _compute_solution(self): 
         # compute solution for all t in [0, T]
-        self.T, self.dt = 10, .1
+        self.T = 10
         self.td_x, self.td_Ham = self.model.solve(0, self.T, self.dt, self.mu)
 
     def _get_training_data(self):
@@ -128,9 +135,11 @@ class WaveExperiment:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run experiments.')
     parser.add_argument('--epochs', default=500, type=int)
+    parser.add_argument('--model', choices=['standing_wave', 'transport'], default='standing_wave')
+    parser.add_argument('--dt', default=.1, type=float)
     parser.add_argument('--nx', default=100, type=int)
     parser.add_argument('--print-params', default=False, nargs='?', const=True, type=bool)
     args = parser.parse_args()
 
-    expm = WaveExperiment(args.epochs, args.nx, args.print_params)
+    expm = WaveExperiment(args)
     expm.run()
