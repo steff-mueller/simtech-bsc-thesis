@@ -29,6 +29,7 @@ class WaveExperiment:
         self.n_x = args.nx
         self.print_params = args.print_params
         self.dt = args.dt
+        self.post_plot_transport = args.post_plot_transport
         
         self.writer = SummaryWriter(comment='wave')
         # TODO add parameters logging
@@ -69,37 +70,45 @@ class WaveExperiment:
         y = torch.tensor(y, dtype=torch.float32)
         return x,y
 
-    def _plot(self, epoch):
-        x0 = self.model.initial_value(self.mu)
+    def _plot(self, epoch, prefix='', other_model=None, other_mu = None):
+        this_model = self.model if other_model is None else other_model
+        this_mu = self.mu if other_mu is None else other_mu
+
+        this_td_Ham = self.td_Ham
+        this_td_x = self.td_x
+        if other_model is not None or other_mu is not None:
+            this_td_x, this_td_Ham = this_model.solve(0, self.T, self.dt, this_mu)
+
+        x0 = this_model.initial_value(this_mu)
         td_x_surrogate = self.surrogate_model.integrate(x0.vec_q[1:-1], x0.vec_p[1:-1], 
             0, self.T, self.dt, custom_phase_space=Dirichlet1dNumpyPhaseSpace(self.dim))
 
         # Plot Hamiltonian
-        ham_plt = plot_hamiltonian(self.td_Ham, td_x_surrogate, self.model, self.mu)
-        self.writer.add_figure('/Hamiltonian', ham_plt, epoch) 
+        ham_plt = plot_hamiltonian(this_td_Ham, td_x_surrogate, this_model, this_mu)
+        self.writer.add_figure(prefix + '/Hamiltonian', ham_plt, epoch) 
 
         # Plot q and p for left, middle and right knot
-        q_left = plot_q_over_time(self.td_x, td_x_surrogate, 0)
-        self.writer.add_figure('left/q', q_left, epoch)
-        p_left = plot_p_over_time(self.td_x, td_x_surrogate, 0)
-        self.writer.add_figure('left/p', p_left, epoch)
+        q_left = plot_q_over_time(this_td_x, td_x_surrogate, 0)
+        self.writer.add_figure(prefix + 'left/q', q_left, epoch)
+        p_left = plot_p_over_time(this_td_x, td_x_surrogate, 0)
+        self.writer.add_figure(prefix + 'left/p', p_left, epoch)
         
-        q_mid = plot_q_over_time(self.td_x, td_x_surrogate, int(self.n_x/2))
-        self.writer.add_figure('middle/q', q_mid, epoch)
-        p_mid = plot_p_over_time(self.td_x, td_x_surrogate, int(self.n_x/2))
-        self.writer.add_figure('middle/p', p_mid, epoch)
+        q_mid = plot_q_over_time(this_td_x, td_x_surrogate, int(self.n_x/2))
+        self.writer.add_figure(prefix + 'middle/q', q_mid, epoch)
+        p_mid = plot_p_over_time(this_td_x, td_x_surrogate, int(self.n_x/2))
+        self.writer.add_figure(prefix + 'middle/p', p_mid, epoch)
 
-        q_right = plot_q_over_time(self.td_x, td_x_surrogate, self.n_x-1)
-        self.writer.add_figure('right/q', q_right, epoch)
-        p_right = plot_p_over_time(self.td_x, td_x_surrogate, self.n_x-1)
-        self.writer.add_figure('right/p', p_right, epoch)
+        q_right = plot_q_over_time(this_td_x, td_x_surrogate, self.n_x-1)
+        self.writer.add_figure(prefix + 'right/q', q_right, epoch)
+        p_right = plot_p_over_time(this_td_x, td_x_surrogate, self.n_x-1)
+        self.writer.add_figure(prefix + 'right/p', p_right, epoch)
 
         # Plot q and p for t=1, t=5 and t=9
-        for t in [1, 5, 9]:
-            q_t = plot_q_over_domain(self, self.td_x, td_x_surrogate, t)
-            self.writer.add_figure('t{}/q'.format(t), q_t, epoch)
-            p_t = plot_p_over_domain(self, self.td_x, td_x_surrogate, t)
-            self.writer.add_figure('t{}/p'.format(t), p_t, epoch)
+        for t in [self.dt, 1, 5, 9]:
+            q_t = plot_q_over_domain(self, this_td_x, td_x_surrogate, t)
+            self.writer.add_figure(prefix + 't{}/q'.format(t), q_t, epoch)
+            p_t = plot_p_over_domain(self, this_td_x, td_x_surrogate, t)
+            self.writer.add_figure(prefix + 't{}/p'.format(t), p_t, epoch)
         
     def run(self):
         self._compute_solution()
@@ -125,6 +134,12 @@ class WaveExperiment:
 
         self._plot(self.epochs)
         self.writer.add_graph(self.surrogate_model, x)
+
+        if self.post_plot_transport:
+            self._plot(None, 'transport/', 
+                FixedEndsLinearWaveProblem(self.l, self.n_x),
+                {'c': .5, 'q0_supp': self.l/4})
+
         self.writer.flush()
 
         if self.print_params:
@@ -139,6 +154,8 @@ if __name__ == '__main__':
     parser.add_argument('--dt', default=.1, type=float)
     parser.add_argument('--nx', default=100, type=int)
     parser.add_argument('--print-params', default=False, nargs='?', const=True, type=bool)
+    parser.add_argument('--post-plot-transport', default=False, nargs='?', const=True, type=bool, 
+        help='Plot transport problem after training.')
     args = parser.parse_args()
 
     expm = WaveExperiment(args)
