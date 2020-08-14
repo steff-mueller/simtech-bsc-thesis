@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from collections import OrderedDict
 
 from nn.linearsymplectic import LinearSymplectic, LowerSymplecticConv1d, UpperSymplecticConv1d
 from nn.nonlinearsymplectic import LowerNonlinearSymplectic, UpperNonlinearSymplectic, HarmonicUnit
@@ -62,15 +63,15 @@ class ConvLinearSympNet(nn.Sequential, StepIntegrator):
     def __init__(self, layers, dim):
         self.dim = dim
 
-        modules = []
+        dict = OrderedDict()
 
         for k in range(layers):
             if k % 2 == 0:
-                modules.append(UpperSymplecticConv1d(dim, bias=k==(layers-1)))
+                dict['upper_conv1d_{}'.format(k)] = UpperSymplecticConv1d(dim, bias=k==(layers-1))
             else:
-                modules.append(LowerSymplecticConv1d(dim, bias=k==(layers-1)))
+                dict['lower_conv1d_{}'.format(k)] = LowerSymplecticConv1d(dim, bias=k==(layers-1))
 
-        super(ConvLinearSympNet, self).__init__(*modules)
+        super(ConvLinearSympNet, self).__init__(dict)
         
 
 class HarmonicSympNet(nn.Sequential, StepIntegrator):
