@@ -3,13 +3,15 @@ import matplotlib.pyplot as plt
 from models.dyn_sys import TimeDataList
 
 def plot_Ham_sys(td_x, td_x_surrogate):
-    fig = plt.figure()
+    fig = plt.figure(figsize=[10, 5])
     ax = plt.axes()
     # plot phase-space diagram
     ax.plot(list(td_x.all_vec_q()), list(td_x.all_vec_p()))
     ax.plot(list(td_x_surrogate.all_vec_q()), list(td_x_surrogate.all_vec_p()))
     ax.scatter(td_x._data[0].vec_q, td_x._data[0].vec_p, marker='o')
     ax.scatter(td_x._data[-1].vec_q, td_x._data[-1].vec_p, marker='s')
+    ax.set_xlabel(r'$q$')
+    ax.set_ylabel(r'$p$')
     ax.legend([
         'solution trajectory',
         'surrogate trajectory',
@@ -24,6 +26,8 @@ def plot_q(td_x, td_x_surrogate):
 
     ax.plot(list(td_x.all_t()), list(td_x.all_vec_q()), '.-')
     ax.plot(list(td_x_surrogate.all_t()), list(td_x_surrogate.all_vec_q()), '.-')
+    ax.set_xlabel(r'$t$')
+    ax.set_ylabel(r'$q$')
     ax.legend([
         'solution trajectory',
         'surrogate trajectory'
@@ -36,6 +40,8 @@ def plot_p(td_x, td_x_surrogate):
 
     ax.plot(list(td_x.all_t()), list(td_x.all_vec_p()), '.-')
     ax.plot(list(td_x_surrogate.all_t()), list(td_x_surrogate.all_vec_p()), '.-')
+    ax.set_xlabel(r'$t$')
+    ax.set_ylabel(r'$p$')
     ax.legend([
         'solution trajectory',
         'surrogate trajectory'
@@ -45,9 +51,9 @@ def plot_p(td_x, td_x_surrogate):
 def plot_spatial_error(coord, loss):
     fig = plt.figure()
     ax = plt.axes()
-    ax.set_xlabel('p0')
-    ax.set_ylabel('q0')
-    s = ax.scatter(coord[:,0], coord[:,1], c=loss, s=20)
+    ax.set_xlabel(r'$q0$')
+    ax.set_ylabel(r'$p0$')
+    s = ax.scatter(coord[:,1], coord[:,0], c=loss, s=20)
     fig.colorbar(s)
     return fig
 
