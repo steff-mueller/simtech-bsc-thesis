@@ -55,25 +55,27 @@ class Configuration:
 
 class Experiment:
 
-    def __init__(self, model, surrogate_model, sampling_params):
-        self.dt = 0.1
-        self.epochs = 2000
+    def __init__(self, args, model, surrogate_model):
+        self.dt = args.dt
+        self.epochs = args.epochs
         self.model = model
         self.surrogate_model = surrogate_model
 
-        self._sampling_params = sampling_params
-        self._configurations = []
-        self._init_writer()
+        mu = {'m': 1., 'g': 1., 'l': 1., 'q0': np.pi/2, 'p0': 0.}
+        self._sampling_params = SamplingParameters(mu,
+            qmin=args.qmin, qmax=args.qmax,
+            pmin=args.pmin, pmax=args.pmax)
+        self._sampling_params.n = args.training_size
 
-    def _init_writer(self):
+        self._configurations = []
+        self._init_writer(args)
+
+    def _init_writer(self, args):
         self.writer = SummaryWriter(comment='lowdim')
-        # TODO log all parameters, e.g. sampling parameters...
         self.writer.add_text('hyperparameters', str({
             'model': self.model.__class__.__name__,
-            'surrogate_model': self.surrogate_model.__class__.__name__,
-            'training/size': self._sampling_params.n,
-            'epochs': self.epochs
-        }))
+            'surrogate_model': self.surrogate_model.__class__.__name__
+        }) + ' ' + str(args))
 
     def _get_training_data(self):
         return generate_training_data(self._sampling_params.n, 
@@ -133,21 +135,25 @@ class Experiment:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run experiments.')
     parser.add_argument('--epochs', default=500, type=int)
+    parser.add_argument('--dt', default=0.1, type=float)
     parser.add_argument('--training-size', '-n', default=40, type=int)
+    parser.add_argument('--activation', choices=['sigmoid', 'sin'], default='sigmoid')
+    parser.add_argument('--qmin', default=-np.pi/2, type=float)
+    parser.add_argument('--qmax', default=np.pi/2, type=float)
+    parser.add_argument('--pmin', default=-np.sqrt(2), type=float)
+    parser.add_argument('--pmax', default=np.sqrt(2), type=float)
     args = parser.parse_args()
 
     model = SimplePendulum()
-    surrogate_model = SympNet(layers = 5, sub_layers = 4, dim = 2)
 
-    mu = {'m': 1., 'g': 1., 'l': 1., 'q0': np.pi/2, 'p0': 0.}
-    sampling_params = SamplingParameters(mu,
-        qmin=-np.sqrt(2), qmax=np.sqrt(2),
-        pmin=-np.pi/2, pmax=np.pi/2)
-    sampling_params.n = args.training_size
+    activation_functions = {
+        'sigmoid': torch.sigmoid,
+        'sin': torch.sin
+    }
+    activation_fn = activation_functions[args.activation]
+    surrogate_model = SympNet(layers = 5, sub_layers = 4, dim = 2, activation_fn=activation_fn)
 
-    expm = Experiment(model, surrogate_model, sampling_params)
-    expm.dt = 0.1
-    expm.epochs = args.epochs
+    expm = Experiment(args, model, surrogate_model)
 
     expm.add_configuration('swinging_case',
         {'m': 1., 'g': 1., 'l': 1., 'q0': np.pi/2, 'p0': 0.}, 
@@ -156,6 +162,13 @@ if __name__ == '__main__':
     expm.add_configuration('rotating_case',
         {'m': 1., 'g': 1., 'l': 1., 'q0': np.pi, 'p0': 1.}, 
         t_start = 0, t_end = 100)
+
+    expm.add_configuration('stationary_stable_case',
+        {'m': 1., 'g': 1., 'l': 1., 'q0': 0, 'p0': 0.},
+        t_start = 0, t_end = 10)
+    expm.add_configuration('stationary_unstable_case',
+        {'m': 1., 'g': 1., 'l': 1., 'q0': np.pi, 'p0': 0.},
+        t_start = 0, t_end = 10)
 
     expm.run()
 

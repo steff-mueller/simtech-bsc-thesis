@@ -40,7 +40,7 @@ class StepIntegrator:
 
 class SympNet(nn.Sequential, StepIntegrator):
 
-    def __init__(self, layers, sub_layers, dim):
+    def __init__(self, layers, sub_layers, dim, activation_fn=torch.sigmoid):
         self.dim = dim
         modules = []
 
@@ -49,9 +49,9 @@ class SympNet(nn.Sequential, StepIntegrator):
         for k in range(layers):
             modules.append(LinearSymplectic(sub_layers, dim))
             if k % 2 == 0:
-                modules.append(LowerNonlinearSymplectic(dim, bias=False))
+                modules.append(LowerNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn))
             else:
-                modules.append(UpperNonlinearSymplectic(dim, bias=False))
+                modules.append(UpperNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn))
         
         modules.append(LinearSymplectic(sub_layers, dim))
         super(SympNet, self).__init__(*modules)

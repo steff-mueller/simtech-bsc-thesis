@@ -53,7 +53,7 @@ def plot_spatial_error(coord, loss):
     ax = plt.axes()
     ax.set_xlabel(r'$q0$')
     ax.set_ylabel(r'$p0$')
-    s = ax.scatter(coord[:,1], coord[:,0], c=loss, s=20)
+    s = ax.scatter(coord[:,0], coord[:,1], c=loss, s=20)
     fig.colorbar(s)
     return fig
 
