@@ -37,7 +37,7 @@ class Configuration:
         self._td_x, self._td_Ham = self.experiment.model.solve(self.t_start, self.t_end, self.experiment.dt, self.mu)
 
     def run(self, epoch):
-        td_x_surrogate = self.experiment.surrogate_model.integrate(mu['q0'], mu['p0'], 
+        td_x_surrogate = self.experiment.surrogate_model.integrate(self.mu['q0'], self.mu['p0'], 
             self.t_start, self.t_end, self.experiment.dt)
 
         # plot results
