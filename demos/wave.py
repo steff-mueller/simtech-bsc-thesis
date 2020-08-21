@@ -40,6 +40,22 @@ class WaveExperiment:
         self.dim = 2*self.n_x-4 # -4 because Dirichlet boundary values removed
         self.surrogate_model = ConvLinearSympNet(3, self.dim)
 
+        if args.init_stormer_verlet:
+            self._init_with_stormer_verlet()
+    
+    def _init_with_stormer_verlet(self):
+        # initialize weights with Störmer-Verlet method
+        torch.nn.init.constant_(self.surrogate_model[0].k1, self.dt/2)
+        torch.nn.init.constant_(self.surrogate_model[0].k2, 0)
+
+        dx = self.l/self.n_x
+        factor = -self.dt*(self.mu['c']/dx)**2
+        torch.nn.init.constant_(self.surrogate_model[1].k1, 2*factor)
+        torch.nn.init.constant_(self.surrogate_model[1].k2, -1*factor)
+
+        torch.nn.init.constant_(self.surrogate_model[2].k1, self.dt/2)
+        torch.nn.init.constant_(self.surrogate_model[2].k2, 0)
+
     def _init_model(self, model_name):
         if model_name == 'standing_wave':
             self.mu = {'c': .5}
@@ -156,6 +172,8 @@ if __name__ == '__main__':
     parser.add_argument('--print-params', default=False, nargs='?', const=True, type=bool)
     parser.add_argument('--post-plot-transport', default=False, nargs='?', const=True, type=bool, 
         help='Plot transport problem after training.')
+    parser.add_argument('--init-stormer-verlet', default=False, nargs='?', const=True, type=bool, 
+        help='Initialize weights with Stormer-Verlet integration scheme.')
     args = parser.parse_args()
 
     expm = WaveExperiment(args)
