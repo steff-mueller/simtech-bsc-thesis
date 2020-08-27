@@ -1,6 +1,8 @@
 import argparse
 
+import math
 import numpy as np
+import matplotlib.pyplot as plt
 
 import torch
 from torch.utils.tensorboard import SummaryWriter
@@ -52,6 +54,35 @@ class Configuration:
 
         ham_plt = plot_hamiltonian(self._td_Ham, td_x_surrogate, self.experiment.model, self.mu)
         self.experiment.writer.add_figure(self.name + '/Hamiltonian', ham_plt, epoch) 
+
+"""
+    Plot equilibriums for simple pendulum
+"""
+class EquilibriumConfiguration:
+    def __init__(self, experiment, name):
+        self.experiment = experiment
+        self.name = name
+
+    def run(self, epoch):
+        n = 100
+        idx = torch.arange(-n, n+1)
+        q = math.pi*idx
+        p = torch.zeros_like(q)
+        x_equilibrium = torch.stack([q,p],dim=1)
+        y_equilibrium = self.experiment.surrogate_model(x_equilibrium).detach().numpy()
+        diff = x_equilibrium - y_equilibrium
+        diff_q = diff[:,0]
+        diff_p = diff[:,1]
+
+        fig = plt.figure()
+        ax = plt.axes()
+        ax.plot(idx, diff_q)
+        ax.plot(idx, diff_p)
+        ax.legend([ 
+            'diff q',
+            'diff p'
+        ])
+        self.experiment.writer.add_figure(self.name, fig, epoch)
 
 class Experiment:
 
@@ -170,6 +201,8 @@ if __name__ == '__main__':
     expm.add_configuration('stationary_unstable_case',
         {'m': 1., 'g': 1., 'l': 1., 'q0': np.pi, 'p0': 0.},
         t_start = 0, t_end = 10)
+
+    expm._configurations.append(EquilibriumConfiguration(expm, 'equilibriums'))
 
     expm.run()
 
