@@ -137,7 +137,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', default=500, type=int)
     parser.add_argument('--dt', default=0.1, type=float)
     parser.add_argument('--training-size', '-n', default=40, type=int)
-    parser.add_argument('--activation', choices=['sigmoid', 'sin'], default='sigmoid')
+    parser.add_argument('--activation', choices=['sigmoid', 'sin', 'relu'], default='sigmoid')
     parser.add_argument('--qmin', default=-np.pi/2, type=float)
     parser.add_argument('--qmax', default=np.pi/2, type=float)
     parser.add_argument('--pmin', default=-np.sqrt(2), type=float)
@@ -148,7 +148,8 @@ if __name__ == '__main__':
 
     activation_functions = {
         'sigmoid': torch.sigmoid,
-        'sin': torch.sin
+        'sin': torch.sin,
+        'relu': torch.relu
     }
     activation_fn = activation_functions[args.activation]
     surrogate_model = SympNet(layers = 5, sub_layers = 4, dim = 2, activation_fn=activation_fn)
