@@ -46,16 +46,12 @@ class WaveExperiment:
     
     def _init_with_stormer_verlet(self):
         # initialize weights with Störmer-Verlet method
-        torch.nn.init.constant_(self.surrogate_model[0].k1, self.dt/2)
-        torch.nn.init.constant_(self.surrogate_model[0].k2, 0)
+        self.surrogate_model[0].k.data = torch.tensor([0, self.dt/2, 0])
+        self.surrogate_model[2].k.data = torch.tensor([0, self.dt/2, 0])
 
         dx = self.l/self.n_x
         factor = -self.dt*(self.mu['c']/dx)**2
-        torch.nn.init.constant_(self.surrogate_model[1].k1, 2*factor)
-        torch.nn.init.constant_(self.surrogate_model[1].k2, -1*factor)
-
-        torch.nn.init.constant_(self.surrogate_model[2].k1, self.dt/2)
-        torch.nn.init.constant_(self.surrogate_model[2].k2, 0)
+        self.surrogate_model[1].k.data = torch.tensor([-1*factor, 2*factor, -1*factor])  
 
     def _init_model(self, model_name):
         if model_name == 'standing_wave':

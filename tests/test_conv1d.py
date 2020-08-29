@@ -18,14 +18,13 @@ class TestConv1d(unittest.TestCase):
             [0, 0, 0, 0, 0,  1,  0,  0],
             [0, 0, 0, 0, 0,  0,  1,  0],
             [0, 0, 0, 0, 0,  0,  0,  1],
-        ])
+        ], dtype=torch.float)
 
-        input1 = torch.arange(8)
-        input2 = torch.arange(8) + 5
+        input1 = torch.arange(8, dtype=torch.float)
+        input2 = torch.arange(8, dtype=torch.float) + 5
         input = torch.stack([input1, input2])
 
-        module.k1.data = torch.tensor(k1)
-        module.k2.data = torch.tensor(k2)
+        module.k.data = torch.tensor([k2, k1, k2])
 
         expected1 = matrix.mm(input1.reshape(8,1)).reshape(1,8)
         expected2 = matrix.mm(input2.reshape(8,1)).reshape(1,8)
@@ -51,14 +50,13 @@ class TestConv1d(unittest.TestCase):
             [0, 0, 0, 0, 0,  1,  0,  0],
             [0, 0, 0, 0, 0,  0,  1,  0],
             [0, 0, 0, 0, 0,  0,  0,  1],
-        ]).t()
+        ], dtype=torch.float).t()
 
-        input1 = torch.arange(8)
-        input2 = torch.arange(8) + 5
+        input1 = torch.arange(8, dtype=torch.float)
+        input2 = torch.arange(8, dtype=torch.float) + 5
         input = torch.stack([input1, input2])
 
-        module.k1.data = torch.tensor(k1)
-        module.k2.data = torch.tensor(k2)
+        module.k.data = torch.tensor([k2, k1, k2])
 
         expected1 = matrix.mm(input1.reshape(8,1)).reshape(1,8)
         expected2 = matrix.mm(input2.reshape(8,1)).reshape(1,8)

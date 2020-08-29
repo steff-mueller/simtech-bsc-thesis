@@ -88,26 +88,26 @@ class LinearSymplectic(nn.Sequential):
 
         super(LinearSymplectic, self).__init__(dict)
 
-# TODO right now hard-coded symmetric kernel size 3
 class UpperSymplecticConv1d(SymplecticTriangularUnit):
-    def __init__(self, dim, bias=True):
+    def __init__(self, dim, bias=True, kernel_size = 3):
         super(UpperSymplecticConv1d, self).__init__(dim, bias, reset_params=False)
-        self.k1 = nn.Parameter(torch.Tensor(1))
-        self.k2 = nn.Parameter(torch.Tensor(1))
+        assert kernel_size % 2 == 1, 'Kernel size must be odd.'
+        self.kernel_size = kernel_size
+        self.k = nn.Parameter(torch.Tensor(kernel_size))
         self.reset_parameters()
 
     def reset_parameters(self):
         super().reset_parameters()
         with torch.no_grad():
-            nn.init.normal_(self.k1, 0, 0.01)
-            nn.init.normal_(self.k2, 0, 0.01)
+            nn.init.normal_(self.k, 0, 0.01)
 
     def conv1d_(self, x_half):
         n = x_half.shape[0] 
         x_half = x_half.reshape((n, 1, self.dim_half))
-        kernel = torch.stack([self.k2, self.k1, self.k2]).reshape((1,1,3))
 
-        conv_result = nn.functional.conv1d(x_half, kernel, padding=1)
+        kernel = (self.k+self.k.flip(0)).true_divide(2).reshape((1,1,self.kernel_size))
+
+        conv_result = nn.functional.conv1d(x_half, kernel, padding=int(self.kernel_size/2))
         conv_result = conv_result.reshape(n, self.dim_half)
 
         return conv_result
