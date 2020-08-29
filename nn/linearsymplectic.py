@@ -124,3 +124,21 @@ class LowerSymplecticConv1d(UpperSymplecticConv1d):
    
     def _matrix_calc_bottom(self, x_top, x_bottom):
         return self.conv1d_(x_top) + x_bottom
+
+class SymplecticScaling(SymplecticTriangularUnit):
+    def __init__(self, dim, a_init, freeze=False):
+        super(SymplecticScaling, self).__init__(dim, bias=False, reset_params=False)
+        self.a_init = a_init
+        self.a = nn.Parameter(torch.Tensor(self.dim_half), requires_grad=not freeze)
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        super().reset_parameters()
+        with torch.no_grad():
+            self.a.data = self.a_init
+
+    def _matrix_calc_top(self, x_top, x_bottom):
+        return x_top*self.a
+   
+    def _matrix_calc_bottom(self, x_top, x_bottom):
+        return x_bottom/self.a

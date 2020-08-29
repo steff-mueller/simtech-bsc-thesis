@@ -8,6 +8,7 @@ from models.vectors import NumpyPhaseSpace
 from models.wave import OscillatingModeLinearWaveProblem, FixedEndsLinearWaveProblem
 
 from nn.models import SympNet, ConvLinearSympNet
+from nn.training_data import scale_training_data
 
 from utils.plot2d import plot_hamiltonian
 from utils.plot_wave import *
@@ -84,7 +85,9 @@ class WaveExperiment:
         # convert to torch.Tensor
         x = torch.tensor(x, requires_grad=True, dtype=torch.float32)
         y = torch.tensor(y, dtype=torch.float32)
-        return x,y
+
+        y_scaled, self.scaler = scale_training_data(y)     
+        return x,y_scaled
 
     def _plot(self, epoch, prefix='', other_model=None, other_mu = None):
         this_model = self.model if other_model is None else other_model
@@ -120,7 +123,7 @@ class WaveExperiment:
         self.writer.add_figure(prefix + 'right/p', p_right, epoch)
 
         # Plot q and p for t=1, t=5 and t=9
-        for t in [self.dt, 1, 5, 9]:
+        for t in [0, self.dt, 1, 5, 9]:
             q_t = plot_q_over_domain(self, this_td_x, td_x_surrogate, t)
             self.writer.add_figure(prefix + 't{}/q'.format(t), q_t, epoch)
             p_t = plot_p_over_domain(self, this_td_x, td_x_surrogate, t)
@@ -137,7 +140,8 @@ class WaveExperiment:
             print('training step: %d/%d' % (epoch, self.epochs))
     
             y1 = self.surrogate_model(x)
-            loss = criterion(y1, y)        
+            y1_scaled = self.scaler(y1)
+            loss = criterion(y1_scaled, y)        
             optimizer.zero_grad()
 
             loss.backward()

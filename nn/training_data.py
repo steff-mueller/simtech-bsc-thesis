@@ -1,6 +1,8 @@
 import torch
 import numpy as np
 
+from nn.linearsymplectic import SymplecticScaling
+
 def generate_training_data(n, model, mu, dt = 0.1, 
     qmin = -2, qmax = +2, 
     pmin = -2, pmax = +2,
@@ -33,3 +35,18 @@ def generate_training_data(n, model, mu, dt = 0.1,
     Y_train = torch.tensor(Y_train, dtype=torch.float32).to(device)
 
     return (X_train, Y_train)
+
+"""
+    Scales every pair (q,p) so that q and p have approximately same magnitude.
+"""
+def scale_training_data(y):
+    dim = y.shape[1]
+    assert dim % 2 == 0, 'Dimension must be even.'
+    dim_half = int(dim/2)
+
+    y_q = y[:,0:dim_half]
+    y_p = y[:,dim_half:dim]
+    a = torch.sqrt(torch.abs((y_p+1e-8)/(y_q+1e-8))).flatten() # prevent division by zero
+
+    scaler = SymplecticScaling(dim, a, freeze=True)
+    return scaler(y), scaler
