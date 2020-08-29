@@ -3,7 +3,7 @@ from torch import nn
 from collections import OrderedDict
 
 from nn.linearsymplectic import LinearSymplectic, LowerSymplecticConv1d, UpperSymplecticConv1d
-from nn.nonlinearsymplectic import LowerNonlinearSymplectic, UpperNonlinearSymplectic, HarmonicUnit
+from nn.nonlinearsymplectic import LowerNonlinearSymplectic, UpperNonlinearSymplectic
 
 from models.vectors import NumpyPhaseSpace, PhaseSpaceVectorList
 
@@ -67,26 +67,8 @@ class ConvLinearSympNet(nn.Sequential, StepIntegrator):
 
         for k in range(layers):
             if k % 2 == 0:
-                dict['upper_conv1d_{}'.format(k)] = UpperSymplecticConv1d(dim, bias=k==(layers-1))
+                dict['upper_conv1d_{}'.format(k)] = UpperSymplecticConv1d(dim, bias=False)
             else:
-                dict['lower_conv1d_{}'.format(k)] = LowerSymplecticConv1d(dim, bias=k==(layers-1))
+                dict['lower_conv1d_{}'.format(k)] = LowerSymplecticConv1d(dim, bias=False)
 
         super(ConvLinearSympNet, self).__init__(dict)
-        
-
-class HarmonicSympNet(nn.Sequential, StepIntegrator):
-    def __init__(self, layers, sub_layers, dim, dt = 0.1):
-        self.dim = dim
-        modules = []
-
-        for k in range(layers):
-            modules.append(LinearSymplectic(sub_layers, dim))
-            modules.append(HarmonicUnit(dt))
-        
-        modules.append(LinearSymplectic(sub_layers, dim))
-        super(HarmonicSympNet, self).__init__(*modules)
-
-# TODO implement fully connected layer
-#class FNN(nn:Sequential):
-#    def __init__():
-#        pass
