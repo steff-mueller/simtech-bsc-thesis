@@ -8,8 +8,9 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 from models.lowdim import SimplePendulum, HarmonicOscillator
+from models.integrators.implicit_midpoint import ImplicitMidpointIntegrator
+from models.integrators.stormer_verlet import SeparableStormerVerletIntegrator
 
-from nn.training_data import generate_training_data
 from nn.models import SympNet
 from nn.symplecticloss import symplectic_mse_loss
 
@@ -36,7 +37,8 @@ class Configuration:
         self.t_end = t_end
 
         # cache solution
-        self._td_x, self._td_Ham = self.experiment.model.solve(self.t_start, self.t_end, self.experiment.dt, self.mu)
+        self._td_x, self._td_Ham = self.experiment.model.solve(self.t_start, self.t_end, 
+            self.experiment.num_integrator, self.mu)
 
     def run(self, epoch):
         td_x_surrogate = self.experiment.surrogate_model.integrate(self.mu['q0'], self.mu['p0'], 
@@ -92,6 +94,13 @@ class Experiment:
         self.model = model
         self.surrogate_model = surrogate_model
 
+        if args.integrator == 'implicit_midpoint':
+            self.num_integrator = ImplicitMidpointIntegrator(self.dt)
+        elif args.integrator == 'stoermer_verlet_q':
+            self.num_integrator = SeparableStormerVerletIntegrator(self.dt, use_staggered='q')
+        elif args.integrator == 'stoermer_verlet_p':
+            self.num_integrator = SeparableStormerVerletIntegrator(self.dt, use_staggered='p')
+
         mu = {'m': 1., 'g': 1., 'l': 1., 'q0': np.pi/2, 'p0': 0.}
         self._sampling_params = SamplingParameters(mu,
             qmin=args.qmin, qmax=args.qmax,
@@ -109,14 +118,35 @@ class Experiment:
         }) + ' ' + str(args))
 
     def _get_training_data(self):
-        return generate_training_data(self._sampling_params.n, 
-            self.model, 
-            self._sampling_params.mu, 
-            self.dt, 
-            qmin=self._sampling_params.qmin, 
-            qmax=self._sampling_params.qmax,
-            pmin=self._sampling_params.pmin, 
-            pmax=self._sampling_params.pmax)
+        params = self._sampling_params
+
+        # do not change original dictionary
+        mu = params.mu.copy()
+
+        # generate random phase points in [-qmin,qmax]x[-pmin,pmax]
+        rg = np.random.default_rng(seed=0)
+        q = rg.uniform(params.qmin, params.qmax, size=(params.n,1))
+        p = rg.uniform(params.pmin, params.pmax, size=(params.n,1))
+        X_train = np.hstack((q,p))
+
+        def time_step(x_train):
+            # TODO implement generic way to set initial values
+            mu['q0'] = x_train[0]
+            mu['p0'] = x_train[1]
+
+            # compute single time step h
+            td_x, td_Ham = model.solve(0, self.dt+self.dt, 
+                self.num_integrator, mu) # open time interval, therefore `dt+dt`
+            t, x = td_x[1]
+            return x.to_numpy()
+
+        Y_train = np.apply_along_axis(time_step, 1, X_train)
+
+        # convert numpy array to `torch.tensor`
+        X_train = torch.tensor(X_train, requires_grad=True, dtype=torch.float32)
+        Y_train = torch.tensor(Y_train, dtype=torch.float32)
+
+        return (X_train, Y_train)
 
     def _run_configurations(self, epoch):
         for configuration in self._configurations:
@@ -168,6 +198,12 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', default=500, type=int)
     parser.add_argument('--dt', default=0.1, type=float)
     parser.add_argument('--training-size', '-n', default=40, type=int)
+    parser.add_argument(
+        '--integrator',
+        help='Choose integrator.',
+        choices=['implicit_midpoint', 'stoermer_verlet_q', 'stoermer_verlet_p'],
+        default='stoermer_verlet_q'
+    )
     parser.add_argument('--activation', choices=['sigmoid', 'sin', 'relu'], default='sigmoid')
     parser.add_argument('--qmin', default=-np.pi/2, type=float)
     parser.add_argument('--qmax', default=np.pi/2, type=float)

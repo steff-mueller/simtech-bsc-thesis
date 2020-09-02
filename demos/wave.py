@@ -6,6 +6,8 @@ from torch.utils.tensorboard import SummaryWriter
 
 from models.vectors import NumpyPhaseSpace
 from models.wave import OscillatingModeLinearWaveProblem, FixedEndsLinearWaveProblem
+from models.integrators.implicit_midpoint import ImplicitMidpointIntegrator
+from models.integrators.stormer_verlet import SeparableStormerVerletIntegrator
 
 from nn.models import integrate
 from nn.linearsymplectic import *
@@ -40,6 +42,13 @@ class WaveExperiment:
         self.l = 1
         self._init_model(args.model)
 
+        if args.integrator == 'implicit_midpoint':
+            self.num_integrator = ImplicitMidpointIntegrator(self.dt)
+        elif args.integrator == 'stoermer_verlet_q':
+            self.num_integrator = SeparableStormerVerletIntegrator(self.dt, use_staggered='q')
+        elif args.integrator == 'stoermer_verlet_p':
+            self.num_integrator = SeparableStormerVerletIntegrator(self.dt, use_staggered='p')
+
         self.dim = 2*self.n_x-4 # -4 because Dirichlet boundary values removed
         self.surrogate_model = torch.nn.Sequential(
             UpperSymplecticConv1d(self.dim, bias=False),
@@ -70,7 +79,7 @@ class WaveExperiment:
     def _compute_solution(self): 
         # compute solution for all t in [0, T]
         self.T = 10
-        self.td_x, self.td_Ham = self.model.solve(0, self.T, self.dt, self.mu)
+        self.td_x, self.td_Ham = self.model.solve(0, self.T, self.num_integrator, self.mu)
 
     def _get_training_data(self):
         assert hasattr(self, 'td_x'), 'Call _compute_solution() before calling _get_training_data()'
@@ -98,7 +107,7 @@ class WaveExperiment:
         this_td_Ham = self.td_Ham
         this_td_x = self.td_x
         if other_model is not None or other_mu is not None:
-            this_td_x, this_td_Ham = this_model.solve(0, self.T, self.dt, this_mu)
+            this_td_x, this_td_Ham = this_model.solve(0, self.T, self.num_integrator, this_mu)
 
         x0 = this_model.initial_value(this_mu)
         td_x_surrogate = integrate(self.surrogate_model, x0.vec_q[1:-1], x0.vec_p[1:-1], 
@@ -174,6 +183,12 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', default=500, type=int)
     parser.add_argument('--model', choices=['standing_wave', 'transport'], default='standing_wave')
     parser.add_argument('--dt', default=.1, type=float)
+    parser.add_argument(
+        '--integrator',
+        help='Choose integrator.',
+        choices=['implicit_midpoint', 'stoermer_verlet_q', 'stoermer_verlet_p'],
+        default='stoermer_verlet_q'
+    )
     parser.add_argument('--nx', default=100, type=int)
     parser.add_argument('--print-params', default=False, nargs='?', const=True, type=bool)
     parser.add_argument('--post-plot-transport', default=False, nargs='?', const=True, type=bool, 
