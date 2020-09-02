@@ -7,7 +7,9 @@ from torch.utils.tensorboard import SummaryWriter
 from models.vectors import NumpyPhaseSpace
 from models.wave import OscillatingModeLinearWaveProblem, FixedEndsLinearWaveProblem
 
-from nn.models import SympNet, ConvLinearSympNet
+from nn.models import integrate
+from nn.linearsymplectic import *
+from nn.nonlinearsymplectic import *
 from nn.training_data import scale_training_data
 
 from utils.plot2d import plot_hamiltonian
@@ -39,7 +41,11 @@ class WaveExperiment:
         self._init_model(args.model)
 
         self.dim = 2*self.n_x-4 # -4 because Dirichlet boundary values removed
-        self.surrogate_model = ConvLinearSympNet(3, self.dim)
+        self.surrogate_model = torch.nn.Sequential(
+            UpperSymplecticConv1d(self.dim, bias=False),
+            LowerSymplecticConv1d(self.dim, bias=False),
+            UpperSymplecticConv1d(self.dim, bias=False)
+        )
 
         if args.init_stormer_verlet:
             self._init_with_stormer_verlet()
@@ -95,7 +101,7 @@ class WaveExperiment:
             this_td_x, this_td_Ham = this_model.solve(0, self.T, self.dt, this_mu)
 
         x0 = this_model.initial_value(this_mu)
-        td_x_surrogate = self.surrogate_model.integrate(x0.vec_q[1:-1], x0.vec_p[1:-1], 
+        td_x_surrogate = integrate(self.surrogate_model, x0.vec_q[1:-1], x0.vec_p[1:-1], 
             0, self.T, self.dt, custom_phase_space=Dirichlet1dNumpyPhaseSpace(self.dim))
 
         # Plot Hamiltonian

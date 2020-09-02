@@ -46,7 +46,12 @@ def scale_training_data(y):
 
     y_q = y[:,0:dim_half]
     y_p = y[:,dim_half:dim]
-    a = torch.sqrt(torch.abs((y_p+1e-8)/(y_q+1e-8))).flatten() # prevent division by zero
+    a = torch.sqrt(torch.abs((y_p+1e-8)/(y_q+1e-8))) # prevent division by zero
 
-    scaler = SymplecticScaling(dim, a, freeze=True)
+    # Note that `a` has shape (n,dim), because we want to scale
+    # each training pair. SymplecticScaling normally expects (dim,).
+    # But shape (n,dim) is still working because of the way 
+    # the SymplecticScaling layer is implemented.
+    scaler = SymplecticScaling(dim, a)
+    scaler.a.requires_grad = False
     return scaler(y), scaler

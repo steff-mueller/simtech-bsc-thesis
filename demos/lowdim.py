@@ -10,7 +10,7 @@ from torch.utils.tensorboard import SummaryWriter
 from models.lowdim import SimplePendulum, HarmonicOscillator
 
 from nn.training_data import generate_training_data
-from nn.models import SympNet, HarmonicSympNet
+from nn.models import SympNet
 from nn.symplecticloss import symplectic_mse_loss
 
 from utils.plot2d import *
