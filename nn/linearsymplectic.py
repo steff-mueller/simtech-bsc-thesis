@@ -105,7 +105,7 @@ class UpperSymplecticConv1d(SymplecticTriangularUnit):
     def reset_parameters(self):
         super().reset_parameters()
         with torch.no_grad():
-            nn.init.constant_(self.a, 0)
+            nn.init.normal_(self.a, 0, 0.01)
             if self.k.requires_grad: 
                 nn.init.normal_(self.k, 0, 1)
 

@@ -51,9 +51,15 @@ class WaveExperiment:
 
         self.dim = 2*self.n_x-4 # -4 because Dirichlet boundary values removed
         self.surrogate_model = torch.nn.Sequential(
-            UpperSymplecticConv1d(self.dim, bias=False),
+            UpperSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([0, 1, 0])),
+            UpperSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([1, -2, 1])),
+            LowerSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([0, 1, 0])),
             LowerSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([1, -2, 1])),
-            UpperSymplecticConv1d(self.dim, bias=False)
+
+            UpperSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([0, 1, 0])),
+            UpperSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([1, -2, 1])),
+            LowerSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([0, 1, 0])),
+            LowerSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([1, -2, 1]))
         )
 
         if args.init_stormer_verlet:
@@ -91,7 +97,7 @@ class WaveExperiment:
         # delete Dirichlet boundary values from training data
         data = np.delete(data, [0, self.n_x-1, self.n_x, 2*self.n_x-1], axis=1)
 
-        T_training = 4
+        T_training = 1
         n_training = int(T_training / self.dt)
         x = data[0:n_training,:]
         y = data[1:n_training+1,:] # shift by 1
@@ -146,13 +152,13 @@ class WaveExperiment:
         x,y = self._get_training_data()
 
         criterion = torch.nn.MSELoss()
-        optimizer = torch.optim.Adam(self.surrogate_model.parameters(), lr=1e0)
+        optimizer = torch.optim.Adam(self.surrogate_model.parameters(), lr=1e-2)
 
         for epoch in range(self.epochs):
             print('training step: %d/%d' % (epoch, self.epochs))
     
             y1 = self.surrogate_model(x)
-            loss = criterion(y1, y)        
+            loss = criterion(y1, y)
             optimizer.zero_grad()
 
             loss.backward()
