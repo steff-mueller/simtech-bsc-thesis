@@ -52,7 +52,7 @@ class WaveExperiment:
         self.dim = 2*self.n_x-4 # -4 because Dirichlet boundary values removed
         self.surrogate_model = torch.nn.Sequential(
             UpperSymplecticConv1d(self.dim, bias=False),
-            LowerSymplecticConv1d(self.dim, bias=False),
+            LowerSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([1, -2, 1])),
             UpperSymplecticConv1d(self.dim, bias=False)
         )
 
@@ -60,13 +60,16 @@ class WaveExperiment:
             self._init_with_stormer_verlet()
     
     def _init_with_stormer_verlet(self):
-        # initialize weights with Störmer-Verlet method
-        self.surrogate_model[0].k.data = torch.tensor([0, self.dt/2, 0])
-        self.surrogate_model[2].k.data = torch.tensor([0, self.dt/2, 0])
+        self.surrogate_model = torch.nn.Sequential(
+            UpperSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([0, 1, 0])),
+            LowerSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([1, -2, 1])),
+            UpperSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([0, 1, 0]))
+        )
 
+        # initialize weights with Störmer-Verlet method
+        self.surrogate_model[0].a.data = self.surrogate_model[2].a.data = torch.tensor(self.dt/2)
         dx = self.l/self.n_x
-        factor = -self.dt*(self.mu['c']/dx)**2
-        self.surrogate_model[1].k.data = torch.tensor([-1*factor, 2*factor, -1*factor])  
+        self.surrogate_model[1].a.data = torch.tensor(self.dt*(self.mu['c']/dx)**2)
 
     def _init_model(self, model_name):
         if model_name == 'standing_wave':
@@ -96,9 +99,7 @@ class WaveExperiment:
         # convert to torch.Tensor
         x = torch.tensor(x, requires_grad=True, dtype=torch.float32)
         y = torch.tensor(y, dtype=torch.float32)
-
-        y_scaled, self.scaler = scale_training_data(y)     
-        return x,y_scaled
+        return x,y
 
     def _plot(self, epoch, prefix='', other_model=None, other_mu = None):
         this_model = self.model if other_model is None else other_model
@@ -145,14 +146,13 @@ class WaveExperiment:
         x,y = self._get_training_data()
 
         criterion = torch.nn.MSELoss()
-        optimizer = torch.optim.Adam(self.surrogate_model.parameters(), lr=1e-2)
+        optimizer = torch.optim.Adam(self.surrogate_model.parameters(), lr=1e0)
 
         for epoch in range(self.epochs):
             print('training step: %d/%d' % (epoch, self.epochs))
     
             y1 = self.surrogate_model(x)
-            y1_scaled = self.scaler(y1)
-            loss = criterion(y1_scaled, y)        
+            loss = criterion(y1, y)        
             optimizer.zero_grad()
 
             loss.backward()
