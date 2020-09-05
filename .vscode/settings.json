@@ -1,0 +1,10 @@
+{
+    "python.linting.pylintEnabled": true,
+    "python.linting.pylintArgs": [
+        "--errors-only",
+        "--generated-members=numpy.* ,torch.*",
+        "--disable=not-callable" // https://github.com/pytorch/pytorch/issues/24807
+    ],
+    "python.linting.enabled": true,
+    "latex-workshop.viewer.pdf.internal.port": 53900
+}

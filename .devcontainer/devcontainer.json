@@ -9,6 +9,12 @@
 	// Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
 	"dockerFile": "Dockerfile",
 
+	"build": {
+		"args": {
+			"LATEX": "yes"
+		}
+	},
+
 	// Set *default* container specific settings.json values on container create.
 	"settings": { 
 		"terminal.integrated.shell.linux": "/bin/bash",
@@ -17,7 +23,8 @@
 
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
-		"ms-python.python"
+		"ms-python.python",
+		"james-yu.latex-workshop"
 	],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.

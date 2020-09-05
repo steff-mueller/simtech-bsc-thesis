@@ -6,11 +6,13 @@ ENV DEBIAN_FRONTEND=noninteractive
 ARG USERNAME=vscode
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
+ARG LATEX
 
 ENV PYBIND11_VERSION=2.2.3
 
 RUN apt update  \
     && apt-get install -y --no-install-recommends python3 python3-virtualenv python3-dev git wget build-essential cmake libboost-all-dev libeigen3-dev petsc-dev \
+    && if [ "$LATEX" = "yes" ] ; then apt-get install -y texlive-latex-extra latexmk ; fi \
     #
     # Create a non-root user to use if preferred - see https://aka.ms/vscode-remote/containers/non-root-user.
     && groupadd --gid $USER_GID $USERNAME \
