@@ -217,9 +217,23 @@ Numerical Simulation (IANS)}%
 %----------------------------------------------------------------------------------------
 \section{Introduction}
 
-\subsection{Outline of this thesis}
+\subsection{Outline}
 
-\subsection{Nomenclature}
+\subsection{Notation}
+
+Let $ f: \mathbb{R} \rightarrow \mathbb{R} $ be an arbitrary function. We denote
+the element-wise application of $f$ on a vector $x \in \mathbb{R}^n$ with:
+
+\begin{equation*}
+	[f]_n: \mathbb{R}^n \rightarrow \mathbb{R}^n, \quad 
+	[f]_n(x_1, ... x_n) := \begin{pmatrix}
+		f(x_1) \\
+		\vdots \\
+		f(x_n)
+	\end{pmatrix}
+\end{equation*}
+
+\todo{Introduce block matrix notation for general functions}
 
 %----------------------------------------------------------------------------------------
 %
@@ -227,9 +241,66 @@ Numerical Simulation (IANS)}%
 %
 %----------------------------------------------------------------------------------------
 \newpage
-\section{Chapter 1}
+\section{Problem setup}
 
-This is based on \cite{Jin2020}
+\section{Architecture}
+
+In this section we first recapitulate the symplectic layers as proposed by Jin et. al 
+in \cite{Jin2020} \todo{How to cite with name?}. Additionally we supplement proofs for 
+symplecticity. A similar architecture was initially proposed by Deco in \cite{Deco1995} 
+\todo{Have a deeper look at \cite{Deco1995}}.
+
+
+\subsection{Linear layers}
+
+\subsection{Activation layers}
+
+\subsection{Gradient layers}
+
+\begin{equation*}
+	\mathcal{G} \begin{pmatrix}
+		q \\
+		p
+	\end{pmatrix} := \begin{bmatrix}
+		I & 0 \\
+		\hat{\sigma} & I
+	\end{bmatrix} \begin{pmatrix}
+		q \\
+		p
+	\end{pmatrix} := \begin{pmatrix}
+		q \\
+		K^T diag(a) [\sigma]_n(Kq + b) + p
+	\end{pmatrix}
+\end{equation*}
+
+where $K \in \mathbb{R}^{nxd}$ and $a,b \in \mathbb{R}^n$.
+
+\newtheorem*{glayer}{Lemma}
+\begin{glayer}
+	Given an activation function $\sigma \in C^1$ the gradient layer $\mathcal{G}$ is symplectic.
+\end{glayer}
+\begin{proof}
+	Let $ V(p) := 1_n^Tdiag(a)[\int \sigma]_n(Kp+b)$ \todo{Notation for 1-vector?}
+
+	Then the Jacobi matrix $DV(p)$ is given by \todo{Notation Jacobi matrix}
+	\begin{equation*}
+		DV(p) = 1_n^Tdiag(a)diag\left([\sigma]_n(Kp+b)\right)K
+	\end{equation*}
+
+	Thus
+	\begin{align*}
+		\nabla V(p) &= \left(DV(p)\right)^T \\
+		&= K^Tdiag(a)diag\left([\sigma]_n(Kp+b)\right)1_n \\
+		&= K^Tdiag(a)[\sigma]_n(Kp+b)
+	\end{align*}
+
+	\todo{Hessian $(D(\nabla V))(p)$} is symmetric because $V \in C^2$. With Lemma \todo{reference Lemma
+	which shows that symmetry implies symplecticity} follows symplecticity of $\mathcal{G}$.
+
+	\todo{Rather create separate lemma for general $V: \mathbb{R}^d \rightarrow \mathbb{R}$}
+\end{proof}
+
+\todo{Relation to 'Generating functions' in literature?}
 
 %----------------------------------------------------------------------------------------
 %
