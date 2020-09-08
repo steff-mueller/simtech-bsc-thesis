@@ -11,7 +11,9 @@ from models.lowdim import SimplePendulum, HarmonicOscillator
 from models.integrators.implicit_midpoint import ImplicitMidpointIntegrator
 from models.integrators.stormer_verlet import SeparableStormerVerletIntegrator
 
-from nn.models import SympNet
+from nn.models import integrate
+from nn.linearsymplectic import *
+from nn.nonlinearsymplectic import *
 from nn.symplecticloss import symplectic_mse_loss
 
 from utils.plot2d import *
@@ -41,7 +43,7 @@ class Configuration:
             self.experiment.num_integrator, self.mu)
 
     def run(self, epoch):
-        td_x_surrogate = self.experiment.surrogate_model.integrate(self.mu['q0'], self.mu['p0'], 
+        td_x_surrogate = integrate(self.experiment.surrogate_model, self.mu['q0'], self.mu['p0'], 
             self.t_start, self.t_end, self.experiment.dt)
 
         # plot results
@@ -192,6 +194,38 @@ class Experiment:
         self.writer.add_graph(self.surrogate_model, x)
         self.writer.flush()
 
+def get_surrogate_model(architecture, dim):
+    if architecture == 'la-sympnet':
+        return torch.nn.Sequential(
+            LinearSymplectic(4, dim, bias=True),
+            LowerNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn),
+            LinearSymplectic(4, dim, bias=True),
+            UpperNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn),
+            LinearSymplectic(4, dim, bias=True),
+            LowerNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn),
+            LinearSymplectic(4, dim, bias=True),
+            UpperNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn),
+            LinearSymplectic(4, dim, bias=True),
+            LowerNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn),
+            LinearSymplectic(4, dim, bias=True)
+        )
+    elif architecture == 'g1-sympnet':
+        return torch.nn.Sequential(
+            LinearSymplectic(4, dim, bias=True),
+            LowerGradientModule(dim, n=1, bias=False, activation_fn=activation_fn),
+            LinearSymplectic(4, dim, bias=True),
+            UpperGradientModule(dim, n=1, bias=False, activation_fn=activation_fn),
+            LinearSymplectic(4, dim, bias=True),
+            LowerGradientModule(dim, n=1, bias=False, activation_fn=activation_fn),
+            LinearSymplectic(4, dim, bias=True),
+            UpperGradientModule(dim, n=1, bias=False, activation_fn=activation_fn),
+            LinearSymplectic(4, dim, bias=True),
+            LowerGradientModule(dim, n=1, bias=False, activation_fn=activation_fn),
+            LinearSymplectic(4, dim, bias=True)
+        )
+    else:
+        raise ValueError('Invalid architecture {}'.format(architecture))
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run experiments.')
@@ -204,7 +238,8 @@ if __name__ == '__main__':
         choices=['implicit_midpoint', 'stoermer_verlet_q', 'stoermer_verlet_p'],
         default='stoermer_verlet_q'
     )
-    parser.add_argument('--activation', choices=['sigmoid', 'sin', 'relu'], default='sigmoid')
+    parser.add_argument('--architecture', choices=['la-sympnet', 'g1-sympnet'], default='la-sympnet')
+    parser.add_argument('--activation', choices=['sigmoid', 'sin', 'relu', 'elu'], default='sigmoid')
     parser.add_argument('--qmin', default=-np.pi/2, type=float)
     parser.add_argument('--qmax', default=np.pi/2, type=float)
     parser.add_argument('--pmin', default=-np.sqrt(2), type=float)
@@ -216,10 +251,12 @@ if __name__ == '__main__':
     activation_functions = {
         'sigmoid': torch.sigmoid,
         'sin': torch.sin,
-        'relu': torch.relu
+        'relu': torch.relu,
+        'elu': torch.nn.ELU
     }
     activation_fn = activation_functions[args.activation]
-    surrogate_model = SympNet(layers = 5, sub_layers = 4, dim = 2, activation_fn=activation_fn)
+    dim = 2
+    surrogate_model = get_surrogate_model(args.architecture, dim)
 
     expm = Experiment(args, model, surrogate_model)
 
