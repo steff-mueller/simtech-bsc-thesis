@@ -5,7 +5,8 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 from models.vectors import NumpyPhaseSpace
-from models.wave import OscillatingModeLinearWaveProblem, FixedEndsLinearWaveProblem
+from models.wave import (OscillatingModeLinearWaveProblem, FixedEndsLinearWaveProblem,
+    SineGordonProblem)
 from models.integrators.implicit_midpoint import ImplicitMidpointIntegrator
 from models.integrators.stormer_verlet import SeparableStormerVerletIntegrator
 
@@ -39,7 +40,7 @@ class WaveExperiment:
         self.writer = SummaryWriter(comment='wave')
         # TODO add parameters logging
 
-        self.l = 1
+        self.l = args.domain_length
         self._init_model(args.model)
 
         if args.integrator == 'implicit_midpoint':
@@ -92,6 +93,9 @@ class WaveExperiment:
         elif model_name == 'transport':
             self.mu = {'c': .1, 'q0_supp': self.l/4}
             self.model = FixedEndsLinearWaveProblem(self.l, self.n_x)
+        elif model_name == 'sine_gordon':
+            self.mu = {'c': 1, 'v': .2}
+            self.model = SineGordonProblem(self.l, self.n_x)
 
     def _compute_solution(self): 
         # compute solution for all t in [0, T]
@@ -195,7 +199,7 @@ class WaveExperiment:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run experiments.')
     parser.add_argument('--epochs', default=500, type=int)
-    parser.add_argument('--model', choices=['standing_wave', 'transport'], default='standing_wave')
+    parser.add_argument('--model', choices=['standing_wave', 'transport', 'sine_gordon'], default='standing_wave')
     parser.add_argument('--dt', default=.1, type=float)
     parser.add_argument(
         '--integrator',
@@ -204,6 +208,7 @@ if __name__ == '__main__':
         default='stoermer_verlet_q'
     )
     parser.add_argument('--nx', default=100, type=int)
+    parser.add_argument('--domain-length', '-l', default=1, type=float)
     parser.add_argument('--print-params', default=False, nargs='?', const=True, type=bool)
     parser.add_argument('--post-plot-transport', default=False, nargs='?', const=True, type=bool, 
         help='Plot transport problem after training.')
