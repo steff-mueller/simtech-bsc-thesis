@@ -88,32 +88,78 @@ class LinearSymplectic(nn.Sequential):
 
         super(LinearSymplectic, self).__init__(dict)
 
-class UpperSymplecticConv1d(SymplecticTriangularUnit):
-    def __init__(self, dim, bias=True, kernel_size = 3, fixed_kernel=None):
-        super(UpperSymplecticConv1d, self).__init__(dim, bias, reset_params=False)
+class KernelBasis(ABC):
+
+    def __init__(self, kernel_size: int):
+        assert kernel_size > 0, 'Kernel size must be larger 0.'
         assert kernel_size % 2 == 1, 'Kernel size must be odd.'
         self.kernel_size = kernel_size
-        self.a = nn.Parameter(torch.Tensor(1))
-        self.k = nn.Parameter(torch.Tensor(kernel_size))
+        self.n_basis = int(kernel_size/2)+1
 
-        if fixed_kernel is not None:
-            self.k.requires_grad = False
-            self.k.data = fixed_kernel
+    @abstractmethod
+    def __iter__(self):
+        """Iterates through basis elements"""
+        pass
 
+
+class CanonicalSymmetricKernelBasis(KernelBasis):
+    """
+    Canonical basis for symmetric convolution kernels
+    """
+
+    def __iter__(self):
+        mid_index = int(self.kernel_size/2)
+
+        basis = []
+        for i in range(0, self.n_basis):
+            basis_el_i = torch.zeros(self.kernel_size)
+            basis_el_i[mid_index + i] = basis_el_i[mid_index - i] = 1
+            basis.append(basis_el_i)
+
+        return iter(basis)
+
+
+class FDSymmetricKernelBasis(KernelBasis):
+    """
+    Finite difference basis for symmetric convolution kernels.
+    Note that only even-order finite differences have a symmetric stencil,
+    i.e. 0th, 2th, 4th finite difference.
+    """
+
+    def __iter__(self):
+        mid_index = int(self.kernel_size/2)
+
+        basis = []
+        for i in range(0, self.n_basis):
+            basis_el_i = torch.zeros(self.kernel_size)
+            for j,pos in enumerate(range(mid_index-i, mid_index+i+1)):
+                basis_el_i[pos] = ((-1)**j)*math.comb(i*2, j)
+            
+            basis.append(basis_el_i)
+
+        return iter(basis)
+
+class UpperSymplecticConv1d(SymplecticTriangularUnit):
+    def __init__(self, dim, bias=True, kernel_basis=CanonicalSymmetricKernelBasis(3)):
+        super(UpperSymplecticConv1d, self).__init__(dim, bias, reset_params=False)
+        self.kernel_size = kernel_basis.kernel_size
+
+        basis_elements = list(kernel_basis)
+        n_params = len(basis_elements)
+        self.basis_matix = torch.stack(basis_elements, dim=1)
+        self.a = nn.Parameter(torch.Tensor(n_params,1))
         self.reset_parameters()
 
     def reset_parameters(self):
         super().reset_parameters()
         with torch.no_grad():
             nn.init.normal_(self.a, 0, 0.01)
-            if self.k.requires_grad: 
-                nn.init.normal_(self.k, 0, 1)
 
     def conv1d_(self, x_half):
         n = x_half.shape[0] 
         x_half = x_half.reshape((n, 1, self.dim_half))
 
-        kernel = self.a*(self.k+self.k.flip(0)).true_divide(2).reshape((1,1,self.kernel_size))
+        kernel = self.basis_matix.mm(self.a).reshape((1,1,self.kernel_size))
 
         conv_result = nn.functional.conv1d(x_half, kernel, padding=int(self.kernel_size/2))
         conv_result = conv_result.reshape(n, self.dim_half)

@@ -50,32 +50,40 @@ class WaveExperiment:
             self.num_integrator = SeparableStormerVerletIntegrator(self.dt, use_staggered='p')
 
         self.dim = 2*self.n_x-4 # -4 because Dirichlet boundary values removed
+        kernel_basis = FDSymmetricKernelBasis(kernel_size = 3)
         self.surrogate_model = torch.nn.Sequential(
-            UpperSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([0, 1, 0])),
-            UpperSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([1, -2, 1])),
-            LowerSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([0, 1, 0])),
-            LowerSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([1, -2, 1])),
-
-            UpperSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([0, 1, 0])),
-            UpperSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([1, -2, 1])),
-            LowerSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([0, 1, 0])),
-            LowerSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([1, -2, 1]))
+            UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+            LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+            UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+            LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+            UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+            LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+            UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+            LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis)
         )
 
         if args.init_stormer_verlet:
             self._init_with_stormer_verlet()
     
     def _init_with_stormer_verlet(self):
+        kernel_basis = FDSymmetricKernelBasis(kernel_size = 3)
         self.surrogate_model = torch.nn.Sequential(
-            UpperSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([0, 1, 0])),
-            LowerSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([1, -2, 1])),
-            UpperSymplecticConv1d(self.dim, bias=False, fixed_kernel=torch.tensor([0, 1, 0]))
+            UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+            LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+            UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis)
         )
 
         # initialize weights with Störmer-Verlet method
-        self.surrogate_model[0].a.data = self.surrogate_model[2].a.data = torch.tensor(self.dt/2)
+        self.surrogate_model[0].a.data = self.surrogate_model[2].a.data = torch.tensor([
+            [self.dt/2],
+            [0.]
+        ])
+
         dx = self.l/self.n_x
-        self.surrogate_model[1].a.data = torch.tensor(self.dt*(self.mu['c']/dx)**2)
+        self.surrogate_model[1].a.data = torch.tensor([
+            [0.], 
+            [self.dt*(self.mu['c']/dx)**2]
+        ])
 
     def _init_model(self, model_name):
         if model_name == 'standing_wave':
