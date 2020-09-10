@@ -59,6 +59,7 @@
 \newtheorem{theorem}{Theorem}
 \newtheorem{example}{Example}
 \newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
 
 %----------------------------------------------------------------------------------------
 %	fancyhdr
@@ -162,7 +163,7 @@ Numerical Simulation (IANS)}%
 \begin{authorST}{Submitted by}%
 \addAuthorInfo{Author}{Steffen Müller}
 \addAuthorInfo{Student ID}{3260643}
-\addAuthorInfo{SimTech ID}{...} %FILLIN
+\addAuthorInfo{SimTech ID}{119} %
 \addAuthorInfo{Submission Date}{...} %FILLIN
 \end{authorST}%
 %------------------------------------------
@@ -250,6 +251,119 @@ in \cite{Jin2020} \todo{How to cite with name?}. Additionally we supplement proo
 symplecticity. A similar architecture was initially proposed by Deco in \cite{Deco1995} 
 \todo{Have a deeper look at \cite{Deco1995}}.
 
+\begin{lemma}\label{jacobi_symmetric}
+	Let
+	\begin{equation*}
+		f_{up} := \begin{bmatrix}
+			I & g \\
+			0 & I
+		\end{bmatrix} \begin{pmatrix}
+			q \\
+			p
+		\end{pmatrix}
+	\end{equation*}
+	and
+	\begin{equation*}
+		f_{low} := \begin{bmatrix}
+			I & 0 \\
+			g & I
+		\end{bmatrix} \begin{pmatrix}
+			q \\
+			p
+		\end{pmatrix}
+	\end{equation*}
+	where $g: \mathbb{R}^d \rightarrow \mathbb{R}^d \in C^1$. 
+
+	$f_{up}$ and $f_{low}$ are symplectic if and only if the Jacobi matrix of $g$, $Dg$,
+	is symmetric.
+\end{lemma}
+\begin{proof}
+	We show the result only for $f_{up}$. The calculation is analogous for $f_{low}$.
+
+	\begin{equation*}
+		Df_{up} = \begin{pmatrix}
+			I & Dg \\
+			0 & I
+		\end{pmatrix}
+	\end{equation*}
+	It follows
+	\begin{align*}
+		\left(Df_{up}\right)^TJ(Df_{up}) &= \left(Df_{up}\right)^T \begin{pmatrix}
+			0 & I \\
+			-I & -Dg
+		\end{pmatrix} \\
+		&= \begin{pmatrix}
+			I & 0 \\
+			(Dg)^T & Id
+		\end{pmatrix} \begin{pmatrix}
+			0 & I \\
+			-I & -Dg
+		\end{pmatrix} \\
+		&= \begin{pmatrix}
+			0 & I \\
+			-I & (Dg)^T-Dg
+		\end{pmatrix}
+	\end{align*}
+	Thus, $f_{up}$ is symplectic if and only if $(Dg)^T-Dg=0$, i.e. if and only if $Dg$
+	is symmetric.
+\end{proof}
+
+\begin{corollary}
+	Let
+	\begin{equation*}
+		f_{up} := \begin{pmatrix}
+			I & S \\
+			0 & I
+		\end{pmatrix} \begin{pmatrix}
+			q \\
+			p
+		\end{pmatrix}
+	\end{equation*}
+	and
+	\begin{equation*}
+		f_{low} := \begin{pmatrix}
+			I & 0 \\
+			S & I
+		\end{pmatrix} \begin{pmatrix}
+			q \\
+			p
+		\end{pmatrix}
+	\end{equation*}
+	where $S \in \mathbb{R}^{dxd}$. 
+
+	$f_{up}$ and $f_{low}$ are symplectic if and only if the matrix $S$
+	is symmetric.
+\end{corollary}
+
+The next corollary is useful to construct symplectic maps.
+\begin{corollary}\label{gradient_corollary}
+	Let $V \in C^2(\mathbb{R}^d, \mathbb{R})$. Then
+	\begin{equation*}
+		f_{up} := \begin{bmatrix}
+			I & \grad{V} \\
+			0 & I
+		\end{bmatrix} \begin{pmatrix}
+			q \\
+			p
+		\end{pmatrix}
+	\end{equation*}
+	and
+	\begin{equation*}
+		f_{low} := \begin{bmatrix}
+			I & 0 \\
+			\grad{V} & I
+		\end{bmatrix} \begin{pmatrix}
+			q \\
+			p
+		\end{pmatrix}
+	\end{equation*}
+	define a symplectic map.
+\end{corollary}
+\begin{proof}
+	The Jacobi matrix of $\nabla V$ corresponds to the Hessian matrix of $V$,
+	i.e. $D(\nabla V) = HD$. \todo{Notation for Hessian}
+	The Hessian is symmetric, thus the result follows with Lemma \ref{jacobi_symmetric}.
+\end{proof}
 
 \subsection{Linear layers}
 
@@ -258,7 +372,22 @@ symplecticity. A similar architecture was initially proposed by Deco in \cite{De
 \subsection{Gradient layers}
 
 \begin{equation*}
-	\mathcal{G} \begin{pmatrix}
+	\mathcal{G}_{up} \begin{pmatrix}
+		q \\
+		p
+	\end{pmatrix} := \begin{bmatrix}
+		I & \hat{\sigma} \\
+		0 & I
+	\end{bmatrix} \begin{pmatrix}
+		q \\
+		p
+	\end{pmatrix} := \begin{pmatrix}
+		q + K^T diag(a) [\sigma]_n(Kp + b) \\
+		p
+	\end{pmatrix}
+\end{equation*}
+\begin{equation*}
+	\mathcal{G}_{low} \begin{pmatrix}
 		q \\
 		p
 	\end{pmatrix} := \begin{bmatrix}
@@ -272,32 +401,27 @@ symplecticity. A similar architecture was initially proposed by Deco in \cite{De
 		K^T diag(a) [\sigma]_n(Kq + b) + p
 	\end{pmatrix}
 \end{equation*}
-
 where $K \in \mathbb{R}^{nxd}$ and $a,b \in \mathbb{R}^n$.
+\todo{Describe n and d}
 
 \newtheorem*{glayer}{Lemma}
 \begin{glayer}
-	Given an activation function $\sigma \in C^1$ the gradient layer $\mathcal{G}$ is symplectic.
+	Given an activation function $\sigma \in C^1$ the gradient layers $\mathcal{G}_{\{up,low\}}$ 
+	are symplectic.
 \end{glayer}
 \begin{proof}
-	Let $ V(p) := 1_n^Tdiag(a)[\int \sigma]_n(Kp+b)$ \todo{Notation for 1-vector?}
+	Let $V(p) := 1_n^Tdiag(a)[\int \sigma]_n(Kp+b)$ \todo{Notation for 1-vector?}
 
-	Then the Jacobi matrix $DV(p)$ is given by \todo{Notation Jacobi matrix}
-	\begin{equation*}
-		DV(p) = 1_n^Tdiag(a)diag\left([\sigma]_n(Kp+b)\right)K
-	\end{equation*}
-
-	Thus
+	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and
 	\begin{align*}
 		\nabla V(p) &= \left(DV(p)\right)^T \\
+		&= \left(1_n^Tdiag(a)diag\left([\sigma]_n(Kp+b)\right)K\right)^T \\
 		&= K^Tdiag(a)diag\left([\sigma]_n(Kp+b)\right)1_n \\
 		&= K^Tdiag(a)[\sigma]_n(Kp+b)
 	\end{align*}
 
-	\todo{Hessian $(D(\nabla V))(p)$} is symmetric because $V \in C^2$. With Lemma \todo{reference Lemma
-	which shows that symmetry implies symplecticity} follows symplecticity of $\mathcal{G}$.
-
-	\todo{Rather create separate lemma for general $V: \mathbb{R}^d \rightarrow \mathbb{R}$}
+	With Corollary \ref{gradient_corollary} follows that the Gradient layers $\mathcal{G}_{\{up,low\}}$
+	are symplectic. \todo{Best way to reference other theorems?}
 \end{proof}
 
 \todo{Relation to 'Generating functions' in literature?}
