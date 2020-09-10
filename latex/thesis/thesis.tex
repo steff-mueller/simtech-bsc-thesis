@@ -246,10 +246,11 @@ the element-wise application of $f$ on a vector $x \in \mathbb{R}^n$ with:
 
 \section{Architecture}
 
-In this section we first recapitulate the symplectic layers as proposed by Jin et. al 
+In this section we first recapitulate the symplectic layers proposed by Jin et. al 
 in \cite{Jin2020} \todo{How to cite with name?}. Additionally we supplement proofs for 
 symplecticity. A similar architecture was initially proposed by Deco in \cite{Deco1995} 
-\todo{Have a deeper look at \cite{Deco1995}}.
+\todo{Have a deeper look at \cite{Deco1995}}. In the second part of this section 
+we propose new symplectic layers.
 
 \begin{lemma}\label{jacobi_symmetric}
 	Let
@@ -308,7 +309,7 @@ symplecticity. A similar architecture was initially proposed by Deco in \cite{De
 	is symmetric.
 \end{proof}
 
-\begin{corollary}
+\begin{corollary}\label{matrix_symmetric}
 	Let
 	\begin{equation*}
 		f_{up} := \begin{pmatrix}
@@ -365,7 +366,15 @@ The next corollary is useful to construct symplectic maps.
 	The Hessian is symmetric, thus the result follows with Lemma \ref{jacobi_symmetric}.
 \end{proof}
 
+\todo{Relation to 'Generating functions' in literature?}
+
 \subsection{Linear layers}
+
+It follows directly from Corollary \ref{matrix_symmetric} that the linear layers are
+symplectic. Alternatively, we can apply Corollary \ref{gradient_corollary} by
+choosing $V(x) = x^TSx$.
+\todo{Not completely correct, is something else than plain $S$,
+see my 'Gradient module' notes}
 
 \subsection{Activation layers}
 
@@ -410,7 +419,7 @@ where $K \in \mathbb{R}^{nxd}$ and $a,b \in \mathbb{R}^n$.
 	are symplectic.
 \end{glayer}
 \begin{proof}
-	Let $V(p) := 1_n^Tdiag(a)[\int \sigma]_n(Kp+b)$ \todo{Notation for 1-vector?}
+	Let $V(p) := 1_n^Tdiag(a)[\int \sigma]_n(Kp+b)$ \todo{Notation for 1-vector? Notation antiderivative?}
 
 	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and
 	\begin{align*}
@@ -424,7 +433,37 @@ where $K \in \mathbb{R}^{nxd}$ and $a,b \in \mathbb{R}^n$.
 	are symplectic. \todo{Best way to reference other theorems?}
 \end{proof}
 
-\todo{Relation to 'Generating functions' in literature?}
+\subsection{Scaling layers}
+
+\subsection{Convolution layers}
+
+\todo{Try motivating convolution layers by showing that the linear layers explode if $d$ becomes large.}
+
+\todo{Bias important if non-zero Dirichlet boundaries, but only at borders!}
+
+\section{Relation to geometric integrators}
+
+\section{Experiments}
+
+\subsection{Low-dimensional systems}
+
+\subsection{High-dimensonal systems}
+
+\todo{Describe Hamiltonian PDEs. A PDE describes system locally, thus it makes sense to share parameters, for
+example in the form of CNNs etc.}
+
+\subsubsection{Linear wave equation}
+
+\todo{The choice of basis for the symmetric convolution kernels is critical (at least for fast convergence)!}
+
+\subsubsection{Sine-Gordon}
+
+\todo{Activation layer with sin works well if $a \in \mathbb{R}$, i.e. activation function is applied
+isotropic.}
+
+\section{Implementation}
+
+\todo{Describe use of PyTorch, TensorBoard, Docker, MLFlow, Unit Tests, ...}
 
 %----------------------------------------------------------------------------------------
 %
