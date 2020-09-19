@@ -376,6 +376,9 @@ choosing $V(x) = x^TSx$.
 \todo{Not completely correct, is something else than plain $S$,
 see my 'Gradient module' notes}
 
+\todo{It does not make sense to put two upper or lower linear layers after each other,
+because this reduces to a single linear layer.}
+
 \subsection{Activation layers}
 
 \subsection{Gradient layers}
@@ -452,7 +455,15 @@ where $K \in \mathbb{R}^{nxd}$ and $a,b \in \mathbb{R}^n$.
 \todo{Describe Hamiltonian PDEs. A PDE describes system locally, thus it makes sense to share parameters, for
 example in the form of CNNs etc.}
 
-\subsubsection{Linear wave equation}
+Assumptions:
+\begin{itemize}
+	\item Original PDE has constant coefficients \todo{Or rather should not depend on $x$ itself?}
+	\item Equidistant grid points
+\end{itemize}
+
+\todo{Explain why we need assumptions.}
+
+\subsubsection{Linear wave equation in one dimension}
 
 \todo{The choice of basis for the symmetric convolution kernels is critical (at least for fast convergence)!}
 
@@ -460,6 +471,10 @@ example in the form of CNNs etc.}
 
 \todo{Activation layer with sin works well if $a \in \mathbb{R}$, i.e. activation function is applied
 isotropic.}
+
+\subsubsection{Linear wave equation in two dimensions}
+
+\subsubsection{Linear elastic beam in three dimensions}
 
 \section{Implementation}
 
