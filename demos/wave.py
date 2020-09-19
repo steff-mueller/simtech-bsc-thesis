@@ -19,13 +19,20 @@ from utils.plot2d import plot_hamiltonian
 from utils.plot_wave import *
 
 class Dirichlet1dNumpyPhaseSpace(NumpyPhaseSpace):
-    def __init__(self, dim):
+    def __init__(self, dim, q_left=0, q_right=0, p_left=0, p_right=0):
         super(Dirichlet1dNumpyPhaseSpace, self).__init__(dim+4)
+        self.q_left = q_left
+        self.q_right = q_right
+        self.p_left = p_left
+        self.p_right = p_right
 
     def new_vector(self, vec_q, vec_p):
-        # insert zero Dirichlet values at boundaries
-        vec_q = np.insert(vec_q, [0, len(vec_q)], 0)
-        vec_p = np.insert(vec_p, [0, len(vec_p)], 0)
+        # insert Dirichlet values at boundaries
+        vec_q = np.insert(vec_q, 0, self.q_left)
+        vec_q = np.insert(vec_q, len(vec_q), self.q_right)
+
+        vec_p = np.insert(vec_p, 0, self.p_left)
+        vec_p = np.insert(vec_p, len(vec_p), self.p_right)
 
         return super().new_vector(vec_q, vec_p)
 
@@ -36,6 +43,7 @@ class WaveExperiment:
         self.print_params = args.print_params
         self.dt = args.dt
         self.post_plot_transport = args.post_plot_transport
+        self.dim = 2*self.n_x-4 # -4 because Dirichlet boundary values removed
         
         self.writer = SummaryWriter(comment='wave')
         # TODO add parameters logging
@@ -49,23 +57,53 @@ class WaveExperiment:
             self.num_integrator = SeparableStormerVerletIntegrator(self.dt, use_staggered='q')
         elif args.integrator == 'stoermer_verlet_p':
             self.num_integrator = SeparableStormerVerletIntegrator(self.dt, use_staggered='p')
-
-        self.dim = 2*self.n_x-4 # -4 because Dirichlet boundary values removed
-        kernel_basis = FDSymmetricKernelBasis(kernel_size = 3)
-        self.surrogate_model = torch.nn.Sequential(
-            UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-            LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-            UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-            LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-            UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-            LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-            UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-            LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis)
-        )
-
+        
         if args.init_stormer_verlet:
             self._init_with_stormer_verlet()
-    
+        else:
+            self._init_surrogate_model(args.architecture)
+
+    def _init_surrogate_model(self, architecture):
+        kernel_basis = FDSymmetricKernelBasis(kernel_size = 3)
+        if architecture == 'linear':
+            self.surrogate_model = torch.nn.Sequential(
+                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis)
+            )
+        elif architecture == 'nonlinear':
+            self.surrogate_model = torch.nn.Sequential(
+                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                UpperNonlinearSymplectic(self.dim, activation_fn=torch.sin, scalar_weight=True),
+
+                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                LowerNonlinearSymplectic(self.dim, activation_fn=torch.sin, scalar_weight=True),
+
+                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                UpperNonlinearSymplectic(self.dim, activation_fn=torch.sin, scalar_weight=True),
+
+                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                LowerNonlinearSymplectic(self.dim, activation_fn=torch.sin, scalar_weight=True)
+            )
+
+
     def _init_with_stormer_verlet(self):
         kernel_basis = FDSymmetricKernelBasis(kernel_size = 3)
         self.surrogate_model = torch.nn.Sequential(
@@ -90,12 +128,15 @@ class WaveExperiment:
         if model_name == 'standing_wave':
             self.mu = {'c': .5}
             self.model = OscillatingModeLinearWaveProblem(self.l, self.n_x)
+            self.surrogate_phase_space = Dirichlet1dNumpyPhaseSpace(self.dim)
         elif model_name == 'transport':
             self.mu = {'c': .1, 'q0_supp': self.l/4}
             self.model = FixedEndsLinearWaveProblem(self.l, self.n_x)
+            self.surrogate_phase_space = Dirichlet1dNumpyPhaseSpace(self.dim)
         elif model_name == 'sine_gordon':
             self.mu = {'c': 1, 'v': .2}
             self.model = SineGordonProblem(self.l, self.n_x)
+            self.surrogate_phase_space = Dirichlet1dNumpyPhaseSpace(self.dim, q_right = 6)
 
     def _compute_solution(self): 
         # compute solution for all t in [0, T]
@@ -130,7 +171,7 @@ class WaveExperiment:
 
         x0 = this_model.initial_value(this_mu)
         td_x_surrogate = integrate(self.surrogate_model, x0.vec_q[1:-1], x0.vec_p[1:-1], 
-            0, self.T, self.dt, custom_phase_space=Dirichlet1dNumpyPhaseSpace(self.dim))
+            0, self.T, self.dt, custom_phase_space=self.surrogate_phase_space)
 
         # Plot Hamiltonian
         ham_plt = plot_hamiltonian(this_td_Ham, td_x_surrogate, this_model, this_mu)
@@ -199,6 +240,8 @@ class WaveExperiment:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run experiments.')
     parser.add_argument('--epochs', default=500, type=int)
+    parser.add_argument('--architecture', choices=['linear', 'nonlinear'], default='linear',
+        help='The architecture to use for the neural network.')
     parser.add_argument('--model', choices=['standing_wave', 'transport', 'sine_gordon'], default='standing_wave')
     parser.add_argument('--dt', default=.1, type=float)
     parser.add_argument(

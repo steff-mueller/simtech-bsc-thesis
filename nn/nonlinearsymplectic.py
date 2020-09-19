@@ -3,10 +3,10 @@ import torch
 from torch import nn
 
 class UpperNonlinearSymplectic(SymplecticTriangularUnit):
-    def __init__(self, dim, bias=False, activation_fn = torch.sigmoid):
+    def __init__(self, dim, bias=False, activation_fn = torch.sigmoid, scalar_weight = False):
         super(UpperNonlinearSymplectic, self).__init__(dim, bias, reset_params=False)
         self.activation_fn = activation_fn
-        self.a = nn.Parameter(torch.Tensor(self.dim_half))
+        self.a = nn.Parameter(torch.Tensor(1 if scalar_weight else self.dim_half))
         self.reset_parameters()
 
     def reset_parameters(self):
