@@ -174,6 +174,7 @@ class Experiment:
         criterion = torch.nn.MSELoss()
         optimizer = torch.optim.Adam(surrogate_model.parameters(), lr=1e-2)
 
+        self.surrogate_model.train()
         for epoch in range(self.epochs):
             print('training step: %d/%d' % (epoch, self.epochs))
     
@@ -188,8 +189,11 @@ class Experiment:
             optimizer.step()
 
             if (epoch % 200) == 0:
+                self.surrogate_model.train(mode=False)
                 self._run_configurations(epoch)
+                self.surrogate_model.train()
 
+        self.surrogate_model.train(mode=False)
         self._run_configurations(self.epochs)
         self.writer.add_graph(self.surrogate_model, x)
         self.writer.flush()
@@ -209,19 +213,19 @@ def get_surrogate_model(architecture, dim):
             LowerNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn),
             LinearSymplectic(4, dim, bias=True)
         )
-    elif architecture == 'g1-sympnet':
+    elif architecture == 'g-sympnet':
         return torch.nn.Sequential(
-            LinearSymplectic(4, dim, bias=True),
-            LowerGradientModule(dim, n=1, bias=False, activation_fn=activation_fn),
-            LinearSymplectic(4, dim, bias=True),
-            UpperGradientModule(dim, n=1, bias=False, activation_fn=activation_fn),
-            LinearSymplectic(4, dim, bias=True),
-            LowerGradientModule(dim, n=1, bias=False, activation_fn=activation_fn),
-            LinearSymplectic(4, dim, bias=True),
-            UpperGradientModule(dim, n=1, bias=False, activation_fn=activation_fn),
-            LinearSymplectic(4, dim, bias=True),
-            LowerGradientModule(dim, n=1, bias=False, activation_fn=activation_fn),
-            LinearSymplectic(4, dim, bias=True)
+            LowerGradientModule(dim, n=30, bias=False, activation_fn=activation_fn),
+            UpperGradientModule(dim, n=30, bias=False, activation_fn=activation_fn),
+            LowerGradientModule(dim, n=30, bias=False, activation_fn=activation_fn),
+            UpperGradientModule(dim, n=30, bias=False, activation_fn=activation_fn)
+        )
+    elif architecture == 'normalized-g-sympnet':
+        return torch.nn.Sequential(
+            NormalizedLowerGradientModule(dim, n=30, bias=False, activation_fn=activation_fn, affine=False),
+            NormalizedUpperGradientModule(dim, n=30, bias=False, activation_fn=activation_fn, affine=False),
+            NormalizedLowerGradientModule(dim, n=30, bias=False, activation_fn=activation_fn, affine=False),
+            NormalizedUpperGradientModule(dim, n=30, bias=False, activation_fn=activation_fn, affine=False)
         )
     else:
         raise ValueError('Invalid architecture {}'.format(architecture))
@@ -238,7 +242,7 @@ if __name__ == '__main__':
         choices=['implicit_midpoint', 'stoermer_verlet_q', 'stoermer_verlet_p'],
         default='stoermer_verlet_q'
     )
-    parser.add_argument('--architecture', choices=['la-sympnet', 'g1-sympnet'], default='la-sympnet')
+    parser.add_argument('--architecture', choices=['la-sympnet', 'g-sympnet', 'normalized-g-sympnet'], default='la-sympnet')
     parser.add_argument('--activation', choices=['sigmoid', 'sin', 'relu', 'elu'], default='sigmoid')
     parser.add_argument('--qmin', default=-np.pi/2, type=float)
     parser.add_argument('--qmax', default=np.pi/2, type=float)

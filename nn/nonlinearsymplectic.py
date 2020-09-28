@@ -91,4 +91,38 @@ class NormalizedUpperGradientModule(UpperGradientModule):
         factor = gamma/torch.sqrt(self.var+eps)
 
         x_bottom_normalized =  factor*(x_bottom - self.mean) + beta
-        return factor*super()._matrix_calc_top(x_top, x_bottom_normalized)
+        return x_top + factor*((self.activation_fn(x_bottom_normalized.mm(self.K.t()) + self.b)*self.a).mm(self.K))
+
+class NormalizedLowerGradientModule(LowerGradientModule):
+    def __init__(self, dim:int, n:int, bias=False, activation_fn = torch.sigmoid, affine=True):
+        super(NormalizedLowerGradientModule, self).__init__(dim, n, bias, activation_fn)
+        self.affine = affine
+        if affine:
+            self.gamma = nn.Parameter(torch.Tensor(self.dim_half))
+            self.beta = nn.Parameter(torch.Tensor(self.dim_half))
+        else:
+            self.register_parameter('gamma', None)
+            self.register_parameter('beta', None)
+
+        self.register_buffer('var', torch.ones(self.dim_half))
+        self.register_buffer('mean', torch.zeros(self.dim_half))
+        self.reset_parameters2()
+
+    # TODO refactor
+    def reset_parameters2(self):
+        if self.affine:
+            with torch.no_grad():
+                nn.init.ones_(self.gamma)
+                nn.init.zeros_(self.beta)
+
+    def _matrix_calc_bottom(self, x_top, x_bottom):
+        if self.training:
+            self.var, self.mean = torch.var_mean(x_top, 0, unbiased=True)
+
+        eps = 1e-05
+        gamma = self.gamma if self.affine else 1
+        beta = self.beta if self.affine else 0
+        factor = gamma/torch.sqrt(self.var+eps)
+
+        x_top_normalized = factor*(x_top - self.mean) + beta
+        return x_bottom + factor*((self.activation_fn(x_top_normalized.mm(self.K.t()) + self.b)*self.a).mm(self.K))

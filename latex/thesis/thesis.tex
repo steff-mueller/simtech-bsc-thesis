@@ -383,6 +383,13 @@ because this reduces to a single linear layer.}
 
 \subsection{Activation layers}
 
+$V(p) = 1_n^T(\int \sigma)(p)$
+
+\begin{align*}
+	\nabla V(p) &= (DV)^T = (1_n^Tdiag(\sigma(p)))^T \\
+	&= diag(\sigma(p)) 1_n = \sigma(p)
+\end{align*}
+
 \todo{Differentiate between $a \in \mathbb{R}$ and $a \in \mathbb{R}^d$?}
 
 \subsection{Gradient layers}
