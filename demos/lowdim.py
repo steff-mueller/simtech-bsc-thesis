@@ -93,6 +93,8 @@ class Experiment:
     def __init__(self, args, model, surrogate_model):
         self.dt = args.dt
         self.epochs = args.epochs
+        self.log_symplectic_loss = args.log_symplectic_loss
+        self.log_spatial_loss = args.log_spatial_loss
         self.model = model
         self.surrogate_model = surrogate_model
 
@@ -157,14 +159,16 @@ class Experiment:
     def _log_loss(self, loss, x, y1, y, epoch):
         self.writer.add_scalar("Loss/train", loss, epoch)
 
-        # calculate and log symplectic loss
-        symplectic_loss = symplectic_mse_loss(x, y1)
-        self.writer.add_scalar('Loss/symplectic', symplectic_loss, epoch)
+        if self.log_symplectic_loss:
+            # calculate and log symplectic loss
+            symplectic_loss = symplectic_mse_loss(x, y1)
+            self.writer.add_scalar('Loss/symplectic', symplectic_loss, epoch)
 
-        # calculate and log spatial loss
-        diff = torch.norm(y-y1, p=2, dim=1)
-        plt_loss = plot_spatial_error(x.detach().numpy(), diff.detach().numpy())
-        self.writer.add_figure('Loss/Spatial', plt_loss, epoch)
+        if self.log_spatial_loss:
+            # calculate and log spatial loss
+            diff = torch.norm(y-y1, p=2, dim=1)
+            plt_loss = plot_spatial_error(x.detach().numpy(), diff.detach().numpy())
+            self.writer.add_figure('Loss/Spatial', plt_loss, epoch)
 
     def add_configuration(self, name, mu, t_start, t_end):
         self._configurations.append(Configuration(self, name, mu, t_start, t_end))
@@ -183,7 +187,7 @@ class Experiment:
             optimizer.zero_grad()
 
             # retain_graph=True to calculate symplectic loss afterwards
-            loss.backward(retain_graph=True)
+            loss.backward(retain_graph=self.log_symplectic_loss)
             self._log_loss(loss, x, y1, y, epoch)
 
             optimizer.step()
@@ -248,6 +252,8 @@ if __name__ == '__main__':
     parser.add_argument('--qmax', default=np.pi/2, type=float)
     parser.add_argument('--pmin', default=-np.sqrt(2), type=float)
     parser.add_argument('--pmax', default=np.sqrt(2), type=float)
+    parser.add_argument('--log-symplectic-loss', default=False, nargs='?', const=True, type=bool)
+    parser.add_argument('--log-spatial-loss', default=False, nargs='?', const=True, type=bool)
     args = parser.parse_args()
 
     model = SimplePendulum()
@@ -270,7 +276,7 @@ if __name__ == '__main__':
 
     expm.add_configuration('rotating_case',
         {'m': 1., 'g': 1., 'l': 1., 'q0': np.pi, 'p0': 1.}, 
-        t_start = 0, t_end = 100)
+        t_start = 0, t_end = 20)
 
     expm.add_configuration('stationary_stable_case',
         {'m': 1., 'g': 1., 'l': 1., 'q0': 0, 'p0': 0.},
