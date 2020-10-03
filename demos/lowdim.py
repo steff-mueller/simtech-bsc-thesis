@@ -93,6 +93,7 @@ class Experiment:
     def __init__(self, args, model, surrogate_model):
         self.dt = args.dt
         self.epochs = args.epochs
+        self.log_intermediate = args.log_intermediate
         self.log_symplectic_loss = args.log_symplectic_loss
         self.log_spatial_loss = args.log_spatial_loss
         self.model = model
@@ -193,7 +194,7 @@ class Experiment:
 
             optimizer.step()
 
-            if (epoch % 200) == 0:
+            if self.log_intermediate and (epoch % 500) == 0:
                 self.surrogate_model.train(mode=False)
                 self._run_configurations(epoch)
                 self.surrogate_model.train()
@@ -216,6 +217,20 @@ def get_surrogate_model(architecture, dim):
             UpperNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn),
             LinearSymplectic(4, dim, bias=True),
             LowerNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn),
+            LinearSymplectic(4, dim, bias=True)
+        )
+    elif architecture == 'normalized-la-sympnet':
+        return torch.nn.Sequential(
+            LinearSymplectic(4, dim, bias=True),
+            NormalizedLowerNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn),
+            LinearSymplectic(4, dim, bias=True),
+            NormalizedUpperNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn),
+            LinearSymplectic(4, dim, bias=True),
+            NormalizedLowerNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn),
+            LinearSymplectic(4, dim, bias=True),
+            NormalizedUpperNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn),
+            LinearSymplectic(4, dim, bias=True),
+            NormalizedLowerNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn),
             LinearSymplectic(4, dim, bias=True)
         )
     elif architecture == 'g-sympnet':
@@ -247,12 +262,13 @@ if __name__ == '__main__':
         choices=['implicit_midpoint', 'stoermer_verlet_q', 'stoermer_verlet_p'],
         default='stoermer_verlet_q'
     )
-    parser.add_argument('--architecture', choices=['la-sympnet', 'g-sympnet', 'normalized-g-sympnet'], default='la-sympnet')
+    parser.add_argument('--architecture', choices=['la-sympnet', 'normalized-la-sympnet', 'g-sympnet', 'normalized-g-sympnet'], default='la-sympnet')
     parser.add_argument('--activation', choices=['sigmoid', 'sin', 'relu', 'elu'], default='sigmoid')
     parser.add_argument('--qmin', default=-np.pi/2, type=float)
     parser.add_argument('--qmax', default=np.pi/2, type=float)
     parser.add_argument('--pmin', default=-np.sqrt(2), type=float)
     parser.add_argument('--pmax', default=np.sqrt(2), type=float)
+    parser.add_argument('--log-intermediate', default=False, nargs='?', const=True, type=bool)
     parser.add_argument('--log-symplectic-loss', default=False, nargs='?', const=True, type=bool)
     parser.add_argument('--log-spatial-loss', default=False, nargs='?', const=True, type=bool)
     args = parser.parse_args()
