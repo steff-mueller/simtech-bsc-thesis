@@ -1,11 +1,13 @@
 import unittest
 import torch
 
-from nn.linearsymplectic import UpperSymplecticConv1d, LowerSymplecticConv1d
+from nn.linearsymplectic import (UpperSymplecticConv1d, LowerSymplecticConv1d,
+    CanonicalSymmetricKernelBasis)
 
 class TestConv1d(unittest.TestCase):
     def test_upper(self):
-        module = UpperSymplecticConv1d(dim=8, bias=False)
+        basis = CanonicalSymmetricKernelBasis(3)
+        module = UpperSymplecticConv1d(dim=8, bias=False, kernel_basis=basis)
 
         k1 = 2
         k2 = -1
@@ -24,7 +26,7 @@ class TestConv1d(unittest.TestCase):
         input2 = torch.arange(8, dtype=torch.float) + 5
         input = torch.stack([input1, input2])
 
-        module.k.data = torch.tensor([k2, k1, k2])
+        module.a.data = torch.tensor([k1, k2], dtype=torch.float).reshape(2,1)
 
         expected1 = matrix.mm(input1.reshape(8,1)).reshape(1,8)
         expected2 = matrix.mm(input2.reshape(8,1)).reshape(1,8)
@@ -37,7 +39,8 @@ class TestConv1d(unittest.TestCase):
         torch.testing.assert_allclose(actual, expected)
 
     def test_lower(self):
-        module = LowerSymplecticConv1d(dim=8, bias=False)
+        basis = CanonicalSymmetricKernelBasis(3)
+        module = LowerSymplecticConv1d(dim=8, bias=False, kernel_basis=basis)
 
         k1 = 2
         k2 = -1
@@ -56,7 +59,7 @@ class TestConv1d(unittest.TestCase):
         input2 = torch.arange(8, dtype=torch.float) + 5
         input = torch.stack([input1, input2])
 
-        module.k.data = torch.tensor([k2, k1, k2])
+        module.a.data = torch.tensor([k1, k2], dtype=torch.float).reshape(2,1)
 
         expected1 = matrix.mm(input1.reshape(8,1)).reshape(1,8)
         expected2 = matrix.mm(input2.reshape(8,1)).reshape(1,8)
