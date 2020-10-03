@@ -40,11 +40,9 @@ class UpperGradientModule(SymplecticTriangularUnit):
     def reset_parameters(self):
         super().reset_parameters()
         with torch.no_grad():
-            # Inspired by initialization of Linear layers:
-            # https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
-            nn.init.uniform_(self.a, -math.sqrt(1/self.dim_half), math.sqrt(1/self.dim_half))
-            nn.init.uniform_(self.b, -math.sqrt(1/self.dim_half), math.sqrt(1/self.dim_half))
-            nn.init.uniform_(self.K, -math.sqrt(1/self.dim_half), math.sqrt(1/self.dim_half))
+            nn.init.uniform_(self.a, -0.01, 0.01)
+            nn.init.constant_(self.b, 0)
+            nn.init.uniform_(self.K, -0.01, 0.01)
             
     def _matrix_calc_top(self, x_top, x_bottom):
         return x_top + (self.activation_fn(x_bottom.mm(self.K.t()) + self.b)*self.a).mm(self.K)
@@ -59,41 +57,42 @@ class LowerGradientModule(UpperGradientModule):
     def _matrix_calc_bottom(self, x_top, x_bottom):
         return x_bottom + (self.activation_fn(x_top.mm(self.K.t()) + self.b)*self.a).mm(self.K)
 
-class NormalizedUpperGradientModule(UpperGradientModule):
-    def __init__(self, dim:int, n:int, bias=False, activation_fn = torch.sigmoid, affine=True):
-        super(NormalizedUpperGradientModule, self).__init__(dim, n, bias, activation_fn)
-        self.affine = affine
-        if affine:
-            self.gamma = nn.Parameter(torch.Tensor(self.dim_half))
-            self.beta = nn.Parameter(torch.Tensor(self.dim_half))
-        else:
-            self.register_parameter('gamma', None)
-            self.register_parameter('beta', None)
+class NormalizedUpperGradientModule(SymplecticTriangularUnit):
+    def __init__(self, dim:int, n:int, bias=False, activation_fn = torch.sigmoid):
+        super(NormalizedUpperGradientModule, self).__init__(dim, bias, reset_params=False)
+        self.activation_fn = activation_fn
+        
+        self.register_buffer('var', torch.ones(n))
+        self.register_buffer('mean', torch.zeros(n))
 
-        self.register_buffer('var', torch.ones(self.dim_half))
-        self.register_buffer('mean', torch.zeros(self.dim_half))
-        self.reset_parameters2()
+        self.a = nn.Parameter(torch.Tensor(n))
+        self.b = nn.Parameter(torch.Tensor(n))
+        self.K = nn.Parameter(torch.Tensor(n, self.dim_half))
+        self.gamma = nn.Parameter(torch.Tensor(n))
+        self.beta = nn.Parameter(torch.Tensor(n))
 
-    # TODO refactor
-    def reset_parameters2(self):
-        if self.affine:
-            with torch.no_grad():
-                nn.init.ones_(self.gamma)
-                nn.init.zeros_(self.beta)
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        super().reset_parameters()
+        with torch.no_grad():
+            nn.init.ones_(self.gamma)
+            nn.init.zeros_(self.beta)
+
+            nn.init.uniform_(self.a, -0.01, 0.01)
+            nn.init.constant_(self.b, 0)
+            nn.init.uniform_(self.K, -10, 10)
 
     def _normalize(self, input, eps = 1e-05):
         if self.training:
             self.var, self.mean = torch.var_mean(input, 0, unbiased=True)
 
-        gamma = self.gamma if self.affine else 1
-        beta = self.beta if self.affine else 0
-
-        factor = gamma/torch.sqrt(self.var+eps)
-        return factor*(input - self.mean) + beta, factor
+        factor = self.gamma/torch.sqrt(self.var+eps)
+        return factor*(input - self.mean) + self.beta, factor
 
     def _matrix_calc_top(self, x_top, x_bottom):
-        x_bottom_normalized, factor = self._normalize(x_bottom)
-        return x_top + ((self.activation_fn(x_bottom_normalized.mm(self.K.t()) + self.b)*self.a).mm(self.K))*factor
+        pre_activation, factor = self._normalize(x_bottom.mm(self.K.t()) + self.b)
+        return x_top + ((self.activation_fn(pre_activation)*factor*self.a).mm(self.K))
 
     def _matrix_calc_bottom(self, x_top, x_bottom):
         return x_bottom
@@ -103,5 +102,5 @@ class NormalizedLowerGradientModule(NormalizedUpperGradientModule):
         return x_top
 
     def _matrix_calc_bottom(self, x_top, x_bottom):
-        x_top_normalized, factor = self._normalize(x_top)
-        return x_bottom + ((self.activation_fn(x_top_normalized.mm(self.K.t()) + self.b)*self.a).mm(self.K))*factor
+        pre_activation, factor = self._normalize(x_top.mm(self.K.t()) + self.b)
+        return x_bottom + (self.activation_fn(pre_activation)*factor*self.a).mm(self.K)

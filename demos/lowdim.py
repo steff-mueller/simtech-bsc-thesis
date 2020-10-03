@@ -180,7 +180,8 @@ class Experiment:
 
         self.surrogate_model.train()
         for epoch in range(self.epochs):
-            print('training step: %d/%d' % (epoch, self.epochs))
+            if (epoch % 100) == 0:
+                print('training step: %d/%d' % (epoch, self.epochs))
     
             y1 = self.surrogate_model(x)
             loss = criterion(y1, y)        
@@ -226,10 +227,10 @@ def get_surrogate_model(architecture, dim):
         )
     elif architecture == 'normalized-g-sympnet':
         return torch.nn.Sequential(
-            NormalizedLowerGradientModule(dim, n=30, bias=False, activation_fn=activation_fn, affine=False),
-            NormalizedUpperGradientModule(dim, n=30, bias=False, activation_fn=activation_fn, affine=False),
-            NormalizedLowerGradientModule(dim, n=30, bias=False, activation_fn=activation_fn, affine=False),
-            NormalizedUpperGradientModule(dim, n=30, bias=False, activation_fn=activation_fn, affine=False)
+            NormalizedLowerGradientModule(dim, n=30, bias=False, activation_fn=activation_fn),
+            NormalizedUpperGradientModule(dim, n=30, bias=False, activation_fn=activation_fn),
+            NormalizedLowerGradientModule(dim, n=30, bias=False, activation_fn=activation_fn),
+            NormalizedUpperGradientModule(dim, n=30, bias=False, activation_fn=activation_fn)
         )
     else:
         raise ValueError('Invalid architecture {}'.format(architecture))
