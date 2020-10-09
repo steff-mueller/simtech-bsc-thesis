@@ -145,3 +145,41 @@ class NormalizedLowerGradientModule(NormalizedUpperGradientModule):
     def _matrix_calc_bottom(self, x_top, x_bottom):
         pre_activation, factor = self._normalize(x_top.mm(self.K.t()) + self.b)
         return x_bottom + (self.activation_fn(pre_activation)*factor*self.a).mm(self.K)
+
+class UpperConv1dGradientModule(SymplecticTriangularUnit):
+    def __init__(self, dim:int, n:int, bias=False, activation_fn = torch.sigmoid):
+        super(UpperConv1dGradientModule, self).__init__(dim, bias, reset_params=False)
+        self.n = n
+        self.activation_fn = activation_fn
+        self.a = nn.Parameter(torch.Tensor(self.n))
+        self.b = nn.Parameter(torch.Tensor(self.n))
+        self.K = nn.Parameter(torch.Tensor(1,1,self.n))
+        self.reset_parameters()
+    
+    def reset_parameters(self):
+        super().reset_parameters()
+        with torch.no_grad():
+            nn.init.uniform_(self.a, -0.01, 0.01)
+            nn.init.constant_(self.b, 0)
+            nn.init.uniform_(self.K, -0.01, 0.01)
+
+    def _conv1d(self, x_half: torch.Tensor):
+        x_half = x_half.reshape((-1, 1, self.dim_half))
+        pre_activation = nn.functional.conv_transpose1d(x_half, self.K, stride=self.n)
+        pre_activation += self.b.expand((self.dim_half,self.n)).reshape((1,self.dim_half*self.n))
+        activation = self.activation_fn(pre_activation)
+        result = nn.functional.conv1d(activation, self.K*self.a, stride=self.n)
+        return result.reshape((-1,self.dim_half))
+
+    def _matrix_calc_top(self, x_top, x_bottom):
+        return x_top + self._conv1d(x_bottom)
+
+    def _matrix_calc_bottom(self, x_top, x_bottom):
+        return x_bottom
+
+class LowerConv1dGradientModule(UpperConv1dGradientModule):
+    def _matrix_calc_top(self, x_top, x_bottom):
+        return x_top
+   
+    def _matrix_calc_bottom(self, x_top, x_bottom):
+        return self._conv1d(x_top) + x_bottom

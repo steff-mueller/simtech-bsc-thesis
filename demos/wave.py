@@ -59,7 +59,7 @@ class WaveExperiment:
             self.num_integrator = SeparableStormerVerletIntegrator(self.dt, use_staggered='p')
         
         if args.init_stormer_verlet:
-            self._init_with_stormer_verlet()
+            self._init_with_stormer_verlet(args.model)
         else:
             self._init_surrogate_model(args.architecture)
 
@@ -102,27 +102,87 @@ class WaveExperiment:
                 LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
                 LowerNonlinearSymplectic(self.dim, activation_fn=torch.sin, scalar_weight=True)
             )
+        elif architecture == 'gradient':
+            kernel_basis = FDSymmetricKernelBasis(kernel_size = 3)
+            self.surrogate_model = torch.nn.Sequential(
+                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, bias=True, kernel_basis=kernel_basis),
+                LowerConv1dGradientModule(self.dim, bias=False, n=40),
+                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis)
+            )
 
+            # initialize weights with Störmer-Verlet method
+            self.surrogate_model[0].a.data = self.surrogate_model[3].a.data = torch.tensor([
+                [self.dt/2],
+                [0.]
+            ])
+            self.surrogate_model[0].a.requires_grad = False
+            self.surrogate_model[3].a.requires_grad = False
 
-    def _init_with_stormer_verlet(self):
-        kernel_basis = FDSymmetricKernelBasis(kernel_size = 3)
-        self.surrogate_model = torch.nn.Sequential(
-            UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-            LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-            UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis)
-        )
+            # non-zero Dirichlet value at right boundary
+            dx = self.l/self.n_x
+            initial_value = self.model.initial_value(self.mu)
+            q_right = initial_value.vec_q[-1]
 
-        # initialize weights with Störmer-Verlet method
-        self.surrogate_model[0].a.data = self.surrogate_model[2].a.data = torch.tensor([
-            [self.dt/2],
-            [0.]
-        ])
+            bias = torch.zeros(self.dim)
+            bias[-1] = (self.dt)*((self.mu['c']/dx)**2)*q_right
+            self.surrogate_model[1].bias.data = bias
+            self.surrogate_model[1].bias.requires_grad = False
 
-        dx = self.l/self.n_x
-        self.surrogate_model[1].a.data = torch.tensor([
-            [0.], 
-            [self.dt*(self.mu['c']/dx)**2]
-        ])
+            self.surrogate_model[1].a.data = torch.tensor([
+                [0.], 
+                [self.dt*(self.mu['c']/dx)**2]
+            ])
+            self.surrogate_model[1].a.requires_grad = False
+
+    def _init_with_stormer_verlet(self, model_name):
+        if model_name == 'standing_wave' or model_name == 'transport':
+            kernel_basis = FDSymmetricKernelBasis(kernel_size = 3)
+            self.surrogate_model = torch.nn.Sequential(
+                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis)
+            )
+
+            self.surrogate_model[0].a.data = self.surrogate_model[2].a.data = torch.tensor([
+                [self.dt/2],
+                [0.]
+            ])
+
+            dx = self.l/self.n_x
+            self.surrogate_model[1].a.data = torch.tensor([
+                [0.],
+                [self.dt*(self.mu['c']/dx)**2]
+            ])
+        elif model_name == 'sine_gordon':
+            kernel_basis = FDSymmetricKernelBasis(kernel_size = 3)
+            self.surrogate_model = torch.nn.Sequential(
+                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, bias=True, kernel_basis=kernel_basis),
+                LowerNonlinearSymplectic(self.dim, bias=False, activation_fn=torch.sin, scalar_weight=True),
+                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis)
+            )
+
+            self.surrogate_model[0].a.data = self.surrogate_model[3].a.data = torch.tensor([
+                [self.dt/2],
+                [0.]
+            ])
+
+            # non-zero Dirichlet value at right boundary
+            dx = self.l/self.n_x
+            initial_value = self.model.initial_value(self.mu)
+            q_right = initial_value.vec_q[-1]
+
+            bias = torch.zeros(self.dim)
+            bias[-1] = (self.dt)*((self.mu['c']/dx)**2)*q_right
+            self.surrogate_model[1].bias.data = bias
+
+            self.surrogate_model[1].a.data = torch.tensor([
+                [0.], 
+                [self.dt*(self.mu['c']/dx)**2]
+            ])
+
+            self.surrogate_model[2].a.data = torch.tensor([-self.dt])
 
     def _init_model(self, model_name):
         if model_name == 'standing_wave':
@@ -136,7 +196,9 @@ class WaveExperiment:
         elif model_name == 'sine_gordon':
             self.mu = {'c': 1, 'v': .2}
             self.model = SineGordonProblem(self.l, self.n_x)
-            self.surrogate_phase_space = Dirichlet1dNumpyPhaseSpace(self.dim, q_right = 6)
+            initial_value = self.model.initial_value(self.mu)
+            q_right = initial_value.vec_q[-1]
+            self.surrogate_phase_space = Dirichlet1dNumpyPhaseSpace(self.dim, q_right = q_right)
 
     def _compute_solution(self): 
         # compute solution for all t in [0, T]
@@ -240,7 +302,7 @@ class WaveExperiment:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run experiments.')
     parser.add_argument('--epochs', default=500, type=int)
-    parser.add_argument('--architecture', choices=['linear', 'nonlinear'], default='linear',
+    parser.add_argument('--architecture', choices=['linear', 'nonlinear', 'gradient'], default='linear',
         help='The architecture to use for the neural network.')
     parser.add_argument('--model', choices=['standing_wave', 'transport', 'sine_gordon'], default='standing_wave')
     parser.add_argument('--dt', default=.1, type=float)
