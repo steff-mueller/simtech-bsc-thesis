@@ -183,3 +183,46 @@ class LowerConv1dGradientModule(UpperConv1dGradientModule):
    
     def _matrix_calc_bottom(self, x_top, x_bottom):
         return self._conv1d(x_top) + x_bottom
+
+class NormalizedUpperConv1dGradientModule(_NormBase):
+    def __init__(self, dim:int, n:int, bias=False, activation_fn = torch.sigmoid):
+        super(NormalizedUpperConv1dGradientModule, self).__init__(dim, bias, norm_dim=n, reset_params=False)
+        self.n = n
+        self.activation_fn = activation_fn
+        self.a = nn.Parameter(torch.Tensor(self.n))
+        self.b = nn.Parameter(torch.Tensor(self.n))
+        self.K = nn.Parameter(torch.Tensor(1,1,self.n))
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        super().reset_parameters()
+        with torch.no_grad():
+            nn.init.uniform_(self.a, -0.01, 0.01)
+            nn.init.uniform_(self.b, -0.01, 0.01)
+            nn.init.uniform_(self.K, -10, 10)
+
+    def _conv1d(self, x_half: torch.Tensor):
+        x_half = x_half.reshape((-1, 1, self.dim_half))
+        pre_activation = nn.functional.conv_transpose1d(x_half, self.K, stride=self.n)
+        pre_activation += self.b.expand((self.dim_half,self.n)).reshape((1,self.dim_half*self.n))
+
+        n_training = pre_activation.shape[0]
+        pre_activation_normalized, factor = self._normalize(pre_activation.reshape((n_training*self.dim_half,self.n)))
+        pre_activation_normalized = pre_activation_normalized.reshape((n_training,1,self.dim_half*self.n))
+
+        activation = self.activation_fn(pre_activation_normalized)
+        result = nn.functional.conv1d(activation, self.K*factor*self.a, stride=self.n)
+        return result.reshape((-1,self.dim_half))
+
+    def _matrix_calc_top(self, x_top, x_bottom):
+        return x_top + self._conv1d(x_bottom)
+
+    def _matrix_calc_bottom(self, x_top, x_bottom):
+        return x_bottom
+        
+class NormalizedLowerConv1dGradientModule(NormalizedUpperConv1dGradientModule):
+    def _matrix_calc_top(self, x_top, x_bottom):
+        return x_top
+   
+    def _matrix_calc_bottom(self, x_top, x_bottom):
+        return self._conv1d(x_top) + x_bottom

@@ -270,7 +270,8 @@ class WaveExperiment:
         optimizer = torch.optim.Adam(self.surrogate_model.parameters(), lr=1e-2)
 
         for epoch in range(self.epochs):
-            print('training step: %d/%d' % (epoch, self.epochs))
+            if (epoch % 100) == 0:
+                print('training step: %d/%d' % (epoch, self.epochs))
     
             y1 = self.surrogate_model(x)
             loss = criterion(y1, y)
@@ -281,7 +282,7 @@ class WaveExperiment:
 
             optimizer.step()
 
-            if (epoch % 200) == 0:
+            if (epoch % 500) == 0:
                 self._plot(epoch)
 
         self._plot(self.epochs)
