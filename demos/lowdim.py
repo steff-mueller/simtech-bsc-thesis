@@ -263,7 +263,7 @@ if __name__ == '__main__':
         default='stoermer_verlet_q'
     )
     parser.add_argument('--architecture', choices=['la-sympnet', 'normalized-la-sympnet', 'g-sympnet', 'normalized-g-sympnet'], default='la-sympnet')
-    parser.add_argument('--activation', choices=['sigmoid', 'sin', 'relu', 'elu'], default='sigmoid')
+    parser.add_argument('--activation', choices=['sigmoid', 'sin', 'relu', 'elu', 'snake'], default='sigmoid')
     parser.add_argument('--qmin', default=-np.pi/2, type=float)
     parser.add_argument('--qmax', default=np.pi/2, type=float)
     parser.add_argument('--pmin', default=-np.sqrt(2), type=float)
@@ -279,7 +279,8 @@ if __name__ == '__main__':
         'sigmoid': torch.sigmoid,
         'sin': torch.sin,
         'relu': torch.relu,
-        'elu': torch.nn.ELU
+        'elu': torch.nn.ELU(),
+        'snake': lambda x: x+torch.sin(x)**2 # https://arxiv.org/pdf/2006.08195v1.pdf
     }
     activation_fn = activation_functions[args.activation]
     dim = 2
