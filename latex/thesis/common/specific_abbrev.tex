@@ -1,1 +1,16 @@
 % thesis specific commands
+
+\newcommand{\qpvec}{\begin{pmatrix}
+    q \\
+    p
+\end{pmatrix}}
+
+\newcommand{\uppersympop}[1]{\begin{bmatrix}
+    I & {#1} \\
+    0 & I
+\end{bmatrix} \qpvec}
+
+\newcommand{\lowersympop}[1]{\begin{bmatrix}
+    I & 0 \\
+    {#1} & I
+\end{bmatrix} \qpvec}

@@ -248,32 +248,26 @@ the element-wise application of $f$ on a vector $x \in \mathbb{R}^n$ with:
 
 \section{Architecture}
 
-In this section we first recapitulate the symplectic layers proposed by Jin et. al 
-in \cite{Jin2020} \todo{How to cite with name?}. Additionally we supplement proofs for 
-symplecticity. A similar architecture was initially proposed by Deco in \cite{Deco1995} 
+In this section we describe the architecture of our symplectic neural networks.
+The linear layers, activation layers and gradient layers are recapitulated as 
+proposed by Jin et. al  in \cite{Jin2020} \todo{How to cite with name?}.
+The convolution layers and normalized versions of the activation and gradient layers
+are contributions of this work.
+We supplement proofs for symplecticity for all layers. 
+A similar architecture was initially proposed by Deco in \cite{Deco1995} 
 \todo{Have a deeper look at \cite{Deco1995}}. In the second part of this section 
 we propose new symplectic layers.
+
+\todo{Relation to Residual Networks / ResNet}
 
 \begin{lemma}\label{jacobi_symmetric}
 	Let
 	\begin{equation*}
-		f_{up} := \begin{bmatrix}
-			I & g \\
-			0 & I
-		\end{bmatrix} \begin{pmatrix}
-			q \\
-			p
-		\end{pmatrix}
+		f_{up} \qpvec := \uppersympop{g}
 	\end{equation*}
 	and
 	\begin{equation*}
-		f_{low} := \begin{bmatrix}
-			I & 0 \\
-			g & I
-		\end{bmatrix} \begin{pmatrix}
-			q \\
-			p
-		\end{pmatrix}
+		f_low \qpvec := \lowersympop{g}
 	\end{equation*}
 	where $g: \mathbb{R}^d \rightarrow \mathbb{R}^d \in C^1$. 
 
@@ -314,23 +308,17 @@ we propose new symplectic layers.
 \begin{corollary}\label{matrix_symmetric}
 	Let
 	\begin{equation*}
-		f_{up} := \begin{pmatrix}
+		f_{up} \qpvec := \begin{pmatrix}
 			I & S \\
 			0 & I
-		\end{pmatrix} \begin{pmatrix}
-			q \\
-			p
-		\end{pmatrix}
+		\end{pmatrix} \qpvec
 	\end{equation*}
 	and
 	\begin{equation*}
-		f_{low} := \begin{pmatrix}
+		f_{low} \qpvec := \begin{pmatrix}
 			I & 0 \\
 			S & I
-		\end{pmatrix} \begin{pmatrix}
-			q \\
-			p
-		\end{pmatrix}
+		\end{pmatrix} \qpvec
 	\end{equation*}
 	where $S \in \mathbb{R}^{dxd}$. 
 
@@ -342,23 +330,11 @@ The next corollary is useful to construct symplectic maps.
 \begin{corollary}\label{gradient_corollary}
 	Let $V \in C^2(\mathbb{R}^d, \mathbb{R})$. Then
 	\begin{equation*}
-		f_{up} := \begin{bmatrix}
-			I & \grad{V} \\
-			0 & I
-		\end{bmatrix} \begin{pmatrix}
-			q \\
-			p
-		\end{pmatrix}
+		f_{up} \qpvec := \uppersympop{\grad{V}}
 	\end{equation*}
 	and
 	\begin{equation*}
-		f_{low} := \begin{bmatrix}
-			I & 0 \\
-			\grad{V} & I
-		\end{bmatrix} \begin{pmatrix}
-			q \\
-			p
-		\end{pmatrix}
+		f_{low} \qpvec := \lowersympop{\grad{V}}
 	\end{equation*}
 	define a symplectic map.
 \end{corollary}
@@ -381,6 +357,17 @@ see my 'Gradient module' notes}
 \todo{It does not make sense to put two upper or lower linear layers after each other,
 because this reduces to a single linear layer.}
 
+\subsection{Convolution layers}
+
+\todo{Try motivating convolution layers by showing that the linear layers explode if $d$ becomes large.}
+
+\todo{Bias important if non-zero Dirichlet boundaries, but only at borders!}
+
+\todo{Interesting: Finite difference basis only contains even-order derivatives, otherwise it
+would not be symplectic (symmetric). What happens if Hamiltonian contains even-order derivative?
+Symmetric Hessian does not explain it, because we only take gradient of Hamiltonian and not Hessian.
+Relation to Störmer-Verlet.}
+
 \subsection{Activation layers}
 
 $V(p) = 1_n^T(\int \sigma)(p)$
@@ -395,31 +382,13 @@ $V(p) = 1_n^T(\int \sigma)(p)$
 \subsection{Gradient layers}
 
 \begin{equation*}
-	\mathcal{G}_{up} \begin{pmatrix}
-		q \\
-		p
-	\end{pmatrix} := \begin{bmatrix}
-		I & \hat{\sigma} \\
-		0 & I
-	\end{bmatrix} \begin{pmatrix}
-		q \\
-		p
-	\end{pmatrix} := \begin{pmatrix}
+	\mathcal{G}_{up} \qpvec := \uppersympop{\hat{\sigma}} := \begin{pmatrix}
 		q + K^T diag(a) [\sigma]_n(Kp + b) \\
 		p
 	\end{pmatrix}
 \end{equation*}
 \begin{equation*}
-	\mathcal{G}_{low} \begin{pmatrix}
-		q \\
-		p
-	\end{pmatrix} := \begin{bmatrix}
-		I & 0 \\
-		\hat{\sigma} & I
-	\end{bmatrix} \begin{pmatrix}
-		q \\
-		p
-	\end{pmatrix} := \begin{pmatrix}
+	\mathcal{G}_{low} \qpvec \lowersympop{\hat{\sigma}} := \begin{pmatrix}
 		q \\
 		K^T diag(a) [\sigma]_n(Kq + b) + p
 	\end{pmatrix}
@@ -447,26 +416,28 @@ where $K \in \mathbb{R}^{nxd}$ and $a,b \in \mathbb{R}^n$.
 	are symplectic. \todo{Best way to reference other theorems?}
 \end{proof}
 
-\subsection{Scaling layers}
+\todo{For high dimensions $K$ and $K^T$ can be implemented as transposed convolution
+and convolution operators.}
 
-\subsection{Convolution layers}
+\subsection{Normalization}
 
-\todo{Try motivating convolution layers by showing that the linear layers explode if $d$ becomes large.}
+\todo{Introduce batch normalization from literature.}
 
-\todo{Bias important if non-zero Dirichlet boundaries, but only at borders!}
+\todo{Normalized activation layers}
 
-\todo{Interesting: Finite difference basis only contains even-order derivatives, otherwise it
-would not be symplectic (symmetric). What happens if Hamiltonian contains even-order derivative?
-Symmetric Hessian does not explain it, because we only take gradient of Hamiltonian and not Hessian.
-Relation to Störmer-Verlet.}
+\todo{Normalized gradient layers}
 
 \section{Relation to geometric integrators}
 
-\section{Experiments}
+\section{Numerical experiments}
 
 \subsection{Low-dimensional systems}
 
-\subsection{High-dimensonal systems}
+\subsubsection{Harmonic Oscillator}
+
+\subsubsection{Simple Pendulum}
+
+\subsection{High-dimensional systems}
 
 \todo{Describe Hamiltonian PDEs. A PDE describes system locally, thus it makes sense to share parameters, for
 example in the form of CNNs etc.}
@@ -487,8 +458,6 @@ Assumptions:
 
 \todo{Activation layer with sin works well if $a \in \mathbb{R}$, i.e. activation function is applied
 isotropic.}
-
-\subsubsection{Linear wave equation in two dimensions}
 
 \subsubsection{Linear elastic beam in three dimensions}
 
