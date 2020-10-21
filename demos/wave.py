@@ -107,24 +107,26 @@ class WaveExperiment:
             self.surrogate_model = torch.nn.Sequential(
                 UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
                 LowerSymplecticConv1d(self.dim, bias=True, kernel_basis=kernel_basis),
-                LowerConv1dGradientModule(self.dim, bias=False, n=40),
+                NormalizedLowerConv1dGradientModule(self.dim, bias=False, n=100),
                 UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis)
             )
 
             # initialize weights with Störmer-Verlet method
-            self.surrogate_model[0].a.data = self.surrogate_model[3].a.data = torch.tensor([
+            self.surrogate_model[0].a.data = self.surrogate_model[-1].a.data = torch.tensor([
                 [self.dt/2],
                 [0.]
             ])
             self.surrogate_model[0].a.requires_grad = False
-            self.surrogate_model[3].a.requires_grad = False
+            self.surrogate_model[-1].a.requires_grad = False
 
             # non-zero Dirichlet value at right boundary
             dx = self.l/self.n_x
             initial_value = self.model.initial_value(self.mu)
+            q_left = initial_value.vec_q[0]
             q_right = initial_value.vec_q[-1]
 
             bias = torch.zeros(self.dim)
+            bias[0] = (self.dt)*((self.mu['c']/dx)**2)*q_left
             bias[-1] = (self.dt)*((self.mu['c']/dx)**2)*q_right
             self.surrogate_model[1].bias.data = bias
             self.surrogate_model[1].bias.requires_grad = False
@@ -171,9 +173,11 @@ class WaveExperiment:
             # non-zero Dirichlet value at right boundary
             dx = self.l/self.n_x
             initial_value = self.model.initial_value(self.mu)
+            q_left = initial_value.vec_q[0]
             q_right = initial_value.vec_q[-1]
 
             bias = torch.zeros(self.dim)
+            bias[0] = (self.dt)*((self.mu['c']/dx)**2)*q_left
             bias[-1] = (self.dt)*((self.mu['c']/dx)**2)*q_right
             self.surrogate_model[1].bias.data = bias
 
