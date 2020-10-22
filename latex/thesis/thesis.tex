@@ -363,6 +363,8 @@ because this reduces to a single linear layer.}
 
 \todo{Bias important if non-zero Dirichlet boundaries, but only at borders!}
 
+\todo{Padding modes}
+
 \todo{Interesting: Finite difference basis only contains even-order derivatives, otherwise it
 would not be symplectic (symmetric). What happens if Hamiltonian contains even-order derivative?
 Symmetric Hessian does not explain it, because we only take gradient of Hamiltonian and not Hessian.
@@ -388,7 +390,7 @@ $V(p) = 1_n^T(\int \sigma)(p)$
 	\end{pmatrix}
 \end{equation*}
 \begin{equation*}
-	\mathcal{G}_{low} \qpvec \lowersympop{\hat{\sigma}} := \begin{pmatrix}
+	\mathcal{G}_{low} \qpvec := \lowersympop{\hat{\sigma}} := \begin{pmatrix}
 		q \\
 		K^T diag(a) [\sigma]_n(Kq + b) + p
 	\end{pmatrix}

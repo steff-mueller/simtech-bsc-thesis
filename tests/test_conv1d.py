@@ -8,7 +8,7 @@ from nn.nonlinearsymplectic import UpperConv1dGradientModule
 class TestConv1d(unittest.TestCase):
     def test_upper(self):
         basis = CanonicalSymmetricKernelBasis(3)
-        module = UpperSymplecticConv1d(dim=8, bias=False, kernel_basis=basis)
+        module = UpperSymplecticConv1d(dim=8, kernel_basis=basis)
 
         k1 = 2
         k2 = -1
@@ -41,7 +41,7 @@ class TestConv1d(unittest.TestCase):
 
     def test_lower(self):
         basis = CanonicalSymmetricKernelBasis(3)
-        module = LowerSymplecticConv1d(dim=8, bias=False, kernel_basis=basis)
+        module = LowerSymplecticConv1d(dim=8, kernel_basis=basis)
 
         k1 = 2
         k2 = -1

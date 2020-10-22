@@ -67,48 +67,55 @@ class WaveExperiment:
         kernel_basis = FDSymmetricKernelBasis(kernel_size = 3)
         if architecture == 'linear':
             self.surrogate_model = torch.nn.Sequential(
-                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis)
+                UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, kernel_basis=kernel_basis)
             )
         elif architecture == 'nonlinear':
             self.surrogate_model = torch.nn.Sequential(
-                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
                 UpperNonlinearSymplectic(self.dim, activation_fn=torch.sin, scalar_weight=True),
 
-                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
                 LowerNonlinearSymplectic(self.dim, activation_fn=torch.sin, scalar_weight=True),
 
-                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
                 UpperNonlinearSymplectic(self.dim, activation_fn=torch.sin, scalar_weight=True),
 
-                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
                 LowerNonlinearSymplectic(self.dim, activation_fn=torch.sin, scalar_weight=True)
             )
         elif architecture == 'gradient':
             kernel_basis = FDSymmetricKernelBasis(kernel_size = 3)
+
+            # non-zero Dirichlet value
+            initial_value = self.model.initial_value(self.mu)
+            q_left = initial_value.vec_q[0]
+            q_right = initial_value.vec_q[-1]
+            padding = (q_left, q_right)
+
             self.surrogate_model = torch.nn.Sequential(
-                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, bias=True, kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, padding_values=padding, kernel_basis=kernel_basis),
                 NormalizedLowerConv1dGradientModule(self.dim, bias=False, n=100),
-                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis)
+                UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis)
             )
 
             # initialize weights with Störmer-Verlet method
@@ -119,18 +126,7 @@ class WaveExperiment:
             self.surrogate_model[0].a.requires_grad = False
             self.surrogate_model[-1].a.requires_grad = False
 
-            # non-zero Dirichlet value at right boundary
             dx = self.l/self.n_x
-            initial_value = self.model.initial_value(self.mu)
-            q_left = initial_value.vec_q[0]
-            q_right = initial_value.vec_q[-1]
-
-            bias = torch.zeros(self.dim)
-            bias[0] = (self.dt)*((self.mu['c']/dx)**2)*q_left
-            bias[-1] = (self.dt)*((self.mu['c']/dx)**2)*q_right
-            self.surrogate_model[1].bias.data = bias
-            self.surrogate_model[1].bias.requires_grad = False
-
             self.surrogate_model[1].a.data = torch.tensor([
                 [0.], 
                 [self.dt*(self.mu['c']/dx)**2]
@@ -141,9 +137,9 @@ class WaveExperiment:
         if model_name == 'standing_wave' or model_name == 'transport':
             kernel_basis = FDSymmetricKernelBasis(kernel_size = 3)
             self.surrogate_model = torch.nn.Sequential(
-                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis)
+                UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis)
             )
 
             self.surrogate_model[0].a.data = self.surrogate_model[2].a.data = torch.tensor([
@@ -158,11 +154,18 @@ class WaveExperiment:
             ])
         elif model_name == 'sine_gordon':
             kernel_basis = FDSymmetricKernelBasis(kernel_size = 3)
+
+            # non-zero Dirichlet value
+            initial_value = self.model.initial_value(self.mu)
+            q_left = initial_value.vec_q[0]
+            q_right = initial_value.vec_q[-1]
+            padding = (q_left, q_right)
+
             self.surrogate_model = torch.nn.Sequential(
-                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, bias=True, kernel_basis=kernel_basis),
-                LowerNonlinearSymplectic(self.dim, bias=False, activation_fn=torch.sin, scalar_weight=True),
-                UpperSymplecticConv1d(self.dim, bias=False, kernel_basis=kernel_basis)
+                UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, padding_values=padding, kernel_basis=kernel_basis),
+                LowerNonlinearSymplectic(self.dim, activation_fn=torch.sin, scalar_weight=True),
+                UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis)
             )
 
             self.surrogate_model[0].a.data = self.surrogate_model[3].a.data = torch.tensor([
@@ -170,17 +173,7 @@ class WaveExperiment:
                 [0.]
             ])
 
-            # non-zero Dirichlet value at right boundary
             dx = self.l/self.n_x
-            initial_value = self.model.initial_value(self.mu)
-            q_left = initial_value.vec_q[0]
-            q_right = initial_value.vec_q[-1]
-
-            bias = torch.zeros(self.dim)
-            bias[0] = (self.dt)*((self.mu['c']/dx)**2)*q_left
-            bias[-1] = (self.dt)*((self.mu['c']/dx)**2)*q_right
-            self.surrogate_model[1].bias.data = bias
-
             self.surrogate_model[1].a.data = torch.tensor([
                 [0.], 
                 [self.dt*(self.mu['c']/dx)**2]
@@ -273,6 +266,7 @@ class WaveExperiment:
         criterion = torch.nn.MSELoss()
         optimizer = torch.optim.Adam(self.surrogate_model.parameters(), lr=1e-2)
 
+        self.surrogate_model.train()
         for epoch in range(self.epochs):
             if (epoch % 100) == 0:
                 print('training step: %d/%d' % (epoch, self.epochs))
@@ -287,8 +281,11 @@ class WaveExperiment:
             optimizer.step()
 
             if (epoch % 500) == 0:
+                self.surrogate_model.train(mode=False)
                 self._plot(epoch)
+                self.surrogate_model.train()
 
+        self.surrogate_model.train(mode=False)
         self._plot(self.epochs)
         self.writer.add_graph(self.surrogate_model, x)
 

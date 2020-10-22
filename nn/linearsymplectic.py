@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 
+from typing import Union, Literal
 import math
 from collections import OrderedDict
 from abc import ABC, abstractmethod
@@ -140,8 +141,14 @@ class FDSymmetricKernelBasis(KernelBasis):
         return iter(basis)
 
 class UpperSymplecticConv1d(SymplecticTriangularUnit):
-    def __init__(self, dim, bias=True, kernel_basis=CanonicalSymmetricKernelBasis(3)):
-        super(UpperSymplecticConv1d, self).__init__(dim, bias, reset_params=False)
+    def __init__(self, dim, 
+        kernel_basis=CanonicalSymmetricKernelBasis(3),
+        padding_mode: Union[Literal['constant'], Literal['replicate']] = 'constant',
+        padding_values = (0, 0)
+    ):
+        super(UpperSymplecticConv1d, self).__init__(dim, bias=False, reset_params=False)
+        self.padding_mode = padding_mode
+        self.padding_values = padding_values
         self.kernel_size = kernel_basis.kernel_size
 
         basis_elements = list(kernel_basis)
@@ -159,9 +166,15 @@ class UpperSymplecticConv1d(SymplecticTriangularUnit):
         n = x_half.shape[0] 
         x_half = x_half.reshape((n, 1, self.dim_half))
 
-        kernel = self.basis_matix.mm(self.a).reshape((1,1,self.kernel_size))
+        padding_size = int(self.kernel_size/2)
+        if self.padding_mode == 'constant':
+            x_half = nn.functional.pad(x_half, (padding_size,0), value=self.padding_values[0])
+            x_half = nn.functional.pad(x_half, (0,padding_size), value=self.padding_values[1])
+        elif self.padding_mode == 'replicate':
+            x_half = nn.functional.pad(x_half, (padding_size,)*2, mode='replicate')
 
-        conv_result = nn.functional.conv1d(x_half, kernel, padding=int(self.kernel_size/2))
+        kernel = self.basis_matix.mm(self.a).reshape((1,1,self.kernel_size))
+        conv_result = nn.functional.conv1d(x_half, kernel)
         conv_result = conv_result.reshape(n, self.dim_half)
 
         return conv_result
