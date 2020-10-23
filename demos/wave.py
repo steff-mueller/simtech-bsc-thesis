@@ -204,11 +204,15 @@ class WaveExperiment:
         n_training = int(T_training / self.dt)
         x = data[0:n_training,:]
         y = data[1:n_training+1,:] # shift by 1
-
-        # convert to torch.Tensor
         x = torch.tensor(x, requires_grad=True, dtype=torch.float32)
         y = torch.tensor(y, dtype=torch.float32)
-        return x,y
+
+        x_test = data[n_training+1:-1]
+        y_test = data[n_training+2:] # shift by 1
+        x_test = torch.tensor(x_test, dtype=torch.float32)
+        y_test = torch.tensor(y_test, dtype=torch.float32)
+
+        return x,y,x_test,y_test
 
     def _plot(self, epoch, prefix='', other_model=None, other_mu = None):
         this_model = self.model if other_model is None else other_model
@@ -252,10 +256,10 @@ class WaveExperiment:
         
     def run(self):
         self._compute_solution()
-        x,y = self._get_training_data()
+        x, y, x_test, y_test = self._get_training_data()
 
         criterion = torch.nn.MSELoss()
-        optimizer = torch.optim.Adam(self.surrogate_model.parameters(), lr=1e-4, eps=1e-6)
+        optimizer = torch.optim.AdamW(self.surrogate_model.parameters(), lr=1e-4, eps=1e-6, weight_decay=1e-1)
 
         self.surrogate_model.train()
         for epoch in range(self.epochs):  
@@ -266,13 +270,20 @@ class WaveExperiment:
             optimizer.step()
 
             self.writer.add_scalar("Loss/train", loss, epoch)
-            if (epoch % 100) == 0:
-                print('training step: {}/{}, loss: {}'.format(epoch, self.epochs, float(loss)))
+            self.surrogate_model.train(mode=False)  
 
-            if (epoch % 500) == 0:
-                self.surrogate_model.train(mode=False)
-                self._plot(epoch)
-                self.surrogate_model.train()
+            with torch.no_grad():
+                if (epoch % 100) == 0:
+                    y1_test = self.surrogate_model(x_test)
+                    test_loss = criterion(y1_test, y_test)
+                    self.writer.add_scalar('Loss/test', test_loss, epoch)
+
+                    print('training step: {}/{}, training loss: {}, test loss: {}'
+                        .format(epoch, self.epochs, float(loss), float(test_loss)))
+                      
+                if (epoch % 500) == 0: self._plot(epoch)
+            
+            self.surrogate_model.train()
 
         self.surrogate_model.train(mode=False)
         self._plot(self.epochs)

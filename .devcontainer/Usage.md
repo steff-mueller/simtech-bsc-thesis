@@ -12,7 +12,7 @@ docker build --build-arg USER_UID=$(id -u) --build-arg USER_GID=$(id -g) -f .dev
 ```bash
 HOST_DIR="/usr/local/faststorage/muellese/dev/simtech-bachelorarbeit" # change to your location
 CONTAINER_DIR="/workspaces/simtech-bachelorarbeit"
-docker run --rm -v $HOST_DIR:$CONTAINER_DIR -w $CONTAINER_DIR simtech/symplectic_nn:latest /bin/bash -c "pip install -e . && cd demos && python lowdim.py --epochs 200"
+docker run --rm -v $HOST_DIR:$CONTAINER_DIR -w $CONTAINER_DIR simtech/symplectic_nn:latest /bin/bash -c "pip install -e . && cd demos && OMP_NUM_THREADS=4 python lowdim.py --epochs 200"
 ```
 
 # Run Tensorboard
