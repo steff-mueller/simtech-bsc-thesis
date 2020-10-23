@@ -105,17 +105,24 @@ class WaveExperiment:
         elif architecture == 'gradient':
             self.surrogate_model = torch.nn.Sequential(
                 UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                NormalizedUpperConv1dGradientModule(self.dim, bias=False, n=100),
+                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
+                NormalizedUpperConv1dGradientModule(self.dim, bias=False, n=50),
 
+                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
+                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 NormalizedLowerConv1dGradientModule(self.dim, bias=False, n=100),
 
                 UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                NormalizedUpperConv1dGradientModule(self.dim, bias=False, n=100),
-
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                NormalizedLowerConv1dGradientModule(self.dim, bias=False, n=100)
+                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
+                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
+                NormalizedUpperConv1dGradientModule(self.dim, bias=False, n=50)
             )
+
 
     def _init_with_stormer_verlet(self, model_name):
         if model_name == 'standing_wave' or model_name == 'transport':
@@ -193,7 +200,7 @@ class WaveExperiment:
         # delete Dirichlet boundary values from training data
         data = np.delete(data, [0, self.n_x-1, self.n_x, 2*self.n_x-1], axis=1)
 
-        T_training = 1
+        T_training = 0.1
         n_training = int(T_training / self.dt)
         x = data[0:n_training,:]
         y = data[1:n_training+1,:] # shift by 1
@@ -248,7 +255,7 @@ class WaveExperiment:
         x,y = self._get_training_data()
 
         criterion = torch.nn.MSELoss()
-        optimizer = torch.optim.Adam(self.surrogate_model.parameters(), lr=1e-2)
+        optimizer = torch.optim.Adam(self.surrogate_model.parameters(), lr=1e-4)
 
         self.surrogate_model.train()
         for epoch in range(self.epochs):
