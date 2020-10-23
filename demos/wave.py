@@ -255,21 +255,19 @@ class WaveExperiment:
         x,y = self._get_training_data()
 
         criterion = torch.nn.MSELoss()
-        optimizer = torch.optim.Adam(self.surrogate_model.parameters(), lr=1e-4)
+        optimizer = torch.optim.Adam(self.surrogate_model.parameters(), lr=1e-4, eps=1e-6)
 
         self.surrogate_model.train()
-        for epoch in range(self.epochs):
-            if (epoch % 100) == 0:
-                print('training step: %d/%d' % (epoch, self.epochs))
-    
+        for epoch in range(self.epochs):  
             y1 = self.surrogate_model(x)
             loss = criterion(y1, y)
             optimizer.zero_grad()
-
             loss.backward()
-            self.writer.add_scalar("Loss/train", loss, epoch)
-
             optimizer.step()
+
+            self.writer.add_scalar("Loss/train", loss, epoch)
+            if (epoch % 100) == 0:
+                print('training step: {}/{}, loss: {}'.format(epoch, self.epochs, float(loss)))
 
             if (epoch % 500) == 0:
                 self.surrogate_model.train(mode=False)
