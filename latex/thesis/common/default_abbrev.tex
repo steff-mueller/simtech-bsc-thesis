@@ -194,12 +194,18 @@
 \newcommand{\divb}[2][]{\ensuremath{\div_{#1}\lb{#2}\rb}}
 
 % parial derivative
-\newcommand{\deldel}[1]{\ensuremath{\frac{\partial}{\partial #1}}}
+\newcommand{\deldel}[2][]{\ensuremath{\frac{\partial #1}{\partial #2}}}
 \newcommand{\deldelt}{\ensuremath{\deldel{t}}}
 \newcommand{\deldelfx}{\ensuremath{\deldel{\fx}}}
 
 % second-order partial derivative
 \newcommand{\sodeldel}[1]{\ensuremath{\frac{\partial^2}{\partial^2 #1}}} % Second-Order DELDEL
+
+% jacobian
+\newcommand{\jac}[2]{\deldel[#1]{#2}}
+\newcommand{\jacp}[2]{\lb
+    \jac{#1}{#2}
+\rb}
 
 % Derivatives written out
 \newcommand{\dd}[2][]{\ensuremath{\frac{\mathrm{d}^{#1}}{\mathrm{d}#2}}}

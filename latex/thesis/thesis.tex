@@ -224,19 +224,29 @@ Numerical Simulation (IANS)}%
 
 \subsection{Notation}
 
-Let $ f: \mathbb{R} \rightarrow \mathbb{R} $ be an arbitrary function. We denote
-the element-wise application of $f$ on a vector $x \in \mathbb{R}^n$ with:
+Let $f: \mathbb{R} \rightarrow \mathbb{R}$ be an arbitrary function and $x \in \mathbb{R}^n$
+a vector. When we write $f(x)$ we mean the element-wise application of $f$ 
+on the vector $x \in \mathbb{R}^n$, i.e. $f(x) = \lb
+	f(x_1), ..., f(x_n)
+\rb^T$.
 
-\begin{equation*}
-	[f]_n: \mathbb{R}^n \rightarrow \mathbb{R}^n, \quad 
-	[f]_n(x_1, ... x_n) := \begin{pmatrix}
-		f(x_1) \\
-		\vdots \\
-		f(x_n)
-	\end{pmatrix}
-\end{equation*}
+The $d$-by-$d$ identity matrix is denoted by $I_d$. If the dimension $d$ can be inferred
+from context we may just write $I$.
+
+$\onevec{n}$ denotes the $n$-dimensional $1$-vector.
 
 \todo{Introduce block matrix notation for general functions}
+
+We denote the $k$-th partial derivative of a function $f: \mathbb{R}^n \to \mathbb{R},
+x \mapsto f(x)$ with $\deldel{x_k} f(x)$.
+
+If $f: \mathbb{R}^{n_1} \to \mathbb{R}^{n_2}$ is a multi-dimensional function
+
+\todo{"partial derivative" of a vector, Jacobian matrices}
+
+\todo{Gradient}
+
+\todo{Describe $d$}
 
 %----------------------------------------------------------------------------------------
 %
@@ -251,12 +261,13 @@ the element-wise application of $f$ on a vector $x \in \mathbb{R}^n$ with:
 In this section we describe the architecture of our symplectic neural networks.
 The linear layers, activation layers and gradient layers are recapitulated as 
 proposed by Jin et. al  in \cite{Jin2020} \todo{How to cite with name?}.
-The convolution layers and normalized versions of the activation and gradient layers
+The convolution layers and normalized variants of the activation and gradient layers
 are contributions of this work.
 We supplement proofs for symplecticity for all layers. 
 A similar architecture was initially proposed by Deco in \cite{Deco1995} 
-\todo{Have a deeper look at \cite{Deco1995}}. In the second part of this section 
-we propose new symplectic layers.
+\todo{Have a deeper look at \cite{Deco1995}}.
+
+\todo{we use that the composition of symplectic maps is again symplectic}
 
 \todo{Relation to Residual Networks / ResNet}
 
@@ -267,42 +278,44 @@ we propose new symplectic layers.
 	\end{equation*}
 	and
 	\begin{equation*}
-		f_low \qpvec := \lowersympop{g}
+		f_{low} \qpvec := \lowersympop{g}
 	\end{equation*}
-	where $g: \mathbb{R}^d \rightarrow \mathbb{R}^d \in C^1$. 
+	where $g: \mathbb{R}^d \to \mathbb{R}^d,\; p \mapsto g(p)$ is a function in 
+	$C^1(\mathbb{R}^d, \mathbb{R}^d)$. 
 
-	$f_{up}$ and $f_{low}$ are symplectic if and only if the Jacobi matrix of $g$, $Dg$,
+	$f_{up}$ and $f_{low}$ are symplectic if and only if the Jacobian matrix $\jac{g}{p}$
 	is symmetric.
 \end{lemma}
 \begin{proof}
-	We show the result only for $f_{up}$. The calculation is analogous for $f_{low}$.
+	We show the result for $f_{up}$ only. The proof is analogous for $f_{low}$.
 
 	\begin{equation*}
-		Df_{up} = \begin{pmatrix}
-			I & Dg \\
+		\deldel[f_{up}]{(q,p)} = \begin{pmatrix}
+			I & \deldel[g]{p} \\
 			0 & I
 		\end{pmatrix}
 	\end{equation*}
 	It follows
 	\begin{align*}
-		\left(Df_{up}\right)^TJ(Df_{up}) &= \left(Df_{up}\right)^T \begin{pmatrix}
+		\jacp{f_{up}}{(q,p)}^T J \jacp{f_{up}}{(q,p)} 
+		&= \left(\deldel[f_{up}]{(q,p)}\right)^T \begin{pmatrix}
 			0 & I \\
-			-I & -Dg
+			-I & -\jac{g}{p}
 		\end{pmatrix} \\
 		&= \begin{pmatrix}
 			I & 0 \\
-			(Dg)^T & Id
+			\jacp{g}{p}^T & Id
 		\end{pmatrix} \begin{pmatrix}
 			0 & I \\
-			-I & -Dg
+			-I & -\jac{g}{p}
 		\end{pmatrix} \\
 		&= \begin{pmatrix}
 			0 & I \\
-			-I & (Dg)^T-Dg
+			-I & \jacp{g}{p}^T-\jac{g}{p}
 		\end{pmatrix}
 	\end{align*}
-	Thus, $f_{up}$ is symplectic if and only if $(Dg)^T-Dg=0$, i.e. if and only if $Dg$
-	is symmetric.
+	Thus $f_{up}$ is symplectic if and only if $\jacp{g}{p}^T-\jac{g}{p}=0$, 
+	i.e. if and only if the Jacobian $\deldel[g]{p}$ is everywhere symmetric.
 \end{proof}
 
 \begin{corollary}\label{matrix_symmetric}
@@ -328,7 +341,10 @@ we propose new symplectic layers.
 
 The next corollary is useful to construct symplectic maps.
 \begin{corollary}\label{gradient_corollary}
-	Let $V \in C^2(\mathbb{R}^d, \mathbb{R})$. Then
+	Let $V: \mathbb{R}^d \to \mathbb{R}, \quad p \mapsto V(p)$ be a function in 
+	$C^2(\mathbb{R}^d, \mathbb{R})$. 
+	
+	Then
 	\begin{equation*}
 		f_{up} \qpvec := \uppersympop{\grad{V}}
 	\end{equation*}
@@ -336,11 +352,11 @@ The next corollary is useful to construct symplectic maps.
 	\begin{equation*}
 		f_{low} \qpvec := \lowersympop{\grad{V}}
 	\end{equation*}
-	define a symplectic map.
+	define a symplectic map. We call $V$ a potential.
 \end{corollary}
 \begin{proof}
-	The Jacobi matrix of $\nabla V$ corresponds to the Hessian matrix of $V$,
-	i.e. $D(\nabla V) = HD$. \todo{Notation for Hessian}
+	The Jacobian matrix of $\grad{V}$ corresponds to the Hessian matrix of $V$,
+	i.e. $\jac{(\grad{V})}{p} = HD$. \todo{Notation for Hessian}
 	The Hessian is symmetric, thus the result follows with Lemma \ref{jacobi_symmetric}.
 \end{proof}
 
@@ -348,14 +364,70 @@ The next corollary is useful to construct symplectic maps.
 
 \subsection{Linear layers}
 
+\begin{align*}
+	\ell_{up}: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad \ell_{up} \qpvec &:= \begin{pmatrix}
+		I & S \\
+		0 & I
+	\end{pmatrix} \qpvec + b, \\
+	\ell_{low}: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad \ell_{low} \qpvec &:= \begin{pmatrix}
+		I & 0 \\
+		S & I
+	\end{pmatrix} \qpvec + b
+\end{align*}
+where $S \in \mathbb{R}^{d \times d}$ symmetric and $b \in \mathbb{R}^{2d}$
+are learnable parameters. In practice, we parametrize the symmetric matrix $S\in \mathbb{R}^{d \times d}$
+with $S = A^T + A$ via another arbitrary matrix $A\in \mathbb{R}^{d \times d}$, as
+most optimization methods used for learning neural networks are designed for
+unconstrained optimization problems.
+
 It follows directly from Corollary \ref{matrix_symmetric} that the linear layers are
 symplectic. Alternatively, we can apply Corollary \ref{gradient_corollary} by
-choosing $V(x) = x^TSx$.
-\todo{Not completely correct, is something else than plain $S$,
-see my 'Gradient module' notes}
+choosing the potential $V(p) := p^TAp$.
+
+\begin{proof}
+	Let
+	\begin{align*}
+		\phi_1: \mathbb{R}^d \to \mathbb{R}^{2d}, \quad &\phi_1(p) := \begin{pmatrix}
+			p \\
+			Ap
+		\end{pmatrix} \\
+		\phi_2: \mathbb{R}^{2d} \to \mathbb{R}, \quad &\phi_2(p, \hat{p}) := 
+		p^T\hat{p}
+	\end{align*}
+	
+	Then $V(p) = \phi_2(\phi_1(p))$ and the corresponding Jacobian matrices are
+	\begin{align*}
+		\jac{\phi_1}{p}(p) &= \begin{pmatrix}
+			I \\
+			A
+		\end{pmatrix} \\
+		\jac{\phi_2}{(p,\hat{p})}(p, \hat{p}) &= \begin{pmatrix}
+			\hat{p}^T && p^T
+		\end{pmatrix}
+	\end{align*}
+	Thus
+	\begin{align*}
+		\jac{V}{p}(p) &= 
+		\jac{\phi_2}{(p,\hat{p})} (\phi_1(p))
+		\jac{\phi_1}{p}(p) \\
+		&= \begin{pmatrix}
+			(Ap)^T && p^T
+		\end{pmatrix}
+		\begin{pmatrix}
+			I \\
+			A
+		\end{pmatrix} \\
+		&= (Ap)^T + p^TA = (Ap + A^Tp)^T \\
+		&= ((A+A^T)p)^T
+	\end{align*}
+	Therefore $\grad{V}(p) = \lb \deldel{p}V(p) \rb^T = (A+A^T)p = Sp$ with
+	$S := A+A^T$ symmetric. Symplecticity follows with Corollary \ref{gradient_corollary}.
+\end{proof}
 
 \todo{It does not make sense to put two upper or lower linear layers after each other,
 because this reduces to a single linear layer.}
+
+\todo{Linear layer = composition of $\ell_{up}$ and $\ell_{low}$.}
 
 \subsection{Convolution layers}
 
@@ -374,29 +446,31 @@ Relation to Störmer-Verlet.}
 
 $V(p) = 1_n^T(\int \sigma)(p)$
 
-\begin{align*}
-	\nabla V(p) &= (DV)^T = (1_n^Tdiag(\sigma(p)))^T \\
-	&= diag(\sigma(p)) 1_n = \sigma(p)
-\end{align*}
+\begin{equation*}
+	\grad{V}(p) = \lb\jac{V}{p}(p)\rb^T = \lb1_n^Tdiag\lb\sigma(p)\rb\rb^T
+	= diag(\activation(p)) 1_n
+	= \activation(p)
+\end{equation*}
 
 \todo{Differentiate between $a \in \mathbb{R}$ and $a \in \mathbb{R}^d$?}
 
 \subsection{Gradient layers}
 
 \begin{equation*}
-	\mathcal{G}_{up} \qpvec := \uppersympop{\hat{\sigma}} := \begin{pmatrix}
-		q + K^T diag(a) [\sigma]_n(Kp + b) \\
+	\mathcal{G}_{up} \qpvec := \uppersympop{\hat{\activation}} := \begin{pmatrix}
+		q + K^T diag(a) \activation(Kp + b) \\
 		p
 	\end{pmatrix}
 \end{equation*}
 \begin{equation*}
-	\mathcal{G}_{low} \qpvec := \lowersympop{\hat{\sigma}} := \begin{pmatrix}
+	\mathcal{G}_{low} \qpvec := \lowersympop{\hat{\activation}} := \begin{pmatrix}
 		q \\
-		K^T diag(a) [\sigma]_n(Kq + b) + p
+		K^T diag(a) \activation(Kq + b) + p
 	\end{pmatrix}
 \end{equation*}
-where $K \in \mathbb{R}^{nxd}$ and $a,b \in \mathbb{R}^n$.
-\todo{Describe n and d}
+where $K \in \mathbb{R}^{n \times d}$ and $a,b \in \mathbb{R}^n$
+are learnable parameters.
+$d \in \mathbb{N}$ denotes the width of the gradient layer and can be chosen freely.
 
 \newtheorem*{glayer}{Lemma}
 \begin{glayer}
@@ -404,14 +478,16 @@ where $K \in \mathbb{R}^{nxd}$ and $a,b \in \mathbb{R}^n$.
 	are symplectic.
 \end{glayer}
 \begin{proof}
-	Let $V(p) := 1_n^Tdiag(a)[\int \sigma]_n(Kp+b)$ \todo{Notation for 1-vector? Notation antiderivative?}
+	Let $\mathcal{F}: \mathbb{R} \to \mathbb{R}$ be the antiderivative of $\activation$, 
+	i.e. $\dd{x} \mathcal{F} = \activation$ and
+	$V(p) := \onevec{n}^Tdiag(a)\mathcal{F}(Kp+b)$.
 
 	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and
 	\begin{align*}
-		\nabla V(p) &= \left(DV(p)\right)^T \\
-		&= \left(1_n^Tdiag(a)diag\left([\sigma]_n(Kp+b)\right)K\right)^T \\
-		&= K^Tdiag(a)diag\left([\sigma]_n(Kp+b)\right)1_n \\
-		&= K^Tdiag(a)[\sigma]_n(Kp+b)
+		\nabla V(p) &= \left(\jac{V}{p}(p)\right)^T \\
+		&= \left(1_n^Tdiag(a)diag\left(\sigma(Kp+b)\right)K\right)^T \\
+		&= K^Tdiag(a)diag\left(\sigma(Kp+b)\right)1_n \\
+		&= K^Tdiag(a)\sigma(Kp+b)
 	\end{align*}
 
 	With Corollary \ref{gradient_corollary} follows that the Gradient layers $\mathcal{G}_{\{up,low\}}$
@@ -460,6 +536,8 @@ Assumptions:
 
 \todo{Activation layer with sin works well if $a \in \mathbb{R}$, i.e. activation function is applied
 isotropic.}
+
+\todo{Maybe compare different optimizers (SGD, Adam, AdamW, amsgrad, ...)}
 
 \subsubsection{Linear elastic beam in three dimensions}
 
