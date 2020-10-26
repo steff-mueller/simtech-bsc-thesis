@@ -21,6 +21,7 @@
 \usepackage[numbers]{natbib}
 \usepackage{multirow}
 \usepackage{makecell}
+\usepackage{theoremref}
 %%% Title page
 \usepackage{common/titlePageST}
 %%% Appendix in TOC
@@ -260,18 +261,19 @@ If $f: \mathbb{R}^{n_1} \to \mathbb{R}^{n_2}$ is a multi-dimensional function
 
 In this section we describe the architecture of our symplectic neural networks.
 The linear layers, activation layers and gradient layers are recapitulated as 
-proposed by Jin et. al  in \cite{Jin2020} \todo{How to cite with name?}.
+proposed by \citeauthor{Jin2020} in \cite{Jin2020}.
 The convolution layers and normalized variants of the activation and gradient layers
-are contributions of this work.
-We supplement proofs for symplecticity for all layers. 
-A similar architecture was initially proposed by Deco in \cite{Deco1995} 
+are contributions of this work. 
+\todo{Convolution gradient module, refer to similar reference}
+We supplement proofs for symplecticity for all layer types. 
+A similar architecture was initially proposed by \citeauthor{Deco1995} in \cite{Deco1995} 
 \todo{Have a deeper look at \cite{Deco1995}}.
 
 \todo{we use that the composition of symplectic maps is again symplectic}
 
 \todo{Relation to Residual Networks / ResNet}
 
-\begin{lemma}\label{jacobi_symmetric}
+\begin{lemma}\thlabel{jacobi_symmetric}
 	Let
 	\begin{equation*}
 		f_{up} \qpvec := \uppersympop{g}
@@ -318,7 +320,7 @@ A similar architecture was initially proposed by Deco in \cite{Deco1995}
 	i.e. if and only if the Jacobian $\deldel[g]{p}$ is everywhere symmetric.
 \end{proof}
 
-\begin{corollary}\label{matrix_symmetric}
+\begin{corollary}\thlabel{matrix_symmetric}
 	Let
 	\begin{equation*}
 		f_{up} \qpvec := \begin{pmatrix}
@@ -340,8 +342,8 @@ A similar architecture was initially proposed by Deco in \cite{Deco1995}
 \end{corollary}
 
 The next corollary is useful to construct symplectic maps.
-\begin{corollary}\label{gradient_corollary}
-	Let $V: \mathbb{R}^d \to \mathbb{R}, \quad p \mapsto V(p)$ be a function in 
+\begin{corollary}\thlabel{gradient_corollary}
+	Let $V: \mathbb{R}^d \to \mathbb{R}, \; p \mapsto V(p)$ be a function in 
 	$C^2(\mathbb{R}^d, \mathbb{R})$. 
 	
 	Then
@@ -357,10 +359,10 @@ The next corollary is useful to construct symplectic maps.
 \begin{proof}
 	The Jacobian matrix of $\grad{V}$ corresponds to the Hessian matrix of $V$,
 	i.e. $\jac{(\grad{V})}{p} = HD$. \todo{Notation for Hessian}
-	The Hessian is symmetric, thus the result follows with Lemma \ref{jacobi_symmetric}.
+	The Hessian is symmetric, thus the result follows with \thref{jacobi_symmetric}.
 \end{proof}
 
-\todo{Relation to 'Generating functions' in literature?}
+\todo{Relation to 'Generating functions' in symplectic literature?}
 
 \subsection{Linear layers}
 
@@ -380,8 +382,8 @@ with $S = A^T + A$ via another arbitrary matrix $A\in \mathbb{R}^{d \times d}$, 
 most optimization methods used for learning neural networks are designed for
 unconstrained optimization problems.
 
-It follows directly from Corollary \ref{matrix_symmetric} that the linear layers are
-symplectic. Alternatively, we can apply Corollary \ref{gradient_corollary} by
+It follows directly from \thref{matrix_symmetric} that the linear layers are
+symplectic. Alternatively, we can apply \thref{gradient_corollary} by
 choosing the potential $V(p) := p^TAp$.
 
 \begin{proof}
@@ -421,15 +423,90 @@ choosing the potential $V(p) := p^TAp$.
 		&= ((A+A^T)p)^T
 	\end{align*}
 	Therefore $\grad{V}(p) = \lb \deldel{p}V(p) \rb^T = (A+A^T)p = Sp$ with
-	$S := A+A^T$ symmetric. Symplecticity follows with Corollary \ref{gradient_corollary}.
+	$S := A+A^T$ symmetric. Symplecticity follows with \thref{gradient_corollary}.
 \end{proof}
 
-\todo{It does not make sense to put two upper or lower linear layers after each other,
-because this reduces to a single linear layer.}
+We may enhance expressivity of a linear layer by alternately composing multiple
+$\ell_{up}$ and $\ell_{low}$:
 
-\todo{Linear layer = composition of $\ell_{up}$ and $\ell_{low}$.}
+\begin{align*}
+	\mathcal{L}^{n}_{up} \qpvec &= \begin{pmatrix}
+		I && 0 / S_n \\
+		S_n / 0 && I
+	\end{pmatrix}
+	\cdots
+	\begin{pmatrix}
+		I && 0 \\
+		S_2 && I
+	\end{pmatrix}
+	\begin{pmatrix}
+		I && S_1 \\
+		0 && I
+	\end{pmatrix} + b \\
+	\mathcal{L}^{n}_{low} \qpvec &= \begin{pmatrix}
+		I && S_n / 0 \\
+		0 / S_n && I
+	\end{pmatrix}
+	\cdots
+	\begin{pmatrix}
+		I && S_2 \\
+		0 && I
+	\end{pmatrix}
+	\begin{pmatrix}
+		I && 0 \\
+		S_1 && I
+	\end{pmatrix} + b
+\end{align*}
+
+$\mathcal{L}^{n}_{up}$ and $\mathcal{L}^{n}_{low}$ are again symplectic because they 
+are a composition of the symplectic maps $\ell_{up}$ and $\ell_{low}$.
+
+\citeauthor{jin2020unit} show in \cite{jin2020unit} that $\mathcal{L}^{9}_{up}$
+can parametrize every symplectic linear map. In other words, 
+the set of all possible $\mathcal{L}^{9}_{up}$ is equal to the set of all symplectic linear maps.
+\todo{check how \cite{jin2020unit} appears in bibliography}
+
+It does not make sense to put two upper linear layers or two lower linear layers after each other,
+because this reduces to a single upper or lower linear layer:
+
+\begin{proof}
+	\begin{align*}
+		\ell_{up,2}\lb\ell_{up,1} \qpvec\rb &=
+		\begin{pmatrix}
+			I && S_2 \\
+			0 && I
+		\end{pmatrix}
+		\lb
+		\begin{pmatrix}
+			I && S_1 \\
+			0 && I
+		\end{pmatrix}
+		\qpvec + b_1
+		\rb + b_2 \\
+		&= \begin{pmatrix}
+			I && S_1 + S_2 \\
+			0 && I
+		\end{pmatrix} \qpvec
+		+ \begin{pmatrix}
+			I && S_2 \\
+			0 && I
+		\end{pmatrix} b_1
+		+ b_2 \\
+		&= \begin{pmatrix}
+			I && S \\
+			0 && I
+		\end{pmatrix} \qpvec + b
+	\end{align*}
+	with $S := S_1 + S_2$ and $b := \begin{pmatrix}
+		I && S_2 \\
+		0 && I
+	\end{pmatrix} b_1
+	+ b_2$.
+\end{proof}
 
 \subsection{Convolution layers}
+
+Convolution layers are a subset of linear layers. \todo{Thus symplectic}
 
 \todo{Try motivating convolution layers by showing that the linear layers explode if $d$ becomes large.}
 
@@ -470,7 +547,7 @@ $V(p) = 1_n^T(\int \sigma)(p)$
 \end{equation*}
 where $K \in \mathbb{R}^{n \times d}$ and $a,b \in \mathbb{R}^n$
 are learnable parameters.
-$d \in \mathbb{N}$ denotes the width of the gradient layer and can be chosen freely.
+$n \in \mathbb{N}$ denotes the width of the gradient layer and can be chosen freely.
 
 \newtheorem*{glayer}{Lemma}
 \begin{glayer}
@@ -490,8 +567,8 @@ $d \in \mathbb{N}$ denotes the width of the gradient layer and can be chosen fre
 		&= K^Tdiag(a)\sigma(Kp+b)
 	\end{align*}
 
-	With Corollary \ref{gradient_corollary} follows that the Gradient layers $\mathcal{G}_{\{up,low\}}$
-	are symplectic. \todo{Best way to reference other theorems?}
+	With \thref{gradient_corollary} follows that the Gradient layers $\mathcal{G}_{\{up,low\}}$
+	are symplectic.
 \end{proof}
 
 \todo{For high dimensions $K$ and $K^T$ can be implemented as transposed convolution
