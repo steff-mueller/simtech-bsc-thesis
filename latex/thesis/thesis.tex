@@ -470,6 +470,7 @@ It does not make sense to put two upper linear layers or two lower linear layers
 because this reduces to a single upper or lower linear layer:
 
 \begin{proof}
+	We show the statement for two upper linear layers.
 	\begin{align*}
 		\ell_{up,2}\lb\ell_{up,1} \qpvec\rb &=
 		\begin{pmatrix}
@@ -518,6 +519,96 @@ Convolution layers are a subset of linear layers. \todo{Thus symplectic}
 would not be symplectic (symmetric). What happens if Hamiltonian contains even-order derivative?
 Symmetric Hessian does not explain it, because we only take gradient of Hamiltonian and not Hessian.
 Relation to Störmer-Verlet.}
+
+1d convolution bc. we only have systems with $1$-dimensional spatial domain.
+\todo{Should be extended if we do $3$d system.}
+
+\todo{Discuss different parametrizations for symmetric kernels}
+
+Given a kernel $k \in \mathbb{R}^{s_k}$ with kernel size $s_k \in \mathbb{N}$
+the $1$-dimensional convolution operator is defined as
+\begin{equation*}
+	conv1d[k]: \mathbb{R}^{L_{in}} \to \mathbb{R}^{L_{out}}, \quad
+	\lb conv1d[k](x) \rb_i := \sum_{u=1}^{s_k} k_u x_{i+u-1} \quad
+	(1 \leq i \leq L_{out})
+\end{equation*}
+where $L_{out} = L_{in} - kernel\_size + 1$.
+\todo{Briefly mention more general versions with stride and dilation.}
+The convolution operator reduces the input dimension $L_{in}$ (if $s_k > 1$).
+
+As we will justify later we only use kernels with odd kernel size $s_k = 2m+1$, $m \in \mathbb{N}$.
+Therefore from now on we always implicitly assume a kernel with odd kernel size $s_k = 2m+1$.
+\todo{in this section, later conv gradient module not?}
+To simplify notation we introduce new indexing for kernels by counting from $-m$ to $m$,
+i.e. $k = (k_{-m}, k_{-m+1}, \dots, k_{-1} k_0, k_1, \dots, k_{m})^T \in \mathbb{R}^{2m+1}$.
+With new indexing the convolution operator becomes 
+\begin{equation*}
+	\lb conv1d[k](x) \rb_i = \sum_{u=-m}^{m} k_u x_{i+u+m} \quad
+	(1 \leq i \leq L_{out})
+\end{equation*}
+
+We call a kernel $k \in \mathbb{R}^{2m+1}$ symmetric if $k_i = k_{-i}$ for all $i = 0, \dots, m$.
+
+A $1$-dimensional padding operator increases the input dimension by padding
+the input boundaries. Let us define constant padding and reflection padding operators.
+
+\begin{equation*}
+	constant\_pad[p,l,r]: \mathbb{R}^{L_{in}} \mapsto \mathbb{R}^{L_{in}+2p},
+	(constant\_pad[p,l,r](x))_i :=
+	\begin{cases}
+		l_i & 1 \leq i \leq p \\
+		x_{i-p} & p+1 \leq i \leq L_{in}+p \\
+		r_{i-L_{in}+p} & L_{in}+p+1 \leq i \leq L_{in} + 2p
+	\end{cases}
+\end{equation*}
+where $p \in \mathbb{N}$ is the padding size and $l,r \in \mathbb{R}^p$
+are the padding values for the left and right boundaries. 
+
+\todo{Reflection}
+
+We define the symplectic $1$-dimensional convolution layer by
+\begin{align*}
+	\mathcal{C}_{up} \qpvec &:= \uppersympop{conv1d[k] \circ pad[p,\dots]} \\
+	\mathcal{C}_{low} \qpvec &:= \lowersympop{conv1d[k] \circ pad[p,\dots]}
+\end{align*}
+with kernel $k \in \mathbb{R}^{2m+1}$ symmetric, $p = m$
+and either $pad[p,\dots] = constant\_pad[p,l,r]$ ($l,r \in \mathbb{R}^p$) 
+or $pad[p,\dots] = reflect\_pad[p]$. $k \in \mathbb{R}^{2m+1}$ is learnable during training. 
+$l,r \in \mathbb{R}^p$ can be constant or also learnable during training.
+
+Indeed $conv1d[k] \circ pad[p,\dots] : \mathbb{R}^d \to \mathbb{R}^d$ because
+\begin{align*}
+	L_{in,pad[p,\dots]} &= d \\
+	L_{out,pad[p,\dots]} &= L_{in,pad[p,\dots]} + 2p = d+2p = d+2m \\
+	L_{in,conv1d[k]} &= L_{out,pad[p,\dots]} = d+2m \\
+	L_{out,conv1d[k]} &= L_{in,conv1d[k]} - s_k + 1 = (d+2m) - (2m+1) + 1 = d
+\end{align*}
+
+Furthermore the two conditions
+\begin{align}
+	L_{in,conv1d[k]} &= L_{out,pad[p,\dots]} = d+2m \label{conv_dim1} \\ 
+	L_{out,conv1d[k]} &= L_{in,conv1d[k]} - s_k + 1 = d \label{conv_dim2}
+\end{align}
+indeed imply that the kernel size $s_k$ must be odd.
+\begin{equation*}
+	\text{\cref{conv_dim1} in \cref{conv_dim2}:} \quad d+2m - s_k + 1 = d \iff s_k = 2m+1
+\end{equation*}
+
+\begin{theorem}
+	The $1$-dimensional convolution layers $\mathcal{C}_{up}$ and $\mathcal{C}_{low}$
+	with $pad[p,\dots] = constant\_pad[p,l,r]$ ($l,r \in \mathbb{R}^p$) are symplectic.
+\end{theorem}
+\begin{proof}
+	\todo{Proof this!}
+\end{proof}
+
+\begin{theorem}
+	The $1$-dimensional convolution layers $\mathcal{C}_{up}$ and $\mathcal{C}_{low}$
+	with $pad[p,\dots] = reflect\_pad[p]$ are symplectic.
+\end{theorem}
+\begin{proof}
+	\todo{Proof this!}
+\end{proof}
 
 \subsection{Activation layers}
 
@@ -615,8 +706,6 @@ Assumptions:
 isotropic.}
 
 \todo{Maybe compare different optimizers (SGD, Adam, AdamW, amsgrad, ...)}
-
-\subsubsection{Linear elastic beam in three dimensions}
 
 \section{Implementation}
 
