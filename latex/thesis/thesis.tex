@@ -21,7 +21,6 @@
 \usepackage[numbers]{natbib}
 \usepackage{multirow}
 \usepackage{makecell}
-\usepackage{theoremref}
 %%% Title page
 \usepackage{common/titlePageST}
 %%% Appendix in TOC
@@ -273,7 +272,7 @@ A similar architecture was initially proposed by \citeauthor{Deco1995} in \cite{
 
 \todo{Relation to Residual Networks / ResNet}
 
-\begin{lemma}\thlabel{jacobi_symmetric}
+\begin{lemma}\label{jacobi_symmetric}
 	Let
 	\begin{equation*}
 		f_{up} \qpvec := \uppersympop{g}
@@ -320,7 +319,7 @@ A similar architecture was initially proposed by \citeauthor{Deco1995} in \cite{
 	i.e. if and only if the Jacobian $\deldel[g]{p}$ is everywhere symmetric.
 \end{proof}
 
-\begin{corollary}\thlabel{matrix_symmetric}
+\begin{corollary}\label{matrix_symmetric}
 	Let
 	\begin{equation*}
 		f_{up} \qpvec := \begin{pmatrix}
@@ -342,7 +341,7 @@ A similar architecture was initially proposed by \citeauthor{Deco1995} in \cite{
 \end{corollary}
 
 The next corollary is useful to construct symplectic maps.
-\begin{corollary}\thlabel{gradient_corollary}
+\begin{corollary}\label{gradient_corollary}
 	Let $V: \mathbb{R}^d \to \mathbb{R}, \; p \mapsto V(p)$ be a function in 
 	$C^2(\mathbb{R}^d, \mathbb{R})$. 
 	
@@ -359,7 +358,7 @@ The next corollary is useful to construct symplectic maps.
 \begin{proof}
 	The Jacobian matrix of $\grad{V}$ corresponds to the Hessian matrix of $V$,
 	i.e. $\jac{(\grad{V})}{p} = HD$. \todo{Notation for Hessian}
-	The Hessian is symmetric, thus the result follows with \thref{jacobi_symmetric}.
+	The Hessian is symmetric, thus the result follows with \cref{jacobi_symmetric}.
 \end{proof}
 
 \todo{Relation to 'Generating functions' in symplectic literature?}
@@ -382,8 +381,8 @@ with $S = A^T + A$ via another arbitrary matrix $A\in \mathbb{R}^{d \times d}$, 
 most optimization methods used for learning neural networks are designed for
 unconstrained optimization problems.
 
-It follows directly from \thref{matrix_symmetric} that the linear layers are
-symplectic. Alternatively, we can apply \thref{gradient_corollary} by
+It follows directly from \cref{matrix_symmetric} that the linear layers are
+symplectic. Alternatively, we can apply \cref{gradient_corollary} by
 choosing the potential $V(p) := p^TAp$.
 
 \begin{proof}
@@ -423,7 +422,7 @@ choosing the potential $V(p) := p^TAp$.
 		&= ((A+A^T)p)^T
 	\end{align*}
 	Therefore $\grad{V}(p) = \lb \deldel{p}V(p) \rb^T = (A+A^T)p = Sp$ with
-	$S := A+A^T$ symmetric. Symplecticity follows with \thref{gradient_corollary}.
+	$S := A+A^T$ symmetric. Symplecticity follows with \cref{gradient_corollary}.
 \end{proof}
 
 We may enhance expressivity of a linear layer by alternately composing multiple
@@ -513,8 +512,6 @@ Convolution layers are a subset of linear layers. \todo{Thus symplectic}
 
 \todo{Bias important if non-zero Dirichlet boundaries, but only at borders!}
 
-\todo{Padding modes, e.g. replicate for sine gordon}
-
 \todo{Interesting: Finite difference basis only contains even-order derivatives, otherwise it
 would not be symplectic (symmetric). What happens if Hamiltonian contains even-order derivative?
 Symmetric Hessian does not explain it, because we only take gradient of Hamiltonian and not Hessian.
@@ -536,6 +533,8 @@ where $L_{out} = L_{in} - kernel\_size + 1$.
 \todo{Briefly mention more general versions with stride and dilation.}
 The convolution operator reduces the input dimension $L_{in}$ (if $s_k > 1$).
 
+\todo{Add illustration for convolution}
+
 As we will justify later we only use kernels with odd kernel size $s_k = 2m+1$, $m \in \mathbb{N}$.
 Therefore from now on we always implicitly assume a kernel with odd kernel size $s_k = 2m+1$.
 \todo{in this section, later conv gradient module not?}
@@ -552,46 +551,48 @@ We call a kernel $k \in \mathbb{R}^{2m+1}$ symmetric if $k_i = k_{-i}$ for all $
 A $1$-dimensional padding operator increases the input dimension by padding
 the input boundaries. Let us define constant padding and reflection padding operators.
 
-\begin{equation*}
-	constant\_pad[p,l,r]: \mathbb{R}^{L_{in}} \mapsto \mathbb{R}^{L_{in}+2p},
-	(constant\_pad[p,l,r](x))_i :=
+\begin{align*}
+	constant\_pad[s_p,l,r] &: \mathbb{R}^{L_{in}} \mapsto \mathbb{R}^{L_{in}+2s_p}, \\
+	(constant\_pad[s_p,l,r](x))_i &:=
 	\begin{cases}
-		l_i & 1 \leq i \leq p \\
-		x_{i-p} & p+1 \leq i \leq L_{in}+p \\
-		r_{i-L_{in}+p} & L_{in}+p+1 \leq i \leq L_{in} + 2p
+		l_i & 1 \leq i \leq s_p \\
+		x_{i-s_p} & s_p+1 \leq i \leq L_{in}+s_p \\
+		r_{i-L_{in}+s_p} & L_{in}+s_p+1 \leq i \leq L_{in} + 2s_p
 	\end{cases}
-\end{equation*}
-where $p \in \mathbb{N}$ is the padding size and $l,r \in \mathbb{R}^p$
+\end{align*}
+where $s_p \in \mathbb{N}$ is the padding size and $l,r \in \mathbb{R}^{s_p}$
 are the padding values for the left and right boundaries. 
 
-\todo{Reflection}
+\todo{Reflection padding}
+
+\todo{Add illustrations for padding}
 
 We define the symplectic $1$-dimensional convolution layer by
 \begin{align*}
-	\mathcal{C}_{up} \qpvec &:= \uppersympop{conv1d[k] \circ pad[p,\dots]} \\
-	\mathcal{C}_{low} \qpvec &:= \lowersympop{conv1d[k] \circ pad[p,\dots]}
+	\mathcal{C}_{up} \qpvec &:= \uppersympop{conv1d[k] \circ pad[s_p,\dots]} \\
+	\mathcal{C}_{low} \qpvec &:= \lowersympop{conv1d[k] \circ pad[s_p,\dots]}
 \end{align*}
-with kernel $k \in \mathbb{R}^{2m+1}$ symmetric, $p = m$
-and either $pad[p,\dots] = constant\_pad[p,l,r]$ ($l,r \in \mathbb{R}^p$) 
-or $pad[p,\dots] = reflect\_pad[p]$. $k \in \mathbb{R}^{2m+1}$ is learnable during training. 
-$l,r \in \mathbb{R}^p$ can be constant or also learnable during training.
+with kernel $k \in \mathbb{R}^{2m+1}$ symmetric, $s_p = m$
+and either $pad[s_p,\dots] = constant\_pad[s_p,l,r]$ ($l,r \in \mathbb{R}^{s_p}$) 
+or $pad[s_p,\dots] = reflect\_pad[s_p]$. $k \in \mathbb{R}^{2m+1}$ is learnable during training. 
+$l,r \in \mathbb{R}^{s_p}$ are constant or also learnable during training.
 
-Indeed $conv1d[k] \circ pad[p,\dots] : \mathbb{R}^d \to \mathbb{R}^d$ because
+Indeed $conv1d[k] \circ pad[p,\dots]$ maps from $\mathbb{R}^d$ to $\mathbb{R}^d$ because
 \begin{align*}
-	L_{in,pad[p,\dots]} &= d \\
-	L_{out,pad[p,\dots]} &= L_{in,pad[p,\dots]} + 2p = d+2p = d+2m \\
+	L_{in,pad[s_p,\dots]} &= d \\
+	L_{out,pad[s_p,\dots]} &= L_{in,pad[s_p,\dots]} + 2s_p = d+2s_p = d+2m \\
 	L_{in,conv1d[k]} &= L_{out,pad[p,\dots]} = d+2m \\
 	L_{out,conv1d[k]} &= L_{in,conv1d[k]} - s_k + 1 = (d+2m) - (2m+1) + 1 = d
 \end{align*}
 
 Furthermore the two conditions
 \begin{align}
-	L_{in,conv1d[k]} &= L_{out,pad[p,\dots]} = d+2m \label{conv_dim1} \\ 
+	L_{in,conv1d[k]} &= L_{out,pad[s_p,\dots]} = d+2s_p \label{conv_dim1} \\ 
 	L_{out,conv1d[k]} &= L_{in,conv1d[k]} - s_k + 1 = d \label{conv_dim2}
 \end{align}
 indeed imply that the kernel size $s_k$ must be odd.
 \begin{equation*}
-	\text{\cref{conv_dim1} in \cref{conv_dim2}:} \quad d+2m - s_k + 1 = d \iff s_k = 2m+1
+	\text{\cref{conv_dim1} in \cref{conv_dim2}:} \quad d+2s_p - s_k + 1 = d \iff s_k = 2s_p+1
 \end{equation*}
 
 \begin{theorem}
@@ -599,7 +600,52 @@ indeed imply that the kernel size $s_k$ must be odd.
 	with $pad[p,\dots] = constant\_pad[p,l,r]$ ($l,r \in \mathbb{R}^p$) are symplectic.
 \end{theorem}
 \begin{proof}
-	\todo{Proof this!}
+	We show that the Jacobian matrix 
+	\begin{equation*}
+		\jac{\lb conv1d \lsb k \rsb \circ constant\_pad \lsb p,l,r \rsb \rb}{p}
+	\end{equation*}
+	is symmetric according to \cref{jacobi_symmetric}.
+
+	We have
+	\begin{equation*}
+		\lb \jac{conv1d \lsb k \rsb}{x} \rb_{ij} = \begin{cases}
+			k_{j-i-m} & \abs{j-i-m} \leq m \\
+			0 & else
+		\end{cases}
+	\end{equation*}
+	and
+	\begin{equation*}
+		\lb \jac{constant\_pad \lsb p,l,r \rsb}{x} \rb_{ij} = \begin{cases}
+			1 & i-j=p \\
+			0 & else
+		\end{cases}
+	\end{equation*}
+	With the chain rule and $s_p = m$ we have
+	\begin{align*}
+		\lb \jac{\lb conv1d \lsb k \rsb \circ constant\_pad \lsb m,l,r \rsb \rb}{p} \rb_{ij}
+		&= \lb  
+			\jac{conv1d \lsb k \rsb}{x}
+			\jac{constant\_pad \lsb m,l,r \rsb}{x} 
+		\rb_{ij} \\
+		&= \sum_{u=1}^{d+2m} \lb \jac{conv1d \lsb k \rsb}{x} \rb_{iu}
+		\lb \jac{constant\_pad \lsb m,l,r \rsb}{x} \rb_{uj} \\
+		&= \lb \jac{conv1d \lsb k \rsb}{x} \rb_{i(j+m)}
+		\quad (\text{bc. } u-j=m \iff u=j+m) \\
+		&= \begin{cases}
+			k_{(j+m)-i-m} & \abs{(j+m)-i-m} \leq m \\
+			0 & else
+		\end{cases} \\
+		&= \begin{cases}
+			k_{j-i} & \abs{j-i} \leq m \\
+			0 & else
+		\end{cases} \\
+		&= \begin{cases}
+			k_{i-j} & \abs{i-j} \leq m \\
+			0 & else
+		\end{cases} \quad \text{(Symmetry of $k$)} \\
+		&= \lb \jac{\lb conv1d \lsb k \rsb \circ constant\_pad \lsb m,l,r \rsb \rb}{p} \rb_{ji}
+	\end{align*}
+	Thus the Jacobian matrix is symmetric.
 \end{proof}
 
 \begin{theorem}
@@ -658,7 +704,7 @@ $n \in \mathbb{N}$ denotes the width of the gradient layer and can be chosen fre
 		&= K^Tdiag(a)\sigma(Kp+b)
 	\end{align*}
 
-	With \thref{gradient_corollary} follows that the Gradient layers $\mathcal{G}_{\{up,low\}}$
+	With \cref{gradient_corollary} follows that the Gradient layers $\mathcal{G}_{\{up,low\}}$
 	are symplectic.
 \end{proof}
 
