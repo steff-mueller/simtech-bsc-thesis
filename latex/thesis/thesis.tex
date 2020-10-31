@@ -366,16 +366,16 @@ The next corollary is useful to construct symplectic maps.
 
 \subsection{Linear layers}
 
-\begin{align*}
-	\ell_{up}: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad \ell_{up} \qpvec &:= \begin{pmatrix}
+\begin{alignat*}{2}
+	\ell_{up}&: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad \ell_{up} \qpvec &:= \begin{pmatrix}
 		I & S \\
 		0 & I
 	\end{pmatrix} \qpvec + b, \\
-	\ell_{low}: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad \ell_{low} \qpvec &:= \begin{pmatrix}
+	\ell_{low}&: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad \ell_{low} \qpvec &:= \begin{pmatrix}
 		I & 0 \\
 		S & I
 	\end{pmatrix} \qpvec + b
-\end{align*}
+\end{alignat*}
 where $S \in \mathbb{R}^{d \times d}$ symmetric and $b \in \mathbb{R}^{2d}$
 are learnable parameters. In practice, we parametrize the symmetric matrix $S\in \mathbb{R}^{d \times d}$
 with $S = A^T + A$ via another arbitrary matrix $A\in \mathbb{R}^{d \times d}$, as
@@ -427,10 +427,11 @@ choosing the potential $V(p) := p^TAp$.
 \end{proof}
 
 We may enhance expressivity of a linear layer by alternately composing multiple
-$\ell_{up}$ and $\ell_{low}$:
+$\ell_{up}$ and $\ell_{low}$. We define 
+$\mathcal{L}^{n}_{up},\, \mathcal{L}^{n}_{low} : \mathbb{R}^{2d} \to \mathbb{R}^{2d}$ with
 
 \begin{align*}
-	\mathcal{L}^{n}_{up} \qpvec &= \begin{pmatrix}
+	\mathcal{L}^{n}_{up} \qpvec &:= \begin{pmatrix}
 		I && 0 / S_n \\
 		S_n / 0 && I
 	\end{pmatrix}
@@ -443,7 +444,7 @@ $\ell_{up}$ and $\ell_{low}$:
 		I && S_1 \\
 		0 && I
 	\end{pmatrix} + b \\
-	\mathcal{L}^{n}_{low} \qpvec &= \begin{pmatrix}
+	\mathcal{L}^{n}_{low} \qpvec &:= \begin{pmatrix}
 		I && S_n / 0 \\
 		0 / S_n && I
 	\end{pmatrix}
@@ -567,13 +568,13 @@ For symmetric padding it must hold $L_{in} \geq s_p$.
 
 \todo{Add illustrations for padding}
 
-We define the symplectic $1$-dimensional convolution layer by
-\begin{align*}
-	\mathcal{C}_{up} : \mathbb{R}^{2d} \to \mathbb{R}^{2d},
-	\mathcal{C}_{up} \qpvec &:= \uppersympop{conv1d[k] \circ pad[s_p,\dots]} \\
-	\mathcal{C}_{low} : \mathbb{R}^{2d} \to \mathbb{R}^{2d},
-	\mathcal{C}_{low} \qpvec &:= \lowersympop{conv1d[k] \circ pad[s_p,\dots]}
-\end{align*}
+We define the symplectic $1$-dimensional convolution layers by
+\begin{alignat*}{2}
+	\mathcal{C}_{up} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d},
+	\quad&\mathcal{C}_{up} \qpvec := \uppersympop{conv1d[k] \circ pad[s_p,\dots]} \\
+	\mathcal{C}_{low} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d},
+	&\mathcal{C}_{low} \qpvec := \lowersympop{conv1d[k] \circ pad[s_p,\dots]}
+\end{alignat*}
 where kernel $k \in \mathbb{R}^{2m+1}$ symmetric, $s_p = m$ and either
 \begin{align*}
 	pad[s_p,\dots] &= constant\_pad[s_p,l,r],\; l,r \in \mathbb{R}^{s_p} \text{ or } \\
@@ -655,7 +656,8 @@ and
 	&= \begin{dcases}
 		(-1)^{j} \binom{2(i-1)}{j+i-1} : \abs{j} < i \\
 		0 : else
-	\end{dcases} = (b_i^{FD})_j
+	\end{dcases} \\
+	&= (b_i^{FD})_j
 \end{align*}
 for $i=1, \dots, m$ and $j= 0, \dots, m$. So $b_i^{FD}$ $(i=1, \dots, m)$ are a valid basis of
 the space $\{ k \in \mathbb{R}^{2m+1} : k \text{ is symmetric} \}$.
@@ -791,15 +793,15 @@ parametrization plays an important role how well a neural network learns.
 	\end{align*}
 	Then
 	\begin{align*}
-		(*) = \sum_{w_1 \in \widetilde{I_1}} k_{1-i-w_1} x_{w_1} +
-		\sum_{w_2 \in \widetilde{I_2}} k_{w_2-i} x_{w_2} +
-		\sum_{w_3 \in \widetilde{I_3}} k_{2d+1-i-w_3} x_{w_3}
+		(*) = \sum_{w_1 \in \widetilde{I_1}} k_{1-i-w_1} p_{w_1} +
+		\sum_{w_2 \in \widetilde{I_2}} k_{w_2-i} p_{w_2} +
+		\sum_{w_3 \in \widetilde{I_3}} k_{2d+1-i-w_3} p_{w_3}
 	\end{align*}
 	Let $ 1 \leq j \leq d$. Then for the Jacobian holds
 	\begin{align*}
 		\hspace{6em}&\hspace{-6em}
-		\lb conv1d \lsb k \rsb \circ symmetric\_pad \lsb m \rsb \rb_{ij}
-		= \deldel{p_j} \lb conv1d \lsb k \rsb \circ symmetric\_pad \lsb m \rsb \rb_i \\
+		\lb conv1d \lsb k \rsb \circ symmetric\_pad \lsb m \rsb(p) \rb_{ij}
+		= \deldel{p_j} \lb conv1d \lsb k \rsb \circ symmetric\_pad \lsb m \rsb(p) \rb_i \\
 		&= \underbrace{\lb \begin{cases}
 			k_{1-i-j} & : j \in \widetilde{I_1} \\
 			0 & : else
@@ -890,39 +892,66 @@ parametrization plays an important role how well a neural network learns.
 
 \subsection{Activation layers}
 
-$V(p) = 1_n^T(\int \sigma)(p)$
+\begin{alignat*}{2}
+	\mathcal{N}_{up} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d},
+	\quad \mathcal{N}_{up} \qpvec &:= \uppersympop{\hat{\activation}_a}
+	:= \begin{pmatrix}
+		q + diag(a)\activation(p) \\
+		p
+	\end{pmatrix} \\[7pt]
+	%
+	\mathcal{N}_{low} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d},
+	\quad \mathcal{N}_{low} \qpvec &:= \lowersympop{\hat{\activation}_a}
+	:= \begin{pmatrix}
+		q \\
+		diag(a)\activation(q) + p
+	\end{pmatrix}
+\end{alignat*}
+where $a \in \mathbb{R}^d$ is a learnable parameter and 
+$\activation : \mathbb{R} \to \mathbb{R}$ an activation function,
+which is applied element-wise.
 
-\begin{equation*}
-	\grad{V}(p) = \lb\jac{V}{p}(p)\rb^T = \lb1_n^Tdiag\lb\sigma(p)\rb\rb^T
-	= diag(\activation(p)) 1_n
-	= \activation(p)
-\end{equation*}
+\begin{corollary}
+	Given an activation function $\activation \in \mathbb{C}^1$
+	the activation layers $\mathcal{N}_{up}$ and $\mathcal{N}_{low}$ are symplectic.
+\end{corollary}
+\begin{proof}
+	Let $\mathcal{A}: \mathbb{R} \to \mathbb{R}$ be the antiderivative of $\activation$, 
+	i.e. $\dd{x} \mathcal{A} = \activation$ and $V(p) := a^T\mathcal{A}(p)$.
 
-\todo{Differentiate between $a \in \mathbb{R}$ and $a \in \mathbb{R}^d$?}
+	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and
+	\begin{equation*}
+		\grad{V}(p) = \lb\jac{V}{p}(p)\rb^T = \lb a^Tdiag\lb\sigma(p)\rb\rb^T
+		= diag(\activation(p)) a
+		= diag(a) \activation(p)
+	\end{equation*}
+	Symplecticity follows with \cref{gradient_corollary}.
+\end{proof}
 
 \subsection{Gradient layers}
 
-\begin{equation*}
-	\mathcal{G}_{up} \qpvec := \uppersympop{\hat{\activation}} := \begin{pmatrix}
+\begin{alignat*}{2}
+	\mathcal{G}_{up} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
+	\mathcal{G}_{up} \qpvec &:= \uppersympop{\hat{\activation_g}} := \begin{pmatrix}
 		q + K^T diag(a) \activation(Kp + b) \\
 		p
-	\end{pmatrix}
-\end{equation*}
-\begin{equation*}
-	\mathcal{G}_{low} \qpvec := \lowersympop{\hat{\activation}} := \begin{pmatrix}
+	\end{pmatrix} \\[7pt]
+	%
+	\mathcal{G}_{low} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
+	\mathcal{G}_{low} \qpvec &:= \lowersympop{\hat{\activation_g}} := \begin{pmatrix}
 		q \\
 		K^T diag(a) \activation(Kq + b) + p
 	\end{pmatrix}
-\end{equation*}
+\end{alignat*}
 where $K \in \mathbb{R}^{n \times d}$ and $a,b \in \mathbb{R}^n$
-are learnable parameters.
+are learnable parameters. $\activation : \mathbb{R} \to \mathbb{R}$ 
+is an activation function, which is applied element-wise.
 $n \in \mathbb{N}$ denotes the width of the gradient layer and can be chosen freely.
 
-\newtheorem*{glayer}{Lemma}
-\begin{glayer}
-	Given an activation function $\sigma \in C^1$ the gradient layers $\mathcal{G}_{\{up,low\}}$ 
-	are symplectic.
-\end{glayer}
+\begin{corollary}
+	Given an activation function $\sigma \in C^1$ the gradient layers $\mathcal{G}_{up}$
+	and $\mathcal{G}_{low}$ are symplectic.
+\end{corollary}
 \begin{proof}
 	Let $\mathcal{A}: \mathbb{R} \to \mathbb{R}$ be the antiderivative of $\activation$, 
 	i.e. $\dd{x} \mathcal{A} = \activation$ and
@@ -936,8 +965,8 @@ $n \in \mathbb{N}$ denotes the width of the gradient layer and can be chosen fre
 		&= K^Tdiag(a)\sigma(Kp+b)
 	\end{align*}
 
-	With \cref{gradient_corollary} follows that the Gradient layers $\mathcal{G}_{\{up,low\}}$
-	are symplectic.
+	With \cref{gradient_corollary} follows that the Gradient layers
+	$\mathcal{G}_{up}$ and $\mathcal{G}_{low}$ are symplectic.
 \end{proof}
 
 \todo{For high dimensions $K$ and $K^T$ can be implemented as transposed convolution
@@ -986,6 +1015,8 @@ Assumptions:
 isotropic.}
 
 \todo{Maybe compare different optimizers (SGD, Adam, AdamW, amsgrad, ...)}
+
+\todo{Activation layers: Differentiate between $a \in \mathbb{R}$ and $a \in \mathbb{R}^d$}
 
 \section{Implementation}
 
