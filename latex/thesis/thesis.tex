@@ -9,6 +9,7 @@
 \usepackage[english]{babel}
 \usepackage{graphicx}
 \usepackage{amsmath,amsthm,amstext,amssymb,bm}
+\usepackage{mathtools}
 \usepackage{xcolor,color}
 \usepackage{pifont}
 \usepackage{array}
@@ -506,18 +507,7 @@ because this reduces to a single upper or lower linear layer:
 
 \subsection{Convolution layers}
 
-Convolution layers are a subset of linear layers. \todo{Thus symplectic}
-
 \todo{Try motivating convolution layers by showing that the linear layers explode if $d$ becomes large.}
-
-\todo{Bias important if non-zero Dirichlet boundaries, but only at borders!}
-
-\todo{Interesting: Finite difference basis only contains even-order derivatives, otherwise it
-would not be symplectic (symmetric). What happens if Hamiltonian contains even-order derivative?
-Symmetric Hessian does not explain it, because we only take gradient of Hamiltonian and not Hessian.
-Relation to Störmer-Verlet.}
-
-\todo{Discuss different parametrizations for symmetric kernels}
 
 Given a kernel $k \in \mathbb{R}^{s_k}$ with kernel size $s_k \in \mathbb{N}$
 the $1$-dimensional convolution operator is defined as
@@ -549,42 +539,49 @@ A padding operator increases the input dimension by padding
 the input boundaries. Let us define $1$-dimensional constant padding and symmetric padding operators.
 Let $s_p \in \mathbb{N}$ be the padding size and $L_{in}$ the input dimension.
 
+Constant padding adds constant padding values at the left and right boundary.
 \begin{align*}
-	constant\_pad[s_p,l,r] &: \mathbb{R}^{L_{in}} \to \mathbb{R}^{L_{in}+2s_p}, \\
-	(constant\_pad[s_p,l,r](x))_i &:=
+	&constant\_pad[s_p,l,r] : \mathbb{R}^{L_{in}} \to \mathbb{R}^{L_{in}+2s_p}, \\[7pt]
+	&(constant\_pad[s_p,l,r](x))_i :=
 	\begin{cases}
 		l_i & 1 \leq i \leq s_p \\
 		x_{i-s_p} & s_p+1 \leq i \leq L_{in}+s_p \\
 		r_{i-L_{in}+s_p} & L_{in}+s_p+1 \leq i \leq L_{in} + 2s_p
 	\end{cases}
+	\quad (1 \leq i \leq L_{in}+2s_p)
 \end{align*}
 where $l,r \in \mathbb{R}^{s_p}$ are the padding values for the left and right boundaries.
 
-\todo{Describe what symmetric padding does in prose}
+Symmetric padding mirrors the inner values at the left and right boundaries.
 \begin{align*}
-	symmetric\_pad[s_p] &: \mathbb{R}^{L_{in}} \to \mathbb{R}^{L_{in}+2s_p}, \\
-	(symmetric\_pad[s_p](x))_i &:=
+	&symmetric\_pad[s_p] : \mathbb{R}^{L_{in}} \to \mathbb{R}^{L_{in}+2s_p}, \\[7pt]
+	&(symmetric\_pad[s_p](x))_i :=
 	\begin{cases}
 		x_{s_p-i+1} & 1 \leq i \leq s_p \\
 		x_{i-s_p} & s_p+1 \leq i \leq L_{in}+s_p \\
 		x_{2L_{in}+s_p+1-i} & L_{in}+s_p+1 \leq i \leq L_{in} + 2s_p
 	\end{cases}
+	\quad (1 \leq i \leq L_{in}+2s_p)
 \end{align*}
-\todo{$L_{in} \geq s_p$!!!}
+For symmetric padding it must hold $L_{in} \geq s_p$.
 
 \todo{Add illustrations for padding}
 
 We define the symplectic $1$-dimensional convolution layer by
 \begin{align*}
+	\mathcal{C}_{up} : \mathbb{R}^{2d} \to \mathbb{R}^{2d},
 	\mathcal{C}_{up} \qpvec &:= \uppersympop{conv1d[k] \circ pad[s_p,\dots]} \\
+	\mathcal{C}_{low} : \mathbb{R}^{2d} \to \mathbb{R}^{2d},
 	\mathcal{C}_{low} \qpvec &:= \lowersympop{conv1d[k] \circ pad[s_p,\dots]}
 \end{align*}
-with kernel $k \in \mathbb{R}^{2m+1}$ symmetric, $s_p = m$
-and either $pad[s_p,\dots] = constant\_pad[s_p,l,r]$ ($l,r \in \mathbb{R}^{s_p}$) 
-or $pad[s_p,\dots] = symmetric\_pad[s_p]$. For $pad[s_p,\dots] = symmetric\_pad[s_p]$
-it must hold $d \geq m$. $k \in \mathbb{R}^{2m+1}$ is learnable during training. 
-$l,r \in \mathbb{R}^{s_p}$ are constant or also learnable during training.
-\todo{Make the sentences above less cluttered...}
+where kernel $k \in \mathbb{R}^{2m+1}$ symmetric, $s_p = m$ and either
+\begin{align*}
+	pad[s_p,\dots] &= constant\_pad[s_p,l,r],\; l,r \in \mathbb{R}^{s_p} \text{ or } \\
+	pad[s_p,\dots] &= symmetric\_pad[s_p]
+\end{align*}
+For $pad[s_p,\dots] = symmetric\_pad[s_p]$ it must hold $d \geq m$.
+The kernel $k \in \mathbb{R}^{2m+1}$ is learnable during training.
+If using constant pad $l,r \in \mathbb{R}^{s_p}$ can be either fixed or learnable during training.
 
 Indeed $conv1d[k] \circ pad[p,\dots]$ maps from $\mathbb{R}^d$ to $\mathbb{R}^d$ because
 \begin{align*}
@@ -604,6 +601,73 @@ indeed imply that the kernel size $s_k$ must be odd.
 	\text{\cref{conv_dim1} in \cref{conv_dim2}:} \quad d+2s_p - s_k + 1 = d \iff s_k = 2s_p+1
 \end{equation*}
 
+Let ${b_1, b_2, \dots b_m} \in \mathbb{R}^{2m+1}$ be a basis of the space 
+$\{ k \in \mathbb{R}^{2m+1} : k \text{ is symmetric} \}$.
+The symmetric kernel $k$ is then parametrized by the coefficients $\beta \in \mathbb{R}^m$ via
+\begin{equation*}
+	k = (b_1, b_2, \dots, b_m) \beta = \beta_1 b_1 + \beta_2 b_2 + \dots + \beta_m b_m
+\end{equation*}
+
+We can choose the canonical basis with basis vectors
+\begin{align*}
+	b_1^C = (0, \dots, 0, 0, 0, &1, 0, 0, 0, \dots, 0)^T \in \mathbb{R}^{2m+1}, \\
+	b_2^C = (0, \dots, 0, 0, 1, &0, 1, 0, 0, \dots, 0)^T \in \mathbb{R}^{2m+1}, \\
+	b_3^C = (0, \dots, 0, 1, 0, &0, 0, 1, 0, \dots, 0)^T \in \mathbb{R}^{2m+1}, \\
+	&\vdots \\
+	b_m^C = (1, 0, \dots, &0, \dots, 0, 1)^T \in \mathbb{R}^{2m+1}
+\end{align*}
+
+Another possible basis choice inspired by finite differences is
+\todo{Cite paper with similar idea?}
+\begin{align*}
+	b_1^{FD} = (0, \dots, 0,& 1,0, \dots, 0)^T \in \mathbb{R}^{2m+1},\\
+	b_2^{FD} = (0, \dots, 0, 1,-&2,1, 0, \dots, 0)^T \in \mathbb{R}^{2m+1},\\
+	b_3^{FD} = (0, 0, \dots, 0, 1,-4,& 6,-4,1, 0, \dots, 0)^T \in \mathbb{R}^{2m+1} \\
+	&\vdots
+\end{align*}
+The entries for a basis vector $b_i \in \mathbb{R}^{2m+1}$ $(1 \leq i \leq m)$ 
+originate from Pascal's triangle.
+\begin{equation*}
+	\lb b_i^{FD} \rb_j = \begin{dcases}
+		(-1)^j \binom{2(i-1)}{j+i-1} : \abs{j} < i \\
+		0 : else
+	\end{dcases}
+	\quad (1 \leq i \leq m, -m \leq j \leq m )
+\end{equation*}
+where $j$ is indexed from $-m$ to $m$ in accordance to how we defined indexing for kernel entries.
+
+\todo{Move this to Appendix?}
+The symmetry of the kernel basis vectors $b_i$ follows with the definition of the binomial coefficient.
+\begin{align*}
+	\binom{2(i-1)}{j+i-1} &= \frac{2(i-1)!}{(j+i-1)!(2(i-1)-(j+i-1))!} \\
+	&= \frac{2(i-1)!}{(j+i-1)!(i-j-1)!}
+\end{align*}
+Thus we have
+\begin{equation*}
+	\binom{2(i-1)}{(-j)+i-1} = \binom{2(i-1)}{j+i-1}
+\end{equation*}
+and
+\begin{align*}
+	\lb b_i^{FD} \rb_{-j} &= \begin{dcases}
+		(-1)^{-j} \binom{2(i-1)}{(-j)+i-1} : \abs{-j} < i \\
+		0 : else
+	\end{dcases} \\
+	&= \begin{dcases}
+		(-1)^{j} \binom{2(i-1)}{j+i-1} : \abs{j} < i \\
+		0 : else
+	\end{dcases} = (b_i^{FD})_j
+\end{align*}
+for $i=1, \dots, m$ and $j= 0, \dots, m$. So $b_i^{FD}$ $(i=1, \dots, m)$ are a valid basis of
+the space $\{ k \in \mathbb{R}^{2m+1} : k \text{ is symmetric} \}$.
+
+\todo{Interesting: Finite difference basis only contains even-order derivatives, otherwise it
+would not be symplectic (symmetric). What happens if Hamiltonian contains even-order derivative?
+Symmetric Hessian does not explain it, because we only take gradient of Hamiltonian and not Hessian.
+Relation to Störmer-Verlet.}
+
+As it turns out in our numerical experiments
+parametrization plays an important role how well a neural network learns.
+
 \todo{Maybe move the proof of these theorems to Appendices to keep this cleaner?}
 
 \begin{theorem}
@@ -620,16 +684,18 @@ indeed imply that the kernel size $s_k$ must be odd.
 	We have
 	\begin{equation*}
 		\lb \jac{conv1d \lsb k \rsb}{x} \rb_{ij} = \begin{cases}
-			k_{j-i-m} & \abs{j-i-m} \leq m \\
-			0 & else
+			k_{j-i-m} & : \abs{j-i-m} \leq m \\
+			0 & : else
 		\end{cases}
+		\quad (1 \leq i \leq d, 1 \leq j \leq d+2m)
 	\end{equation*}
 	and
 	\begin{equation*}
 		\lb \jac{constant\_pad \lsb m,l,r \rsb}{x} \rb_{ij} = \begin{cases}
-			1 & i-j=m \\
-			0 & else
+			1 & : i-j=m \\
+			0 & : else
 		\end{cases}
+		\quad (1 \leq i \leq d+2m, 1 \leq j \leq d)
 	\end{equation*}
 	Let $1 \leq i,j \leq d$. By the chain rule we have
 	\begin{align*}
@@ -643,18 +709,26 @@ indeed imply that the kernel size $s_k$ must be odd.
 		&= \lb \jac{conv1d \lsb k \rsb}{x} \rb_{i(j+m)}
 		\quad (\text{bc. } u-j=m \iff u=j+m) \\
 		&= \begin{cases}
-			k_{(j+m)-i-m} & \abs{(j+m)-i-m} \leq m \\
-			0 & else
+			k_{(j+m)-i-m} & : \abs{(j+m)-i-m} \leq m \\
+			0 & : else
 		\end{cases} \\
 		&= \begin{cases}
-			k_{j-i} & \abs{j-i} \leq m \\
-			0 & else
+			k_{j-i} & : \abs{j-i} \leq m \\
+			0 & : else
+		\end{cases}
+	\end{align*}
+	Then 
+	\begin{align*}
+		\lb \jac{\lb conv1d \lsb k \rsb \circ constant\_pad \lsb m,l,r \rsb \rb}{p} \rb_{ji}
+		&= \begin{cases}
+			k_{i-j} & : \abs{i-j} \leq m \\
+			0 & : else
 		\end{cases} \\
 		&= \begin{cases}
-			k_{i-j} & \abs{i-j} \leq m \\
-			0 & else
-		\end{cases} \quad \text{(Symmetry of $k$)} \\
-		&= \lb \jac{\lb conv1d \lsb k \rsb \circ constant\_pad \lsb m,l,r \rsb \rb}{p} \rb_{ji}
+			k_{j-i} & : \abs{j-i} \leq m \\
+			0 & : else
+		\end{cases} \quad \text{($k$ symmetric)} \\
+		&= \lb \jac{\lb conv1d \lsb k \rsb \circ constant\_pad \lsb m,l,r \rsb \rb}{p} \rb_{ij}
 	\end{align*}
 	We have shown that the Jacobian matrix is symmetric.
 \end{proof}
@@ -664,15 +738,15 @@ indeed imply that the kernel size $s_k$ must be odd.
 	with $pad[m,\dots] = symmetric\_pad[m]$ are symplectic.
 \end{theorem}
 \begin{proof}
-	Let $i \in \mathbb{N}$ with $ 1 \leq i \leq d$.
+	Let $1 \leq i \leq d$.
 	Then
 	\begin{equation*}
-		\lb conv1d \lsb k \rsb \circ symmetric\_pad \lsb m \rsb \rb_i
-		= \sum_{u=-m}^m k_u \lb symmetric\_pad \lsb m \rsb \rb_{i+u+m} = (*)
+		\lb conv1d \lsb k \rsb \circ symmetric\_pad \lsb m \rsb(p) \rb_i
+		= \sum_{u=-m}^m k_u \lb symmetric\_pad \lsb m \rsb(p) \rb_{i+u+m} = (*)
 	\end{equation*}
 	With the variable transform $v=v(u):=i+u+m \iff u=v-i-m$ we have
 	\begin{equation*}
-		(*) = \sum_{v=i}^{i+2m} k_{v-i-m} \lb symmetric\_pad \lsb m \rsb \rb_{v}
+		(*) = \sum_{v=i}^{i+2m} k_{v-i-m} \lb symmetric\_pad \lsb m \rsb(p) \rb_{v}
 	\end{equation*}
 	Let $I := \{ v \in \mathbb{N} : i \leq v \leq i+2m \}$ and
 	\begin{align*}
@@ -682,9 +756,9 @@ indeed imply that the kernel size $s_k$ must be odd.
 	\end{align*}
 	Then
 	\begin{align*}
-		(*) &= \sum_{v_1 \in I_1} k_{v_1-i-m} x_{m+1-v_1} +
-		\sum_{v_2 \in I_2} k_{v_2-i-m} x_{v_2-m} +
-		\sum_{v_3 \in I_3} k_{v_3-i-m} x_{2d+m+1-v_3}
+		(*) &= \sum_{v_1 \in I_1} k_{v_1-i-m} p_{m+1-v_1} +
+		\sum_{v_2 \in I_2} k_{v_2-i-m} p_{v_2-m} +
+		\sum_{v_3 \in I_3} k_{v_3-i-m} p_{2d+m+1-v_3}
 	\end{align*}
 	We apply a variable transform on each sum.
 	\begin{align*}
@@ -721,94 +795,94 @@ indeed imply that the kernel size $s_k$ must be odd.
 		\sum_{w_2 \in \widetilde{I_2}} k_{w_2-i} x_{w_2} +
 		\sum_{w_3 \in \widetilde{I_3}} k_{2d+1-i-w_3} x_{w_3}
 	\end{align*}
-	Let $j \in \mathbb{N}$ with $ 1 \leq j \leq d$. Then for the Jacobian holds
+	Let $ 1 \leq j \leq d$. Then for the Jacobian holds
 	\begin{align*}
 		\hspace{6em}&\hspace{-6em}
 		\lb conv1d \lsb k \rsb \circ symmetric\_pad \lsb m \rsb \rb_{ij}
 		= \deldel{p_j} \lb conv1d \lsb k \rsb \circ symmetric\_pad \lsb m \rsb \rb_i \\
 		&= \underbrace{\lb \begin{cases}
-			k_{1-i-j} & j \in \widetilde{I_1} \\
-			0 & else
+			k_{1-i-j} & : j \in \widetilde{I_1} \\
+			0 & : else
 		\end{cases} \rb}_{:= K_1(i,j)} + \underbrace{\lb \begin{cases}
-			k_{j-i} & j \in \widetilde{I_2} \\
-			0 & else
+			k_{j-i} & : j \in \widetilde{I_2} \\
+			0 & : else
 		\end{cases} \rb}_{:= K_2(i,j)} + \underbrace{\lb \begin{cases}
-			k_{2d+1-i-j} & j \in \widetilde{I_3} \\
-			0 & else
+			k_{2d+1-i-j} & : j \in \widetilde{I_3} \\
+			0 & : else
 		\end{cases} \rb}_{:= K_3(i,j)} \\
 		&= K_1(i,j) + K_2(i,j) + K_3(i,j)
 	\end{align*}
 	We have
 	\begin{align*}
 		 K_1(i,j) &= \begin{cases}
-			k_{1-i-j} & j \in \widetilde{I_1} \\
-			0 & else
+			k_{1-i-j} & : j \in \widetilde{I_1} \\
+			0 & : else
 		\end{cases} = \begin{cases}
-			k_{1-i-j} & 1 \leq j \leq 1+m-i \\
-			0 & else
-		\end{cases} \\
+			k_{1-i-j} & : 1 \leq j \leq 1+m-i \\
+			0 & : else
+		\end{cases} \\[7pt]
 		&= \begin{cases}
-			k_{1-i-j} & j \leq 1+m-i \\
-			0 & else
+			k_{1-i-j} & : j \leq 1+m-i \\
+			0 & : else
 		\end{cases} = \begin{cases}
-			k_{1-i-j} & j+i \leq 1+m \\
-			0 & else
-		\end{cases} \\[20pt]
+			k_{1-i-j} & : j+i \leq 1+m \\
+			0 & : else
+		\end{cases} \\[25pt]
 		%
 		K_2(i,j) &= \begin{cases}
-			k_{j-i} & j \in \widetilde{I_2} \\
-			0 & else
+			k_{j-i} & : j \in \widetilde{I_2} \\
+			0 & : else
 		\end{cases} = \begin{cases}
-			k_{j-i} & i-m \leq j \leq i+m \\
-			0 & else
+			k_{j-i} & : i-m \leq j \leq i+m \\
+			0 & : else
 		\end{cases} = \begin{cases}
-			k_{j-i} & \abs{j-i} \leq m \\
-			0 & else
-		\end{cases} \\[20pt]
+			k_{j-i} & : \abs{j-i} \leq m \\
+			0 & : else
+		\end{cases} \\[25pt]
 		%
 		K_3(i,j) &= \begin{cases}
-			k_{2d+1-i-j} & j \in \widetilde{I_3} \\
-			0 & else
+			k_{2d+1-i-j} & : j \in \widetilde{I_3} \\
+			0 & : else
 		\end{cases} = \begin{cases}
-			k_{2d+1-i-j} & 2d+1-m-i \leq j \leq d \\
-			0 & else
-		\end{cases} \\
+			k_{2d+1-i-j} & : 2d+1-m-i \leq j \leq d \\
+			0 & : else
+		\end{cases} \\[7pt]
 		&= \begin{cases}
-			k_{2d+1-i-j} & 2d+1-m-i \leq j \\
-			0 & else
+			k_{2d+1-i-j} & : 2d+1-m-i \leq j \\
+			0 & : else
 		\end{cases}
 		= \begin{cases}
-			k_{2d+1-i-j} & 2d+1-m \leq j+i \\
-			0 & else
+			k_{2d+1-i-j} & : 2d+1-m \leq j+i \\
+			0 & : else
 		\end{cases}
 	\end{align*}
 	We show that $K_l$, $l=1,2,3$ are symmetric, i.e. $K_l(j,i) = K_l(i,j)$ for
 	$l=1,2,3$. This implies that the Jacobian is symmetric.
 	\begin{equation*}
 		K_1(j,i) = \begin{cases}
-			k_{1-j-i} & i+j \leq 1+m \\
-			0 & else
+			k_{1-j-i} & : i+j \leq 1+m \\
+			0 & : else
 		\end{cases} = \begin{cases}
-			k_{1-i-j} & j+i \leq 1+m \\
-			0 & else
+			k_{1-i-j} & : j+i \leq 1+m \\
+			0 & : else
 		\end{cases} = K_1(i,j) \\[20pt]
 	\end{equation*}
 	\begin{equation*}
 		K_2(j,i) = \begin{cases}
-			k_{i-j} & \abs{i-j} \leq m \\
-			0 & else
+			k_{i-j} & : \abs{i-j} \leq m \\
+			0 & : else
 		\end{cases} \stackrel{k \text{ symmetric}}{=} \begin{cases}
-			k_{j-i} & \abs{j-i} \leq m \\
-			0 & else
+			k_{j-i} & : \abs{j-i} \leq m \\
+			0 & : else
 		\end{cases} = K_2(i,j) \\[20pt]
 	\end{equation*}
 	\begin{equation*}
 		K_3(j,i) = \begin{cases}
-			k_{2d+1-j-i} & 2d+1-m \leq i+j \\
-			0 & else
+			k_{2d+1-j-i} & : 2d+1-m \leq i+j \\
+			0 & : else
 		\end{cases} = \begin{cases}
-			k_{2d+1-i-j} & 2d+1-m \leq j+i \\
-			0 & else
+			k_{2d+1-i-j} & : 2d+1-m \leq j+i \\
+			0 & : else
 		\end{cases} = K_3(i,j)
 	\end{equation*}
 	Thus symplecticity follows with \cref{jacobi_symmetric}.
@@ -900,11 +974,13 @@ Assumptions:
 
 \todo{Explain why we need assumptions.}
 
-\subsubsection{Linear wave equation in one dimension}
+\subsubsection{Linear wave equation}
 
 \todo{The choice of basis for the symmetric convolution kernels is critical (at least for fast convergence)!}
 
 \subsubsection{Sine-Gordon}
+
+\todo{Bias important if non-zero Dirichlet boundaries, but only at borders! // Padding modes}
 
 \todo{Activation layer with sin works well if $a \in \mathbb{R}$, i.e. activation function is applied
 isotropic.}
