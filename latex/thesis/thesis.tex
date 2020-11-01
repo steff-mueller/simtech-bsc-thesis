@@ -22,6 +22,7 @@
 \usepackage[numbers]{natbib}
 \usepackage{multirow}
 \usepackage{makecell}
+\usepackage{algpseudocode,algorithm}
 %%% Title page
 \usepackage{common/titlePageST}
 %%% Appendix in TOC
@@ -36,6 +37,8 @@
 \usepackage{hhline}
 %%% custom items in enumerate and itemize
 \usepackage{enumitem}
+%%% custom format for algorithm comments
+\algrenewcommand{\algorithmiccomment}[1]{\hskip3em // #1}
 
 \clubpenalty=5000
 \widowpenalty=5000
@@ -370,7 +373,7 @@ The next corollary is useful to construct symplectic maps.
 	\ell_{up}&: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad \ell_{up} \qpvec &:= \begin{pmatrix}
 		I & S \\
 		0 & I
-	\end{pmatrix} \qpvec + b, \\
+	\end{pmatrix} \qpvec + b, \\[7pt]
 	\ell_{low}&: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad \ell_{low} \qpvec &:= \begin{pmatrix}
 		I & 0 \\
 		S & I
@@ -508,7 +511,7 @@ because this reduces to a single upper or lower linear layer:
 
 \subsection{Convolution layers}
 
-\todo{Try motivating convolution layers by showing that the linear layers explode if $d$ becomes large.}
+\todo{Motivate convolution layers}
 
 Given a kernel $k \in \mathbb{R}^{s_k}$ with kernel size $s_k \in \mathbb{N}$
 the $1$-dimensional convolution operator is defined as
@@ -571,7 +574,7 @@ For symmetric padding it must hold $L_{in} \geq s_p$.
 We define the symplectic $1$-dimensional convolution layers by
 \begin{alignat*}{2}
 	\mathcal{C}_{up} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d},
-	\quad&\mathcal{C}_{up} \qpvec := \uppersympop{conv1d[k] \circ pad[s_p,\dots]} \\
+	\quad&\mathcal{C}_{up} \qpvec := \uppersympop{conv1d[k] \circ pad[s_p,\dots]} \\[7pt]
 	\mathcal{C}_{low} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d},
 	&\mathcal{C}_{low} \qpvec := \lowersympop{conv1d[k] \circ pad[s_p,\dots]}
 \end{alignat*}
@@ -626,7 +629,7 @@ Another possible basis choice inspired by finite differences is
 	b_3^{FD} = (0, 0, \dots, 0, 1,-4,& 6,-4,1, 0, \dots, 0)^T \in \mathbb{R}^{2m+1} \\
 	&\vdots
 \end{align*}
-The entries for a basis vector $b_i \in \mathbb{R}^{2m+1}$ $(1 \leq i \leq m)$ 
+The entries for a basis vector $b_i^{FD} \in \mathbb{R}^{2m+1}$ $(1 \leq i \leq m)$ 
 originate from Pascal's triangle.
 \begin{equation*}
 	\lb b_i^{FD} \rb_j = \begin{dcases}
@@ -638,7 +641,7 @@ originate from Pascal's triangle.
 where $j$ is indexed from $-m$ to $m$ in accordance to how we defined indexing for kernel entries.
 
 \todo{Move this to Appendix?}
-The symmetry of the kernel basis vectors $b_i$ follows with the definition of the binomial coefficient.
+The symmetry of the kernel basis vectors $b_i^{FD}$ follows with the definition of the binomial coefficient.
 \begin{align*}
 	\binom{2(i-1)}{j+i-1} &= \frac{2(i-1)!}{(j+i-1)!(2(i-1)-(j+i-1))!} \\
 	&= \frac{2(i-1)!}{(j+i-1)!(i-j-1)!}
@@ -932,13 +935,13 @@ which is applied element-wise.
 
 \begin{alignat*}{2}
 	\mathcal{G}_{up} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
-	\mathcal{G}_{up} \qpvec &:= \uppersympop{\hat{\activation_g}} := \begin{pmatrix}
+	\mathcal{G}_{up} \qpvec &:= \uppersympop{\hat{\activation}_g} := \begin{pmatrix}
 		q + K^T diag(a) \activation(Kp + b) \\
 		p
 	\end{pmatrix} \\[7pt]
 	%
 	\mathcal{G}_{low} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
-	\mathcal{G}_{low} \qpvec &:= \lowersympop{\hat{\activation_g}} := \begin{pmatrix}
+	\mathcal{G}_{low} \qpvec &:= \lowersympop{\hat{\activation}_g} := \begin{pmatrix}
 		q \\
 		K^T diag(a) \activation(Kq + b) + p
 	\end{pmatrix}
@@ -959,8 +962,9 @@ $n \in \mathbb{N}$ denotes the width of the gradient layer and can be chosen fre
 
 	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and
 	\begin{align*}
-		\nabla V(p) &= \left(\jac{V}{p}(p)\right)^T \\
+		\grad{V(p)} &= \left(\jac{V}{p}(p)\right)^T \\
 		&= \left(1_n^Tdiag(a)diag\left(\sigma(Kp+b)\right)K\right)^T \\
+		&= K^Tdiag\left(\sigma(Kp+b)\right)diag(a)1_n \\
 		&= K^Tdiag(a)diag\left(\sigma(Kp+b)\right)1_n \\
 		&= K^Tdiag(a)\sigma(Kp+b)
 	\end{align*}
@@ -969,6 +973,9 @@ $n \in \mathbb{N}$ denotes the width of the gradient layer and can be chosen fre
 	$\mathcal{G}_{up}$ and $\mathcal{G}_{low}$ are symplectic.
 \end{proof}
 
+Note that activation layers are a subset of gradient layers. We can see this by choosing
+$n=d$, $K=I_d$ and $b=0$.
+
 \todo{For high dimensions $K$ and $K^T$ can be implemented as transposed convolution
 and convolution operators.}
 
@@ -976,9 +983,180 @@ and convolution operators.}
 
 \todo{Introduce batch normalization from literature.}
 
-\todo{Normalized activation layers}
+Batch normalization is a well-known method to accelerate training initially proposed by
+\citeauthor{batchnorm-ioffe15} in \cite{batchnorm-ioffe15}. 
+We introduce a possibility to incorporate batch normalization
+into activation and gradient layers while maintaining symplecticity.
 
-\todo{Normalized gradient layers}
+Sigmoid activation function saturates for large values. Vanishing gradient.
+Therefore normalize input before applying activation function.
+
+Let us define the batch normalization transformation.
+\begin{equation*}
+	BN_{\gamma, \beta} : \mathbb{R}^d \to \mathbb{R}^d,\quad
+	BN_{\gamma, \beta}(p) 
+	:= diag(\gamma)diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb (p-\mu_\mathcal{B}) + \beta
+\end{equation*}
+where $\gamma, \beta \in \mathbb{R}^{d}$ are learnable parameters.
+$\epsilon \in \mathbb{R}$ is a small positive value to avoid division by zero.
+$\sigma^2_\mathcal{B} \in \mathbb{R}^{d}$ refers to the mini-batch variance and
+$\mu_\mathcal{B} \in \mathbb{R}^{d}$ refers to the mini-batch mean.
+
+\todo{Move this to Notation}
+The fraction has to be interpreted in broadcasting sense, i.e.
+$\frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \in \mathbb{R}^d$ is a vector with entries
+\begin{equation*}
+	\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb_i
+	:= \frac{1}{ \sqrt{ \lb \sigma^2_\mathcal{B} \rb_i + \epsilon}}
+	\quad (1 \leq i \leq d)
+\end{equation*}
+
+Given a mini-batch $\mathcal{B}$ with input training data $p_1, p_2, \dots, p_n \in \mathbb{R}^{d}$ the
+mean and variance are estimated by
+\begin{align*}
+	\mu_\mathcal{B} &= \frac{1}{n} \sum_{i=1}^{n} p_i \\
+	\sigma^2_\mathcal{B} &= \frac{1}{n} \sum_{i=1}^n (p_i - \mu_\mathcal{B})^2
+\end{align*}
+
+During training the mini-batch variance $\sigma^2_\mathcal{B} \in \mathbb{R}^{d}$ and
+the mini-batch $\mu_\mathcal{B} \in \mathbb{R}^{d}$ are continously updated.
+When training has finished we switch to evaluation mode. In evaluation mode we keep
+$\sigma^2_\mathcal{B} \in \mathbb{R}^{d}$ and $\mu_\mathcal{B} \in \mathbb{R}^{d}$ constant
+and remember the last value from training.
+
+The learnable parameters $\gamma, \beta \in \mathbb{R}^{d}$ allow the neural network to modify
+the normalization during training if necessary. The batch normalization transform is able to 
+represent the identity transform by setting appropriate $\gamma, \beta$.
+
+\begin{algorithm}
+	\caption{Batch normalization transform}
+	\textbf{Input:} $p_j$ and mini batch $\mathcal{B} = \{p_1, p_2, \dots, p_n\}$  \\
+	\textbf{Output:} $BN_{\gamma, \beta}(p_j)$
+	\setstretch{1.5}
+	\begin{algorithmic}
+		\If{training\_mode} \Comment{Update mean and variane if training, otherwise
+		keep previous values}
+			\State $\mu_\mathcal{B} \gets \frac{1}{n} \sum_{i=1}^{n} p_i$
+			\State $\sigma^2_\mathcal{B} \gets \frac{1}{n} \sum_{i=1}^n (p_i - \mu_\mathcal{B})^2$
+		\EndIf
+		\State \Return 
+		$diag(\gamma)diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb 
+		(p-\mu_\mathcal{B}) + \beta$
+	\end{algorithmic}
+\end{algorithm}
+
+The batch normalization transform can be implemented in a straightforward way with modern
+deep learning frameworks, as for backpropagation during training 
+$\jac{BN_{\gamma, \beta}}{(\gamma, \beta)}$ is obtained via automatic differentiation.
+
+If the training data is small enough so that splitting the data into multiple mini batches
+is not necessary, the mean and variance are calculated for the whole training data. This is the
+case for our numerical experiments, as we work with very small training data sets.
+If the training data set is split into mini batches there exist also alternative methods to estimate
+the mean and variance for the whole training data set, for example using moving averages.
+
+\subsubsection{Normalized gradient layers}
+
+\begin{alignat*}{2}
+	\mathcal{G}^{BN}_{up} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
+	\mathcal{G}^{BN}_{up} \qpvec &:= \uppersympop{\hat{\activation}^{BN}_g} := \begin{pmatrix}
+		q + \hat{\activation}^{BN}_g(p) \\
+		p
+	\end{pmatrix} \\[7pt]
+	%
+	\mathcal{G}^{BN}_{low} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
+	\mathcal{G}^{BN}_{low} \qpvec &:= \lowersympop{\hat{\activation}^{BN}_g} := \begin{pmatrix}
+		q \\
+		\hat{\activation}^{BN}_g(q) + p
+	\end{pmatrix}
+\end{alignat*}
+with $\hat{\activation}^{BN}_g : \mathbb{R}^d \to \mathbb{R}^d$ defined as
+\begin{equation*}
+	\hat{\activation}^{BN}_g(p) := 
+	K^T diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb diag(\gamma)
+	diag(a) \activation(BN_{\gamma, \beta}(Kp+b))
+\end{equation*}
+where $K \in \mathbb{R}^{n \times d}$ and $a,b, \gamma, \beta \in \mathbb{R}^n$
+are learnable parameters. $\activation : \mathbb{R} \to \mathbb{R}$ 
+is an activation function, which is applied element-wise.
+$n \in \mathbb{N}$ denotes the width of the gradient layer.
+
+\todo{$diag(\gamma)$ and $\beta$ redundant, but numerical experiments better result
+with $diag(\gamma)$ and ease of implementation. Double-check?
+Having $diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb$ greatly improves
+learning.}
+
+\todo{Maybe add illustration for normalized gradient layer}
+
+\begin{corollary}
+	The normalized gradient layers $\mathcal{G}^{BN}_{up}$ and $\mathcal{G}^{BN}_{down}$
+	are symplectic.
+\end{corollary}
+\begin{proof}
+	Let $\mathcal{A}: \mathbb{R} \to \mathbb{R}$ be the antiderivative of $\activation$, 
+	i.e. $\dd{x} \mathcal{A} = \activation$ and
+	\begin{equation*}
+		V(p) := \onevec{n}^Tdiag(a)\mathcal{A}(BN_{\gamma, \beta}(Kp+b))
+	\end{equation*}
+
+	We have $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and
+	\begin{equation*}
+		\jac{BN_{\gamma, \beta}(p)}{p} = 
+		diag(\gamma)diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb
+	\end{equation*}
+
+	Then
+	\begin{align*}
+		\grad{V(p)} &= \left(\jac{V}{p}(p)\right)^T \\
+		&= \left( 1_n^T diag(a) diag \lb \activation(BN_{\gamma, \beta}(Kp+b))\rb
+		\jac{BN_{\gamma, \beta}(p)}{p} K \right)^T \\
+		&= \left( 1_n^T diag(a) diag \lb \activation(BN_{\gamma, \beta}(Kp+b))\rb
+		diag(\gamma) diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb K \right)^T \\
+		&= K^T diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb diag(\gamma)
+		diag\left(\activation(BN_{\gamma, \beta}(Kp+b))\right) diag(a) 1_n \\
+		&= K^T diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb diag(\gamma)
+		diag(a) diag\left(\activation(BN_{\gamma, \beta}(Kp+b))\right) 1_n \\
+		&= K^T diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb diag(\gamma)
+		diag(a) \activation(BN_{\gamma, \beta}(Kp+b)) = \hat{\activation}^{BN}_g(p)
+	\end{align*}
+
+	With \cref{gradient_corollary} follows that the Gradient layers
+	$\mathcal{G}^{BN}_{up}$ and $\mathcal{G}^{BN}_{low}$ are symplectic.
+\end{proof}
+
+\subsubsection{Normalized activation layers}
+
+\begin{alignat*}{2}
+	\mathcal{N}^{BN}_{up} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
+	\mathcal{N}^{BN}_{up} \qpvec &:= \uppersympop{\hat{\activation}^{BN}_a} := \begin{pmatrix}
+		q + \hat{\activation}^{BN}_a(p) \\
+		p
+	\end{pmatrix} \\[7pt]
+	%
+	\mathcal{N}^{BN}_{low} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
+	\mathcal{N}^{BN}_{low} \qpvec &:= \lowersympop{\hat{\activation}^{BN}_a} := \begin{pmatrix}
+		q \\
+		\hat{\activation}^{BN}_a(q) + p
+	\end{pmatrix}
+\end{alignat*}
+with $\hat{\activation}^{BN}_a : \mathbb{R}^d \to \mathbb{R}^d$ defined as
+\begin{equation*}
+	\hat{\activation}^{BN}_a(p) := 
+	diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb diag(\gamma)
+	diag(a) \activation(BN_{\gamma, \beta}(p))
+\end{equation*}
+where $a, \gamma, \beta \in \mathbb{R}^d$ are learnable parameters and 
+$\activation : \mathbb{R} \to \mathbb{R}$ an activation function,
+which is applied element-wise.
+
+\begin{corollary}
+	The normalized activation layers $\mathcal{N}^{BN}_{up}$ and $\mathcal{N}^{BN}_{low}$
+	are symplectic.
+\end{corollary}
+\begin{proof}
+	Symplecticity follows because an activation layer is a gradient layer
+	(choose $n=d$, $K=I_d$ and $b=0$).
+\end{proof}
 
 \section{Relation to geometric integrators}
 
@@ -1054,6 +1232,7 @@ isotropic.}
 \centering
 \begin{tabular}{|p{13cm}|}
 \hline\\
+	\todo{Change to bachelor thesis}
 	I hereby certify
 	\begin{enumerate}
 		\item that this thesis has been composed by me and is based on my own work, unless stated otherwise,
