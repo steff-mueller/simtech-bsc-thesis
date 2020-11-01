@@ -1080,6 +1080,8 @@ where $K \in \mathbb{R}^{n \times d}$ and $a,b, \gamma, \beta \in \mathbb{R}^n$
 are learnable parameters. $\activation : \mathbb{R} \to \mathbb{R}$ 
 is an activation function, which is applied element-wise.
 $n \in \mathbb{N}$ denotes the width of the gradient layer.
+$\sigma^2_\mathcal{B}$ refers to the mini-batch variance of $Kp+b$ for $\mathcal{G}^{BN}_{up}$
+or $Kq+b$ for $\mathcal{G}^{BN}_{low}$.
 
 \todo{$diag(\gamma)$ and $\beta$ redundant, but numerical experiments better result
 with $diag(\gamma)$ and ease of implementation. Double-check?
@@ -1147,7 +1149,8 @@ with $\hat{\activation}^{BN}_a : \mathbb{R}^d \to \mathbb{R}^d$ defined as
 \end{equation*}
 where $a, \gamma, \beta \in \mathbb{R}^d$ are learnable parameters and 
 $\activation : \mathbb{R} \to \mathbb{R}$ an activation function,
-which is applied element-wise.
+which is applied element-wise. $\sigma^2_\mathcal{B}$ refers to the mini-batch variance of $p$
+for $\mathcal{N}^{BN}_{up}$ or $q$ for $\mathcal{N}^{BN}_{low}$.
 
 \begin{corollary}
 	The normalized activation layers $\mathcal{N}^{BN}_{up}$ and $\mathcal{N}^{BN}_{low}$
