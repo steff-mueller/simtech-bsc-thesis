@@ -1091,7 +1091,8 @@ learning.}
 \todo{Maybe add illustration for normalized gradient layer}
 
 \begin{corollary}
-	The normalized gradient layers $\mathcal{G}^{BN}_{up}$ and $\mathcal{G}^{BN}_{down}$
+	Given an activation function $\sigma \in C^1$
+	the normalized gradient layers $\mathcal{G}^{BN}_{up}$ and $\mathcal{G}^{BN}_{down}$
 	are symplectic.
 \end{corollary}
 \begin{proof}
@@ -1153,12 +1154,13 @@ which is applied element-wise. $\sigma^2_\mathcal{B}$ refers to the mini-batch v
 for $\mathcal{N}^{BN}_{up}$ or $q$ for $\mathcal{N}^{BN}_{low}$.
 
 \begin{corollary}
-	The normalized activation layers $\mathcal{N}^{BN}_{up}$ and $\mathcal{N}^{BN}_{low}$
+	Given an activation function $\sigma \in C^1$
+	the normalized activation layers $\mathcal{N}^{BN}_{up}$ and $\mathcal{N}^{BN}_{low}$
 	are symplectic.
 \end{corollary}
 \begin{proof}
 	Symplecticity follows because an activation layer is a gradient layer
-	(choose $n=d$, $K=I_d$ and $b=0$).
+	(choose $n=d$, $K=I_d$ and $b=0$). We have already shown that a gradient layer is symplectic.
 \end{proof}
 
 \section{Relation to geometric integrators}
