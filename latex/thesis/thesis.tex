@@ -60,6 +60,7 @@
 %----------------------------------------------------------------------------------------
 %	Theorem environments
 %----------------------------------------------------------------------------------------
+\newtheorem{definition}{Definition}
 \newtheorem{theorem}{Theorem}
 \newtheorem{example}{Example}
 \newtheorem{corollary}{Corollary}
@@ -222,8 +223,6 @@ Numerical Simulation (IANS)}%
 %----------------------------------------------------------------------------------------
 \section{Introduction}
 
-\todo{Introduce Hamiltonain systems with general skew-symmetric $S$?}
-
 \subsection{Outline}
 
 \subsection{Notation}
@@ -252,6 +251,13 @@ If $f: \mathbb{R}^{n_1} \to \mathbb{R}^{n_2}$ is a multi-dimensional function
 
 \todo{Describe $d$}
 
+\begin{equation*}
+	J := \begin{pmatrix}
+		0 & I_d \\
+		-I_d & 0
+	\end{pmatrix}
+\end{equation*}
+
 %----------------------------------------------------------------------------------------
 %
 % Content
@@ -259,6 +265,67 @@ If $f: \mathbb{R}^{n_1} \to \mathbb{R}^{n_2}$ is a multi-dimensional function
 %----------------------------------------------------------------------------------------
 \newpage
 \section{Problem setup}
+
+\begin{definition}
+	A matrix $A \in \mathbb{R}^{2d \times 2d}$ is called symplectic if $A^TJA=J$.
+\end{definition}
+
+\begin{definition}
+	A differentiable map $\phi : U \to \mathbb{R}^{2d}$ (where $U \subset \mathbb{R}^{2d}$ is an open set)
+	is called symplectic if the Jacobian matrix $\jac{\phi}{x}$ is everywhere symplectic, i.e.
+	\begin{equation*}
+		\lb \jac{\phi}{x} \rb^T J \lb \jac{\phi}{x} \rb = J
+	\end{equation*}
+\end{definition}
+
+\todo{Introduce Hamiltonain systems with general skew-symmetric $S$?}
+A Hamiltonian system can be written as
+\begin{align*}
+	\dot{y} &= J^{-1} \grad{H}(y) \\
+	y(t_0) &= y_0
+\end{align*}
+where $y: \mathbb{R} \to \mathbb{R}^{2d},\, t \mapsto y(t) = \begin{pmatrix}
+	q(t) \\
+	p(t)
+\end{pmatrix}$ and $y_0 = \begin{pmatrix}
+	q_0 \\
+	p_0
+\end{pmatrix} \in \mathbb{R}^{2d}$ the initial value for $t_0 \in \mathbb{R}$. 
+The map $H: \mathbb{R}^{2d} \to \mathbb{R}$ is called the Hamiltonian.
+$q = q(t) \in \mathbb{R}^d$ are called generalized coordinates and
+and $p=p(t) \in \mathbb{R}^d$ are called conjugate momenta. Note that the phase space $\mathbb{R}^{2d}$
+has even dimension for Hamiltonian systems.
+
+Let $\phi_{t,H} : U \subset \mathbb{R}^{2d} \to \mathbb{R}^{2d}$ be the flow for a Hamiltonian system 
+with Hamiltonian $H$ for a fixed time step $t$, i.e.
+\begin{equation*}
+	\phi_{t,H}\begin{pmatrix}
+		q_0 \\
+		p_0
+	\end{pmatrix}
+	= \begin{pmatrix}
+		q(t; q_0, p_0) \\
+		p(t; q_0, p_0)
+	\end{pmatrix}
+\end{equation*}
+where $q(t; q_0, p_0)$ and $p(t; q_0, p_0)$ denote the solution
+at time $t$ for initial conditions $y_0 = \begin{pmatrix}
+	q_0 \\
+	p_0
+\end{pmatrix}$. Poincaré has shown that the flow of a Hamiltonian system is symplectic.
+
+\begin{theorem}(Poincaré 1899)
+	Let $H: \mathbb{R}^{2d} \to \mathbb{R}$ be a twice continuously differentiable
+	function on $U \subset \mathbb{R}^{2d}$. Then, for each fixed $t$, the flow
+	$\phi_{t,H}$ is a symplectic map wherever it is defined.
+\end{theorem}
+\begin{proof}
+	We refer to \citet[Theorem 2.4, p.~184]{hairer2006}.
+\end{proof}
+
+Our goal is to learn the flow map $\phi_{t,H} : U \to \mathbb{R}^{2d}$ with a neural network
+for fixed $t$.
+This leads to the idea that we embed symplecticity into the neural network itself structurally. 
 
 \section{Architecture}
 
@@ -268,21 +335,49 @@ proposed by \citeauthor{Jin2020} in \cite{Jin2020}.
 The convolution layers and normalized variants of the activation and gradient layers
 are contributions of this work. 
 \todo{Convolution gradient module, refer to similar reference}
-We supplement proofs for symplecticity for all layer types. 
-A similar architecture was initially proposed by \citeauthor{Deco1995} in \cite{Deco1995} 
-\todo{Have a deeper look at \cite{Deco1995}}.
+We proof symplecticity for all layer types. 
 
-\todo{we use that the composition of symplectic maps is again symplectic}
+We use that the composition of symplectic maps is again symplectic. So we impose that every
+layer of the neural network must be symplectic, which leads to the overall neural network
+to be symplectic.
+
+All layers we introduce will have unit triangular structure in block matrix notation, 
+i.e. can either be expressed in upper variant
+\begin{equation*}
+	L_{up} : \mathbb{R}^{2d} \to \mathbb{R}^{2d},
+	\quad \mathcal{L} \qpvec = \uppersympop{\hat{\activation}_L}
+	= \begin{pmatrix}
+		q + \hat{\activation}_L(p) \\
+		p
+	\end{pmatrix}
+\end{equation*}
+or lower variant
+\begin{equation*}
+	L_{low} : \mathbb{R}^{2d} \to \mathbb{R}^{2d},
+	\quad \mathcal{L} \qpvec = \lowersympop{\hat{\activation}_L}
+	= \begin{pmatrix}
+		q \\
+		\hat{\activation}_L(q) + p
+	\end{pmatrix}
+\end{equation*}
+where $\hat{\activation}_L : \mathbb{R}^d \to \mathbb{R}^d$ is a Layer-specific transformation.
+In order that $L_{up}$ and $L_{low}$ are symplectic we have to demand additional requirements
+to $\hat{\activation}_L$ as the following lemma and corollaries will show.
+
+The structure was initially proposed by \citeauthor{Deco1995} in \cite{Deco1995} 
+\todo{Have a deeper look at \cite{Deco1995}} for volume-conserving neural networks.
 
 \todo{Relation to Residual Networks / ResNet}
 
 \begin{lemma}\label{jacobi_symmetric}
 	Let
 	\begin{equation*}
+		f_{up} : \mathbb{R}^{2d} \to \mathbb{R}^{2d},\quad
 		f_{up} \qpvec := \uppersympop{g}
 	\end{equation*}
 	and
 	\begin{equation*}
+		f_{low} : \mathbb{R}^{2d} \to \mathbb{R}^{2d},\quad
 		f_{low} \qpvec := \lowersympop{g}
 	\end{equation*}
 	where $g: \mathbb{R}^d \to \mathbb{R}^d,\; p \mapsto g(p)$ is a function in 
@@ -326,6 +421,7 @@ A similar architecture was initially proposed by \citeauthor{Deco1995} in \cite{
 \begin{corollary}\label{matrix_symmetric}
 	Let
 	\begin{equation*}
+		f_{up} : \mathbb{R}^{2d} \to \mathbb{R}^{2d},\quad
 		f_{up} \qpvec := \begin{pmatrix}
 			I & S \\
 			0 & I
@@ -333,6 +429,7 @@ A similar architecture was initially proposed by \citeauthor{Deco1995} in \cite{
 	\end{equation*}
 	and
 	\begin{equation*}
+		f_{low} : \mathbb{R}^{2d} \to \mathbb{R}^{2d},\quad
 		f_{low} \qpvec := \begin{pmatrix}
 			I & 0 \\
 			S & I
@@ -347,7 +444,7 @@ A similar architecture was initially proposed by \citeauthor{Deco1995} in \cite{
 The next corollary is useful to construct symplectic maps.
 \begin{corollary}\label{gradient_corollary}
 	Let $V: \mathbb{R}^d \to \mathbb{R}, \; p \mapsto V(p)$ be a function in 
-	$C^2(\mathbb{R}^d, \mathbb{R})$. 
+	$\mathbb{C}^2$. 
 	
 	Then
 	\begin{equation*}
@@ -987,6 +1084,7 @@ Batch normalization is a well-known method to accelerate training initially prop
 \citeauthor{batchnorm-ioffe15} in \cite{batchnorm-ioffe15}. 
 We introduce a possibility to incorporate batch normalization
 into activation and gradient layers while maintaining symplecticity.
+\todo{Cite similar idea}
 
 Sigmoid activation function saturates for large values. Vanishing gradient.
 Therefore normalize input before applying activation function.
