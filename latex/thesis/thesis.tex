@@ -279,9 +279,9 @@ If $f: \mathbb{R}^{n_1} \to \mathbb{R}^{n_2}$ is a multi-dimensional function
 \end{definition}
 
 \todo{Introduce Hamiltonain systems with general skew-symmetric $S$?}
-A Hamiltonian system can be written as
+A Hamiltonian ODE system can be written in canonical form as
 \begin{align*}
-	\dot{y} &= J^{-1} \grad{H}(y) \\
+	\dot{y} &= J \grad{H}(y) \\
 	y(t_0) &= y_0
 \end{align*}
 where $y: \mathbb{R} \to \mathbb{R}^{2d},\, t \mapsto y(t) = \begin{pmatrix}
@@ -291,10 +291,22 @@ where $y: \mathbb{R} \to \mathbb{R}^{2d},\, t \mapsto y(t) = \begin{pmatrix}
 	q_0 \\
 	p_0
 \end{pmatrix} \in \mathbb{R}^{2d}$ the initial value for $t_0 \in \mathbb{R}$. 
-The map $H: \mathbb{R}^{2d} \to \mathbb{R}$ is called the Hamiltonian.
-$q = q(t) \in \mathbb{R}^d$ are called generalized coordinates and
-and $p=p(t) \in \mathbb{R}^d$ are called conjugate momenta. Note that the phase space $\mathbb{R}^{2d}$
-has even dimension for Hamiltonian systems.
+The map $H: \mathbb{R}^{2d} \to \mathbb{R}$ is called the Hamiltonian 
+or the total energy. $q = q(t) \in \mathbb{R}^d$ are called generalized coordinates
+and $p=p(t) \in \mathbb{R}^d$ are called conjugate momenta. 
+The phase space $\mathbb{R}^{2d}$ has even dimension for Hamiltonian systems.
+
+Note that the Hamiltonian $H$ is a first integral, i.e. the total energy is preserved, because
+\begin{align*}
+	\ddt H(y(t)) &= \lsb \grad{H}(y(t)) \rsb^T \dot{y}(t) = 
+	\lsb \grad{H}(y(t)) \rsb^T J \grad{H}(y(t)) \\
+	&= \begin{pmatrix}
+		\grad[q]{H}(y(t)) & \grad[p]{H}(y(t))
+	\end{pmatrix} \begin{pmatrix}
+		\grad[p]{H}(y(t)) \\
+		- \grad[q]{H}(y(t))
+	\end{pmatrix} = 0
+\end{align*}
 
 Let $\phi_{t,H} : U \subset \mathbb{R}^{2d} \to \mathbb{R}^{2d}$ be the flow for a Hamiltonian system 
 with Hamiltonian $H$ for a fixed time step $t$, i.e.
@@ -308,7 +320,7 @@ with Hamiltonian $H$ for a fixed time step $t$, i.e.
 		p(t; q_0, p_0)
 	\end{pmatrix}
 \end{equation*}
-where $q(t; q_0, p_0)$ and $p(t; q_0, p_0)$ denote the solution
+where $q(t; q_0, p_0)$ and $p(t; q_0, p_0)$ denote the solution of the Hamiltonian system
 at time $t$ for initial conditions $y_0 = \begin{pmatrix}
 	q_0 \\
 	p_0
@@ -320,8 +332,18 @@ at time $t$ for initial conditions $y_0 = \begin{pmatrix}
 	$\phi_{t,H}$ is a symplectic map wherever it is defined.
 \end{theorem}
 \begin{proof}
-	We refer to \citet[Theorem 2.4, p.~184]{hairer2006}.
+	We refer to \citet[Theorem 2.4, p.~184]{hairer2006} 
+	or to \citet[Theorem 1, p.~54]{leimkuhler_reich_2005}.
 \end{proof}
+
+Note that a Hamiltonian ODE system in general can be written as
+\begin{align*}
+	\dot{y} &= S \grad{H}(y) \\
+	y(t_0) &= y_0
+\end{align*}
+with an arbitrary nondegenerate skew-symmetric matrix $S \in \mathbb{R}^{2d \times 2d}$.
+However there always exists a transformation to express such a Hamiltonian ODE system in
+canonical form (see \citet[Remark 3.8]{peng2016}). \todo{Maybe add more details?}
 
 Our goal is to learn the flow map $\phi_{t,H} : U \to \mathbb{R}^{2d}$ with a neural network
 for fixed $t$.
@@ -448,13 +470,16 @@ The next corollary is useful to construct symplectic maps.
 	
 	Then
 	\begin{equation*}
+		f_{up} : \mathbb{R}^{2d} \to \mathbb{R}^{2d},\quad
 		f_{up} \qpvec := \uppersympop{\grad{V}}
 	\end{equation*}
 	and
 	\begin{equation*}
+		f_{low} : \mathbb{R}^{2d} \to \mathbb{R}^{2d},\quad
 		f_{low} \qpvec := \lowersympop{\grad{V}}
 	\end{equation*}
-	define a symplectic map. We call $V$ a potential.
+	define a symplectic map with $\grad{V} : \mathbb{R}^d \to \mathbb{R}^d,\, p \mapsto \grad{V}(p)$. 
+	We call $V$ a potential.
 \end{corollary}
 \begin{proof}
 	The Jacobian matrix of $\grad{V}$ corresponds to the Hessian matrix of $V$,
@@ -640,7 +665,7 @@ A padding operator increases the input dimension by padding
 the input boundaries. Let us define $1$-dimensional constant padding and symmetric padding operators.
 Let $s_p \in \mathbb{N}$ be the padding size and $L_{in}$ the input dimension.
 
-Constant padding adds constant padding values at the left and right boundary.
+Constant padding adds constant values at the left and right boundary.
 \begin{align*}
 	&constant\_pad[s_p,l,r] : \mathbb{R}^{L_{in}} \to \mathbb{R}^{L_{in}+2s_p}, \\[7pt]
 	&(constant\_pad[s_p,l,r](x))_i :=
@@ -651,7 +676,7 @@ Constant padding adds constant padding values at the left and right boundary.
 	\end{cases}
 	\quad (1 \leq i \leq L_{in}+2s_p)
 \end{align*}
-where $l,r \in \mathbb{R}^{s_p}$ are the padding values for the left and right boundaries.
+where $l,r \in \mathbb{R}^{s_p}$ are the constant padding values for the left and right boundaries.
 
 Symmetric padding mirrors the inner values at the left and right boundaries.
 \begin{align*}
@@ -676,19 +701,22 @@ We define the symplectic $1$-dimensional convolution layers by
 	&\mathcal{C}_{low} \qpvec := \lowersympop{conv1d[k] \circ pad[s_p,\dots]}
 \end{alignat*}
 where kernel $k \in \mathbb{R}^{2m+1}$ symmetric, $s_p = m$ and either
-\begin{align*}
-	pad[s_p,\dots] &= constant\_pad[s_p,l,r],\; l,r \in \mathbb{R}^{s_p} \text{ or } \\
-	pad[s_p,\dots] &= symmetric\_pad[s_p]
-\end{align*}
+\begin{equation*}
+	pad[s_p,\dots] = constant\_pad[s_p,l,r],\; l,r \in \mathbb{R}^{s_p}
+\end{equation*}
+or
+\begin{equation*}
+	pad[s_p,\dots] = symmetric\_pad[s_p]
+\end{equation*}
 For $pad[s_p,\dots] = symmetric\_pad[s_p]$ it must hold $d \geq m$.
 The kernel $k \in \mathbb{R}^{2m+1}$ is learnable during training.
-If using constant pad $l,r \in \mathbb{R}^{s_p}$ can be either fixed or learnable during training.
+If using constant padding $l,r \in \mathbb{R}^{s_p}$ can be either fixed or learnable during training.
 
-Indeed $conv1d[k] \circ pad[p,\dots]$ maps from $\mathbb{R}^d$ to $\mathbb{R}^d$ because
+Indeed $conv1d[k] \circ pad[s_p,\dots]$ maps from $\mathbb{R}^d$ to $\mathbb{R}^d$ because
 \begin{align*}
 	L_{in,pad[s_p,\dots]} &= d \\
 	L_{out,pad[s_p,\dots]} &= L_{in,pad[s_p,\dots]} + 2s_p = d+2s_p = d+2m \\
-	L_{in,conv1d[k]} &= L_{out,pad[p,\dots]} = d+2m \\
+	L_{in,conv1d[k]} &= L_{out,pad[s_p,\dots]} = d+2m \\
 	L_{out,conv1d[k]} &= L_{in,conv1d[k]} - s_k + 1 = (d+2m) - (2m+1) + 1 = d
 \end{align*}
 
@@ -1263,6 +1291,124 @@ for $\mathcal{N}^{BN}_{up}$ or $q$ for $\mathcal{N}^{BN}_{low}$.
 
 \section{Relation to geometric integrators}
 
+The symplectic Euler schemes are given by
+\begin{equation*}
+	\begin{split}
+			p_{n+1} &= p_n - h \grad[q]{H} (p_{n+1}, q_n) \\
+			q_{n+1} &= q_n + h \grad[p]{H}(p_{n+1}, q_n)	
+	\end{split}
+	\quad\quad \text{or} \quad\quad
+	\begin{split}
+			p_{n+1} &= p_n - h \grad[q]{H}(p_n, q_{n+1}) \\
+			q_{n+1} &= q_n + h \grad[p]{H}{p}(p_n, q_{n+1})	
+	\end{split}
+\end{equation*}
+
+If the Hamiltonian $H$ is separable, i.e. $H(q,p) = U(q) + T(p)$, both variants
+become explicit. Then the left variant can be expressed as
+\begin{equation*}
+	\begin{pmatrix}
+		q_{n+1} \\
+		p_{n+1}
+	\end{pmatrix} =
+	\begin{bmatrix}
+		I & h \grad[p]{H} \\
+		0 & I
+	\end{bmatrix} \begin{bmatrix}
+		I & 0 \\
+		-h \grad[q]{H} & I
+	\end{bmatrix}
+	\begin{pmatrix}
+		q_{n} \\
+		p_{n}
+	\end{pmatrix} 
+\end{equation*}
+and the right variant as
+\begin{equation*}
+	\begin{pmatrix}
+		q_{n+1} \\
+		p_{n+1}
+	\end{pmatrix} =
+	\begin{bmatrix}
+		I & 0 \\
+		-h \grad[q]{H} & I
+	\end{bmatrix}
+	\begin{bmatrix}
+		I & h \grad[p]{H} \\
+		0 & I
+	\end{bmatrix}
+	\begin{pmatrix}
+		q_{n} \\
+		p_{n}
+	\end{pmatrix}
+\end{equation*}
+where $\grad[p]{H} : \mathbb{R}^d \to \mathbb{R}^d$, $p \mapsto \grad[p]{H}(p)$ 
+and $\grad[q]{H} : \mathbb{R}^d \to \mathbb{R}^d$, $q \mapsto \grad[q]{H}(q)$.
+
+Similarly given a separable Hamiltonian $H(q,p) = U(q) + T(p)$ the $p$-staggered Störmer-Verlet scheme
+\begin{align*}
+	p_{n+1/2} &= p_n - \frac{h}{2} \grad[q]{H}(p_{n+1/2}, q_n) \\[7pt]
+	q_{n+1} &= q_n + \frac{h}{2} \lb \grad[p]{H}(p_{n+1/2}, q_n) + \grad[p]{H}(p_{n+1/2}, q_{n+1}) \rb \\[7pt]
+	p_{n+1} &= p_{n+1/2} - \frac{h}{2} \grad[q]{H}(p_{n+1/2}, q_{n+1})
+\end{align*}
+becomes explicit and can be expressed as
+\begin{equation*}
+	\begin{pmatrix}
+		q_{n+1} \\
+		p_{n+1}
+	\end{pmatrix} =
+	\begin{bmatrix}
+		I & 0 \\
+		-\frac{h}{2} \grad[q]{H}
+	\end{bmatrix}
+	\begin{bmatrix}
+		I & h \grad[p]{H} \\
+		0 & I
+	\end{bmatrix}
+	\begin{bmatrix}
+		I & 0 \\
+		-\frac{h}{2} \grad[q]{H}
+	\end{bmatrix}
+	\begin{pmatrix}
+		q_{n} \\
+		p_{n}
+	\end{pmatrix}
+\end{equation*}
+and the $q$-staggered Störmer-Verlet scheme
+\begin{align*}
+	q_{n+1/2} &= q_n + \frac{h}{2} \grad[p]{H}(p_n, q_{n+1/2}) \\[7pt]
+	p_{n+1} &= q_n - \frac{h}{2} \lb \grad[q]{H}(p_n, q_{n+1/2}) + \grad[q]{H}(p_{n+1}, q_{n+1/2}) \rb \\[7pt]
+	q_{n+1} &= q_{n+1/2} + \frac{h}{2} \grad[p]{H}(p_{n+1}, q_{n+1/2})
+\end{align*}
+becomes explicit can be expressed as
+\begin{equation*}
+	\begin{pmatrix}
+		q_{n+1} \\
+		p_{n+1}
+	\end{pmatrix} =
+	\begin{bmatrix}
+		I & \frac{h}{2} \grad[p]{H} \\
+		0 & I
+	\end{bmatrix}
+	\begin{bmatrix}
+		I & 0 \\
+		-h \grad[q]{H} & I
+	\end{bmatrix}
+	\begin{bmatrix}
+		I & \frac{h}{2} \grad[p]{H} \\
+		0 & I
+	\end{bmatrix}
+	\begin{pmatrix}
+		q_{n} \\
+		p_{n}
+	\end{pmatrix}
+\end{equation*}
+
+Symplecticity for the explicit Euler and Störmer-Verlet schemes follows directly 
+from \cref{gradient_corollary} and the fact that the composition of symplectic maps is again symplectic.
+
+\todo{Add specific example like linear wave equation or Sine-Gordon and relate to neural network layers.}
+
 \section{Numerical experiments}
 
 \subsection{Low-dimensional systems}
@@ -1298,10 +1444,6 @@ isotropic.}
 \todo{Maybe compare different optimizers (SGD, Adam, AdamW, amsgrad, ...)}
 
 \todo{Activation layers: Differentiate between $a \in \mathbb{R}$ and $a \in \mathbb{R}^d$}
-
-\section{Implementation}
-
-\todo{Describe use of PyTorch, TensorBoard, Docker, MLFlow, Unit Tests, ...}
 
 %----------------------------------------------------------------------------------------
 %
