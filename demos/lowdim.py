@@ -1,4 +1,5 @@
 import argparse
+import os
 
 import math
 import numpy as np
@@ -17,6 +18,7 @@ from nn.nonlinearsymplectic import *
 from nn.symplecticloss import symplectic_mse_loss
 
 from utils.plot2d import *
+from utils.data import td_x_to_hamiltonian, time_data_list_to_numpy, save_json
 
 class SamplingParameters:
     def __init__(self, mu, qmin=-1, qmax=+1, pmin=-1, pmax=+1):
@@ -42,9 +44,30 @@ class Configuration:
         self._td_x, self._td_Ham = self.experiment.model.solve(self.t_start, self.t_end, 
             self.experiment.num_integrator, self.mu)
 
+        # save arguments on disk
+        save_json((experiment.output_dir, name, 'args.json'), {
+            'name': name,
+            'mu': mu,
+            't_start': t_start,
+            't_end': t_end
+        })
+
+        # save exact solution on disk
+        np.save(os.path.join(experiment.output_dir, name, 'exact_td_x.npy'), 
+            self._td_x.all_data_to_numpy())
+        np.save(os.path.join(experiment.output_dir, name, 'exact_td_Ham.npy'), 
+            time_data_list_to_numpy(self._td_Ham))
+
     def run(self, epoch):
         td_x_surrogate = integrate(self.experiment.surrogate_model, self.mu['q0'], self.mu['p0'], 
             self.t_start, self.t_end, self.experiment.dt)
+        td_Ham_surrogate = td_x_to_hamiltonian(td_x_surrogate, self.experiment.model, self.mu)
+
+        # save data on disk
+        np.save(os.path.join(self.experiment.output_dir, self.name, 'epoch{}_td_x.npy'.format(epoch)), 
+            td_x_surrogate.all_data_to_numpy())
+        np.save(os.path.join(self.experiment.output_dir, self.name, 'epoch{}_td_Ham.npy'.format(epoch)), 
+            time_data_list_to_numpy(td_Ham_surrogate))
 
         # plot results
         plt = plot_Ham_sys(self._td_x, td_x_surrogate)
@@ -56,19 +79,21 @@ class Configuration:
         pplt = plot_p(self._td_x, td_x_surrogate)
         self.experiment.writer.add_figure(self.name + '/p', pplt, epoch)
 
-        ham_plt = plot_hamiltonian(self._td_Ham, td_x_surrogate, self.experiment.model, self.mu)
+        ham_plt = plot_hamiltonian(self._td_Ham, td_Ham_surrogate)
         self.experiment.writer.add_figure(self.name + '/Hamiltonian', ham_plt, epoch)
 
 class Experiment:
 
     def __init__(self, args, model, surrogate_model, sampling_params: SamplingParameters):
         self.dt = args.dt
+        self.lr = args.learning_rate
         self.epochs = args.epochs
         self.log_intermediate = args.log_intermediate
         self.log_symplectic_loss = args.log_symplectic_loss
         self.log_spatial_loss = args.log_spatial_loss
         self.model = model
         self.surrogate_model = surrogate_model
+        self.output_dir = args.output_dir
 
         if args.integrator == 'implicit_midpoint':
             self.num_integrator = ImplicitMidpointIntegrator(self.dt)
@@ -82,12 +107,15 @@ class Experiment:
         self._configurations = []
         self._init_writer(args)
 
+        # save args on disk
+        save_json((self.output_dir, 'args.json'), vars(args))
+        save_json((self.output_dir, 'stats.json'), {
+            'learnable_parameters': sum(p.numel() for p in self.surrogate_model.parameters() if p.requires_grad)
+        })
+
     def _init_writer(self, args):
-        self.writer = SummaryWriter(comment='lowdim')
-        self.writer.add_text('hyperparameters', str({
-            'model': self.model.__class__.__name__,
-            'surrogate_model': self.surrogate_model.__class__.__name__
-        }) + ' ' + str(args))
+        self.writer = SummaryWriter(log_dir=os.path.join(self.output_dir, 'tensorboard'), comment='lowdim')
+        self.writer.add_text('hyperparameters', str(args))
 
     def _get_training_data(self):
         params = self._sampling_params
@@ -143,9 +171,15 @@ class Experiment:
 
     def run(self):
         x,y = self._get_training_data()
-        criterion = torch.nn.MSELoss()
-        optimizer = torch.optim.Adam(surrogate_model.parameters(), lr=1e-2, amsgrad=True)
 
+        # save training data on disk
+        np.save(os.path.join(self.output_dir, 'training_data_x.npy'), x.detach())
+        np.save(os.path.join(self.output_dir, 'training_data_y.npy'), y.detach())
+
+        criterion = torch.nn.MSELoss()
+        optimizer = torch.optim.Adam(surrogate_model.parameters(), lr=self.lr, amsgrad=True)
+
+        losses = []
         self.surrogate_model.train()
         for epoch in range(self.epochs):
             if (epoch % 100) == 0:
@@ -163,6 +197,7 @@ class Experiment:
                 self.surrogate_model.train(mode=False)
 
                 self._log_loss(loss, x, y1, y, epoch)
+                losses.append(float(loss))
                 if self.log_intermediate and (epoch % 500) == 0:
                     self._run_configurations(epoch)
 
@@ -172,6 +207,11 @@ class Experiment:
         self._run_configurations(self.epochs)
         self.writer.add_graph(self.surrogate_model, x)
         self.writer.flush()
+
+        # save losses and trained model on disk
+        np.save(os.path.join(self.output_dir, 'losses.npy'), losses)
+        torch.save(self.surrogate_model.state_dict(), 
+            os.path.join(self.output_dir, 'surrogate_model.state_dict'))
 
 def get_surrogate_model(architecture, dim):
     if architecture == 'la-sympnet':
@@ -222,10 +262,12 @@ def get_surrogate_model(architecture, dim):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run experiments.')
+    parser.add_argument('--output-dir', default='.')
     parser.add_argument('--model', choices=['harmonic_oscillator', 'simple_pendulum'])
     parser.add_argument('--epochs', default=500, type=int)
     parser.add_argument('--dt', default=0.1, type=float)
     parser.add_argument('--training-size', '-n', default=40, type=int)
+    parser.add_argument('--learning-rate', '-lr', default=1e-2, type=float)
     parser.add_argument(
         '--integrator',
         help='Choose integrator.',

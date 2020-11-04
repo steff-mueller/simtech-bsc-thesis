@@ -55,18 +55,12 @@ def plot_spatial_error(coord, loss):
     fig.colorbar(s)
     return fig
 
-def plot_hamiltonian(td_Ham, td_x_surrogate, model, mu):
-    surrogate_t = []
-    surrogate_data = []
-    for t,x in td_x_surrogate:
-        surrogate_t.append(t)
-        surrogate_data.append(model.Ham(x, mu))
-
+def plot_hamiltonian(td_Ham, td_Ham_surrogate):
     fig = plt.figure(figsize=[15, 5])
     ax = plt.axes()
 
     ax.plot(td_Ham._t, td_Ham._data - td_Ham._data[0])
-    ax.plot(surrogate_t, surrogate_data - td_Ham._data[0])
+    ax.plot(td_Ham_surrogate._t, td_Ham_surrogate._data - td_Ham._data[0])
     ax.set_title('Hamiltonian vs. time')
     ax.set_xlabel(r'time $t$')
     ax.set_ylabel(r'Ham. $H(x(t,\mu), \mu) - H(x(t_0,\mu), \mu)$')
