@@ -57,40 +57,11 @@ class Configuration:
         self.experiment.writer.add_figure(self.name + '/p', pplt, epoch)
 
         ham_plt = plot_hamiltonian(self._td_Ham, td_x_surrogate, self.experiment.model, self.mu)
-        self.experiment.writer.add_figure(self.name + '/Hamiltonian', ham_plt, epoch) 
-
-"""
-    Plot equilibriums for simple pendulum
-"""
-class EquilibriumConfiguration:
-    def __init__(self, experiment, name):
-        self.experiment = experiment
-        self.name = name
-
-    def run(self, epoch):
-        n = 100
-        idx = torch.arange(-n, n+1)
-        q = math.pi*idx
-        p = torch.zeros_like(q)
-        x_equilibrium = torch.stack([q,p],dim=1)
-        y_equilibrium = self.experiment.surrogate_model(x_equilibrium).detach().numpy()
-        diff = x_equilibrium - y_equilibrium
-        diff_q = diff[:,0]
-        diff_p = diff[:,1]
-
-        fig = plt.figure()
-        ax = plt.axes()
-        ax.plot(idx, diff_q)
-        ax.plot(idx, diff_p)
-        ax.legend([ 
-            'diff q',
-            'diff p'
-        ])
-        self.experiment.writer.add_figure(self.name, fig, epoch)
+        self.experiment.writer.add_figure(self.name + '/Hamiltonian', ham_plt, epoch)
 
 class Experiment:
 
-    def __init__(self, args, model, surrogate_model):
+    def __init__(self, args, model, surrogate_model, sampling_params: SamplingParameters):
         self.dt = args.dt
         self.epochs = args.epochs
         self.log_intermediate = args.log_intermediate
@@ -106,11 +77,7 @@ class Experiment:
         elif args.integrator == 'stoermer_verlet_p':
             self.num_integrator = SeparableStormerVerletIntegrator(self.dt, use_staggered='p')
 
-        mu = {'m': 1., 'g': 1., 'l': 1., 'q0': np.pi/2, 'p0': 0.}
-        self._sampling_params = SamplingParameters(mu,
-            qmin=args.qmin, qmax=args.qmax,
-            pmin=args.pmin, pmax=args.pmax)
-        self._sampling_params.n = args.training_size
+        self._sampling_params = sampling_params
 
         self._configurations = []
         self._init_writer(args)
@@ -177,7 +144,7 @@ class Experiment:
     def run(self):
         x,y = self._get_training_data()
         criterion = torch.nn.MSELoss()
-        optimizer = torch.optim.Adam(surrogate_model.parameters(), lr=1e-2)
+        optimizer = torch.optim.Adam(surrogate_model.parameters(), lr=1e-2, amsgrad=True)
 
         self.surrogate_model.train()
         for epoch in range(self.epochs):
@@ -190,13 +157,15 @@ class Experiment:
 
             # retain_graph=True to calculate symplectic loss afterwards
             loss.backward(retain_graph=self.log_symplectic_loss)
-            self._log_loss(loss, x, y1, y, epoch)
-
             optimizer.step()
 
-            if self.log_intermediate and (epoch % 500) == 0:
+            with torch.no_grad():
                 self.surrogate_model.train(mode=False)
-                self._run_configurations(epoch)
+
+                self._log_loss(loss, x, y1, y, epoch)
+                if self.log_intermediate and (epoch % 500) == 0:
+                    self._run_configurations(epoch)
+
                 self.surrogate_model.train()
 
         self.surrogate_model.train(mode=False)
@@ -253,6 +222,7 @@ def get_surrogate_model(architecture, dim):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run experiments.')
+    parser.add_argument('--model', choices=['harmonic_oscillator', 'simple_pendulum'])
     parser.add_argument('--epochs', default=500, type=int)
     parser.add_argument('--dt', default=0.1, type=float)
     parser.add_argument('--training-size', '-n', default=40, type=int)
@@ -273,8 +243,6 @@ if __name__ == '__main__':
     parser.add_argument('--log-spatial-loss', default=False, nargs='?', const=True, type=bool)
     args = parser.parse_args()
 
-    model = SimplePendulum()
-
     activation_functions = {
         'sigmoid': torch.sigmoid,
         'sin': torch.sin,
@@ -286,34 +254,43 @@ if __name__ == '__main__':
     dim = 2
     surrogate_model = get_surrogate_model(args.architecture, dim)
 
-    expm = Experiment(args, model, surrogate_model)
+    if args.model == 'simple_pendulum':
+        model = SimplePendulum()
 
-    expm.add_configuration('swinging_case',
-        {'m': 1., 'g': 1., 'l': 1., 'q0': np.pi/2, 'p0': 0.}, 
-        t_start = 0, t_end = 100)
+        mu = {'m': 1., 'g': 1., 'l': 1., 'q0': np.pi/2, 'p0': 0.}
+        sampling_params = SamplingParameters(mu,
+            qmin=args.qmin, qmax=args.qmax,
+            pmin=args.pmin, pmax=args.pmax)
+        sampling_params.n = args.training_size
 
-    expm.add_configuration('rotating_case',
-        {'m': 1., 'g': 1., 'l': 1., 'q0': np.pi, 'p0': 1.}, 
-        t_start = 0, t_end = 20)
+        expm = Experiment(args, model, surrogate_model, sampling_params)
 
-    expm.add_configuration('stationary_stable_case',
-        {'m': 1., 'g': 1., 'l': 1., 'q0': 0, 'p0': 0.},
-        t_start = 0, t_end = 10)
-    expm.add_configuration('stationary_unstable_case',
-        {'m': 1., 'g': 1., 'l': 1., 'q0': np.pi, 'p0': 0.},
-        t_start = 0, t_end = 10)
+        expm.add_configuration('swinging_case',
+            {'m': 1., 'g': 1., 'l': 1., 'q0': np.pi/2, 'p0': 0.}, 
+            t_start = 0, t_end = 100)
 
-    expm._configurations.append(EquilibriumConfiguration(expm, 'equilibriums'))
+        expm.add_configuration('rotating_case',
+            {'m': 1., 'g': 1., 'l': 1., 'q0': np.pi, 'p0': 1.}, 
+            t_start = 0, t_end = 10)
 
-    expm.run()
+        expm.run()
+    
+    elif args.model == 'harmonic_oscillator':
+        model = HarmonicOscillator()
 
-    # model = HarmonicOscillator()
-    # dt = 0.1
-    # q0 = 1.
-    # p0 = 0.
-    # mu = {'m': 1., 'k': 1., 'f': 0., 'q0': q0, 'p0': p0}
-    # x, y = generate_training_data(10000, model, mu, dt, 
-    #   qmin = -2, qmax = 2,
-    #   pmin = -2, pmax = 2)
+        mu = {'m': 1., 'k': 1., 'f': 0., 'q0': 1., 'p0': 0.}
+        sampling_params = SamplingParameters(mu,
+            qmin=args.qmin, qmax=args.qmax,
+            pmin=args.pmin, pmax=args.pmax)
+        sampling_params.n = args.training_size
 
-    #surrogate_model = HarmonicSympNet(layers = 8, sub_layers = 5, dim = 1, dt = 0.1)
+        expm = Experiment(args, model, surrogate_model, sampling_params)
+
+        expm.add_configuration('harmonic_oscillator',
+            {'m': 1., 'k': 1., 'f': 0., 'q0': 1., 'p0': 0.}, 
+            t_start = 0, t_end = 100)
+
+        expm.run()
+
+    else:
+        raise ValueError('Invalid model {}'.format(args.model))
