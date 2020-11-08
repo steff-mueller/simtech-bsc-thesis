@@ -15,7 +15,6 @@
 \usepackage{array}
 \usepackage{upgreek}
 \usepackage{enumerate}
-\usepackage{pgf}
 \usepackage{mathrsfs}
 \usepackage{subfig}
 \usepackage{tabularx}
@@ -23,6 +22,9 @@
 \usepackage{multirow}
 \usepackage{makecell}
 \usepackage{algpseudocode,algorithm}
+%%% pgfplots for plotting
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
 %%% Title page
 \usepackage{common/titlePageST}
 %%% Appendix in TOC
@@ -278,8 +280,7 @@ If $f: \mathbb{R}^{n_1} \to \mathbb{R}^{n_2}$ is a multi-dimensional function
 	\end{equation*}
 \end{definition}
 
-\todo{Introduce Hamiltonain systems with general skew-symmetric $S$?}
-A Hamiltonian ODE system can be written in canonical form as
+A Hamiltonian (ODE) system can be written in canonical form as
 \begin{align*}
 	\dot{y} &= J \grad{H}(y) \\
 	y(t_0) &= y_0
@@ -297,16 +298,11 @@ and $p=p(t) \in \mathbb{R}^d$ are called conjugate momenta.
 The phase space $\mathbb{R}^{2d}$ has even dimension for Hamiltonian systems.
 
 Note that the Hamiltonian $H$ is a first integral, i.e. the total energy is preserved, because
-\begin{align*}
-	\ddt H(y(t)) &= \lsb \grad{H}(y(t)) \rsb^T \dot{y}(t) = 
-	\lsb \grad{H}(y(t)) \rsb^T J \grad{H}(y(t)) \\
-	&= \begin{pmatrix}
-		\grad[q]{H}(y(t)) & \grad[p]{H}(y(t))
-	\end{pmatrix} \begin{pmatrix}
-		\grad[p]{H}(y(t)) \\
-		- \grad[q]{H}(y(t))
-	\end{pmatrix} = 0
-\end{align*}
+\begin{equation*}
+	\ddt H(y(t)) = \lsb \grad{H}(y(t)) \rsb^T \dot{y}(t) = 
+	\lsb \grad{H}(y(t)) \rsb^T J \grad{H}(y(t)) = 0
+\end{equation*}
+with $J$ skew-symmetric.
 
 Let $\phi_{t,H} : U \subset \mathbb{R}^{2d} \to \mathbb{R}^{2d}$ be the flow for a Hamiltonian system 
 with Hamiltonian $H$ for a fixed time step $t$, i.e.
@@ -635,116 +631,249 @@ because this reduces to a single upper or lower linear layer:
 
 \todo{Motivate convolution layers}
 
-Given a kernel $k \in \mathbb{R}^{s_k}$ with kernel size $s_k \in \mathbb{N}$
-the $1$-dimensional convolution operator is defined as
+Given two discrete functions $f,g \in \mathbb{R}^\mathbb{Z}$ the convolution is defined as 
 \begin{equation*}
-	conv1d[k]: \mathbb{R}^{L_{in}} \to \mathbb{R}^{L_{out}}, \quad
-	\lb conv1d[k](x) \rb_i := \sum_{u=1}^{s_k} k_u x_{i+u-1} \quad
-	(1 \leq i \leq L_{out})
+	(f*g)(\tau) = \sum^{\infty}_{a=-\infty} f(a) g(\tau - a)
 \end{equation*}
-where $L_{in}$ is the input dimension and $L_{out} = L_{in} - s_k + 1$.
-\todo{Briefly mention more general versions with stride and dilation.}
-The convolution operator reduces the input dimension $L_{in}$ (if $s_k > 1$).
-
-\todo{Add illustration for convolution}
-
-As we will justify later we only use kernels with odd kernel size $s_k = 2m+1$, $m \in \mathbb{N}$.
-Therefore from now on we always implicitly assume a kernel with odd kernel size $s_k = 2m+1$.
-\todo{in this section, later conv gradient module not?}
-To simplify notation we introduce new indexing for kernels by counting from $-m$ to $m$,
-i.e. $k = (k_{-m}, k_{-m+1}, \dots, k_{-1} k_0, k_1, \dots, k_{m})^T \in \mathbb{R}^{2m+1}$.
-With new indexing the convolution operator becomes 
+However, must popular neural network libraries implement the so called cross-correlation.
+Cross-correlation is a flipped convolution
 \begin{equation*}
-	\lb conv1d[k](x) \rb_i = \sum_{u=-m}^{m} k_u x_{i+u+m} \quad
-	(1 \leq i \leq L_{out})
+	(f*g)(\tau) = \sum^{\infty}_{a=-\infty} f(a) g(\tau + a)
 \end{equation*}
+For this reason, if we write $*$, we mean cross-correlation from now on. However, all following statements 
+could also be proofed with convolution.
+\todo{Write this in a better way... and cite Goodfellow?}
 
-We call a kernel $k \in \mathbb{R}^{2m+1}$ symmetric if $k_i = k_{-i}$ for all $i = 0, \dots, m$.
-
-A padding operator increases the input dimension by padding
-the input boundaries. Let us define $1$-dimensional constant padding and symmetric padding operators.
-Let $s_p \in \mathbb{N}$ be the padding size and $L_{in}$ the input dimension.
-
-Constant padding adds constant values at the left and right boundary.
+We work with finite-dimensional vectors in practice. Therefore, we define a bijective mapping between
+finite-dimensionial vectors and $\mathbb{R}^{\mathbb{Z}}$ via zero continuation on $\mathbb{Z}$:
 \begin{align*}
-	&constant\_pad[s_p,l,r] : \mathbb{R}^{L_{in}} \to \mathbb{R}^{L_{in}+2s_p}, \\[7pt]
-	&(constant\_pad[s_p,l,r](x))_i :=
-	\begin{cases}
-		l_i & 1 \leq i \leq s_p \\
-		x_{i-s_p} & s_p+1 \leq i \leq L_{in}+s_p \\
-		r_{i-L_{in}+s_p} & L_{in}+s_p+1 \leq i \leq L_{in} + 2s_p
-	\end{cases}
-	\quad (1 \leq i \leq L_{in}+2s_p)
-\end{align*}
-where $l,r \in \mathbb{R}^{s_p}$ are the constant padding values for the left and right boundaries.
-
-Symmetric padding mirrors the inner values at the left and right boundaries.
-\begin{align*}
-	&symmetric\_pad[s_p] : \mathbb{R}^{L_{in}} \to \mathbb{R}^{L_{in}+2s_p}, \\[7pt]
-	&(symmetric\_pad[s_p](x))_i :=
-	\begin{cases}
-		x_{s_p-i+1} & 1 \leq i \leq s_p \\
-		x_{i-s_p} & s_p+1 \leq i \leq L_{in}+s_p \\
-		x_{2L_{in}+s_p+1-i} & L_{in}+s_p+1 \leq i \leq L_{in} + 2s_p
-	\end{cases}
-	\quad (1 \leq i \leq L_{in}+2s_p)
-\end{align*}
-For symmetric padding it must hold $L_{in} \geq s_p$.
-
-\todo{Add illustrations for padding}
-
-We define the symplectic $1$-dimensional convolution layers by
-\begin{alignat*}{2}
-	\mathcal{C}_{up} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d},
-	\quad&\mathcal{C}_{up} \qpvec := \uppersympop{conv1d[k] \circ pad[s_p,\dots]} \\[7pt]
-	\mathcal{C}_{low} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d},
-	&\mathcal{C}_{low} \qpvec := \lowersympop{conv1d[k] \circ pad[s_p,\dots]}
-\end{alignat*}
-where kernel $k \in \mathbb{R}^{2m+1}$ symmetric, $s_p = m$ and either
-\begin{equation*}
-	pad[s_p,\dots] = constant\_pad[s_p,l,r],\; l,r \in \mathbb{R}^{s_p}
-\end{equation*}
-or
-\begin{equation*}
-	pad[s_p,\dots] = symmetric\_pad[s_p]
-\end{equation*}
-For $pad[s_p,\dots] = symmetric\_pad[s_p]$ it must hold $d \geq m$.
-The kernel $k \in \mathbb{R}^{2m+1}$ is learnable during training.
-If using constant padding $l,r \in \mathbb{R}^{s_p}$ can be either fixed or learnable during training.
-
-Indeed $conv1d[k] \circ pad[s_p,\dots]$ maps from $\mathbb{R}^d$ to $\mathbb{R}^d$ because
-\begin{align*}
-	L_{in,pad[s_p,\dots]} &= d \\
-	L_{out,pad[s_p,\dots]} &= L_{in,pad[s_p,\dots]} + 2s_p = d+2s_p = d+2m \\
-	L_{in,conv1d[k]} &= L_{out,pad[s_p,\dots]} = d+2m \\
-	L_{out,conv1d[k]} &= L_{in,conv1d[k]} - s_k + 1 = (d+2m) - (2m+1) + 1 = d
+	\mathcal{I}_k &: \mathbb{R}^k \to \mathbb{R}^{\mathbb{Z}},
+	\quad \lb\mathcal{I}_k(x)\rb(\tau) := \sum_{a=1}^{k} x_a \delta_{\tau a} \\
+	%
+	\mathcal{I}_k^{-1} &: \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^k,
+	\quad \mathcal{I}_k^{-1}(f) := \lb f(\tau) \rb_{\tau=1}^k
 \end{align*}
 
-Furthermore the two conditions
-\begin{align}
-	L_{in,conv1d[k]} &= L_{out,pad[s_p,\dots]} = d+2s_p \label{conv_dim1} \\ 
-	L_{out,conv1d[k]} &= L_{in,conv1d[k]} - s_k + 1 = d \label{conv_dim2}
-\end{align}
-indeed imply that the kernel size $s_k$ must be odd.
+Additionially, we define a shift operator $\mathcal{S}_v$, 
+which shifts a discrete function $f \in \mathbb{R}^\mathbb{Z}$ by $v \in \mathbb{Z}$ positions
+in the right direction
 \begin{equation*}
-	\text{\cref{conv_dim1} in \cref{conv_dim2}:} \quad d+2s_p - s_k + 1 = d \iff s_k = 2s_p+1
+	\mathcal{S}_v : \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
+	\quad \lb \mathcal{S}_v(f) \rb (\tau) := f(\tau - v)
 \end{equation*}
+
+We define the valid cross-correlation of a finite-dimensional kernel $k \in \mathbb{R}^{n_k}$ and 
+a finite-dimensional input $x \in \mathbb{R}^{n_x}$ with $n_x \geq n_k$ as
+\begin{equation*}
+	*_{\text{v}} : \mathbb{R}^{n_k} \times \mathbb{R}^{n_x} \to \mathbb{R}^{n_x-n_k+1},
+	\quad *_{\text{v}}(k,x) := \mathcal{I}_{n_x-n_k+1}^{-1} (
+		\mathcal{S}_{-1}( \mathcal{I}_{n_k}(k)) * \mathcal{I}_{n_x}(x)
+	)
+\end{equation*}
+In other words, the valid cross-correlation $*_{\text{v}}$ evaluates the cross-correlation 
+only at positions where the finite-dimensional kernel $k$ and the 
+finite-dimensional input $x$ fully overlap and puts the result into a finite-dimensional vector.
+
+The cross correlation has the output dimension $n_x - n_k + 1$.
+Thus, the valid cross-correlation $*_{\text{v}}$ decreases the dimension of the input $x$.
+However, we want to incorporate the valid cross-correlation as the layer transform of a
+unit triangular layer. The layer transform must keep the dimension.
+Therefore we apply a padding operation on $x$ before passing it to the valid
+cross-correlation. The padding operation increases the dimension of $x$ in order
+that the composition of padding and cross-correlation keeps the overall dimension.
+More specifically, let $d \in \mathbb{N}$ denote the input dimension of the layer transform.
+Let $c \in \mathbb{N}$ denote the number by which the padding operator increases 
+the input dimension. In order that the composition of padding and cross-correlation
+keeps the dimension, it must hold
+\begin{equation*}
+	n_x - n_k + 1 = \underbrace{(d+c)}_{\substack{
+		\text{increased dim.} \\
+		\text{by } c \text{ via padding}
+	}} - \, n_k + 1 = d \iff c = n_k-1
+\end{equation*}
+For symmetry reasons, we pad the same number of values at the beginning and 
+the end of the input vector. This means that the number of padding values $c$ is even. 
+Consequently, the equation above implies that the kernel size $n_k$ is odd, i.e. we can write
+$n_k = 2m+1$ for a $m \in \mathbb{N}_0$, and $c=2m$. We define two different padding operators,
+which both increase the input vector dimension by $2m$.
+
+\begin{definition}
+	Given the padding values $l,r \in \mathbb{R}^m$ we define constant padding 
+	$c_{\text{pad},m}$ as
+	\begin{equation*}
+		c_{\text{pad},m} : \mathbb{R}^d \to \mathbb{R}^{d+2m},
+		\quad c_{\text{pad},m}(p) = c_{\text{pad},m}(p;l,r) := \lb l^T, p^T, r^T \rb^T
+	\end{equation*}
+\end{definition}
+The constant padding $c_{\text{pad},m}$ is an affine linear map, because we can write
+\begin{equation}\label{cpad_affine}
+	c_{\text{pad},m}(p;l,r) = c_{\text{pad}}(p;0_m,0_m)
+	+ c_{\text{pad},m}(0_d;l,r)
+\end{equation}
+and $c_{\text{pad},m}(p;0_m,0_m)$ is linear regarding $p$.
+
+\begin{definition}
+	We define symmetric padding as
+	\begin{equation*}
+		s_{\text{pad},m} : \mathbb{R}^d \to \mathbb{R}^{d+2m},
+		\quad s_{\text{pad},m}(p) := (
+			\underbrace{p_m, p_{m-1} \dots, p_1}_{m \text{ values}}, \,
+			\underbrace{p_1, p_2 \dots, p_d}_{d \text{ values}}, \,
+			\underbrace{p_d, p_{d-1} \dots, p_{d-m+1}}_{m \text{ values}}
+		)^T
+	\end{equation*}
+\end{definition}
+The symmetric padding $s_{\text{pad},m}$ is a linear map.
+
+Given an odd kernel $k \in \mathbb{R}^{2m+1}$ we set
+\begin{equation*}
+	\hat{k} = \hat{k}(k) := \mathcal{S}_{-m-1}(\mathcal{I}_{2m+1}(k))
+\end{equation*}
+Then $\hat{k}(-m) = k_1, \, \dots,\, \hat{k}(m) = k_{2m+1}$ and
+$\hat{k}(\tau)=0$ for $\abs{\tau} > m$. With $\hat{k}$, we can express the valid cross-correlation as
+\begin{equation*}
+	*_{\text{v}}(k,x) = \mathcal{I}_{n_x-2m}^{-1} (
+		\mathcal{S}_{m}(\hat{k}) * \mathcal{I}_{n_x}(x)
+	)
+\end{equation*}
+because
+\begin{equation*}
+	\mathcal{S}_{m}(\hat{k}) 
+	= \mathcal{S}_{m}(\mathcal{S}_{-m-1}(\mathcal{I}_{2m+1}(k)))
+	= \mathcal{S}_{m+(-m-1)}(\mathcal{I}_{2m+1}(k))
+	= \mathcal{S}_{-1}(\mathcal{I}_{2m+1}(k))
+\end{equation*}
+
+\begin{definition}
+	We call an odd kernel $k \in \mathbb{R}^{2m+1}$ symmetric if
+	\begin{equation*}
+		\hat{k}(\tau) = \hat{k}(-\tau)
+	\end{equation*}
+	for all $\tau \in \mathbb{Z}$.
+\end{definition}
+
+Let us now define symplectic convolution layers by combining padding and valid 
+cross-convolution.
+\begin{definition}
+	Given a symmetric kernel $k \in \mathbb{R}^{2m+1}$ and padding
+	$(\bullet)_{\text{pad},m} = c_{\text{pad},m}$ or $(\bullet)_{\text{pad},m} = s_{\text{pad},m}$,
+	we call the upper and lower unit triangular layers with layer transform
+	\begin{equation*}
+		\activation_{\mathcal{C}}(p) := *_{\text{v}}(k,((\bullet)_{\text{pad}})(p))
+	\end{equation*}
+	the convolution layers $\mathcal{C}_{up}$ and $\mathcal{C}_{low}$.
+\end{definition}
+
+With $\hat{(\bullet)}_{\text{pad},m}(p) := \mathcal{I}_{d+2m}((\bullet)_{\text{pad},m}(p))$,
+we can write the layer transform as
+\begin{equation}\label{eq_conv_layer_transform}
+	\activation_{\mathcal{C}}(p) =
+	\mathcal{I}_{d}^{-1} (
+		\mathcal{S}_{m}(\hat{k}) * \hat{(\bullet)}_{\text{pad}}(p)
+	)
+\end{equation}
+
+\begin{lemma}\label{jac_linear_map}
+	Let $f: \mathbb{R}^d \to \mathbb{R}^d$ be a linear map. Then the Jacobian matrix
+	$\jac{f}{x}$ is constant, i.e.
+	\begin{equation*}
+		\jac{f}{x} \bigg|_{x = v} = \jac{f}{x} \bigg|_{x = w} \quad \forall v,w \in \mathbb{R}^d
+	\end{equation*}
+	and for the Jacobian-vector product holds
+	\begin{equation*}
+		\lb \jac{f}{x} \bigg|_{x = v} \rb w = f(w) \quad \forall v,w \in \mathbb{R}^d
+	\end{equation*}
+\end{lemma}
+\begin{proof}
+	$f$ is linear $\implies$ There exists a matrix representation $f(x) = Ax$ with
+	$A \in \mathbb{R}^{d \times d}$ \\
+	$\implies \jac{f}{x} \big|_{x=v} = A = \text{const.} \quad \forall v \in \mathbb{R}^d$
+	$\implies \lb \jac{f}{x} \big|_{x=v} \rb w = Aw = f(w) \quad \forall v,w \in \mathbb{R}^d$
+\end{proof}
+As the Jacobian matrix for a linear map is constant, we omit the evaluation point, i.e.
+$\jac{f}{x} \big|_{x=v} = \jac{f}{x}$.
+
+\begin{theorem}\label{thm_conv_const_pad_symplectic}
+	The convolution layers $\mathcal{C}_{up}$ and $\mathcal{C}_{low}$
+	with padding $(\bullet)_{\text{pad},m} = c_{\text{pad},m}$ are symplectic.
+\end{theorem}
+\begin{proof}
+	We have to show that the Jacobian of the layer transform $\activation_{\mathcal{C}}(p)$
+	is symmetric (\cref{jacobi_symmetric}).
+	Because of \cref{cpad_affine}, it suffices to show the case $l,r=0$ (the Jacobian
+	of a constant has only zero-valued entries). For $l,r=0$, the layer transform 
+	$\activation_{\mathcal{C}}(p)$ 
+	is a linear map, because it is a composition of linear maps only.
+
+	Define the bilinear form
+	\begin{equation}\label{eq_bilinear_proof_conv}
+		b : \mathbb{R}^d \times \mathbb{R}^d \to \mathbb{R},
+		\quad b(v,w) := \ip{v}{\lb \jac{\activation_{\mathcal{C}}}{p} \rb w}
+	\end{equation}
+	To show symmetry of the Jacobian, we show that 
+	$b(e_i, e_j) = b(e_j, e_i)$ for all $i,j=1,\dots,d$.
+	\begin{align*}
+		b(e_i, e_j) &= \ip{e_i}{\lb \jac{\activation_{\mathcal{C}}}{p} \rb e_j}
+		= \ip{e_i}{\activation_{\mathcal{C}}(e_j)} \quad \text{(\cref{jac_linear_map})} \\
+		&\stackrel{\cref{eq_conv_layer_transform}}{=} \ip{e_i}{\mathcal{I}_{d}^{-1} (
+			\mathcal{S}_{m}(\hat{k}) * \hat{c}_{\text{pad}}(e_j)
+		)} \\
+		&= \ip{e_i}{
+			\lb \sum_{a=-\infty}^{\infty} 
+				\hat{k}(a-m)
+				\underbrace{(\hat{c}_{\text{pad}}(e_j))(\tau+a)}_{
+					= \delta_{(\tau+a) (j+m)}
+				}
+			\rb_{\tau=1}^d
+		} \\
+		&= \hat{k}((j-i+m)-m) = \hat{k}(j-i)
+	\end{align*}
+	The kernel $k$ is symmetric, thus $\hat{k}(j-i) = \hat{k}(i-j) \implies b(e_i, e_j) = b(e_j,e_i)$.
+\end{proof}
+
+\begin{theorem}
+	The convolution layers $\mathcal{C}_{up}$ and $\mathcal{C}_{low}$
+	with padding $(\bullet)_{\text{pad},m} = s_{\text{pad},m}$ are symplectic.
+\end{theorem}
+\begin{proof}
+	With $(\bullet)_{\text{pad},m} = s_{\text{pad},m}$, the layer transform 
+	$\activation_{\mathcal{C}}$ is linear, because it is a composition of linear maps. Thus,
+	we proof the statement the same way as \cref{thm_conv_const_pad_symplectic} above.
+	For $\tau,a \in \mathbb{Z}$ we have
+	\begin{equation*}
+		\hat{s}_{\text{pad},m}(e_j)(\tau + a) = 
+		\delta_{(\tau + a) (m-j+1)} + \delta_{(\tau + a) (j+m)} + \delta_{(\tau + a) (2d+m-j+1)}
+	\end{equation*}
+	Consequently, for $(\bullet)_{\text{pad},m} = s_{\text{pad},m}$ and $i,j=1, \dots, d$, 
+	the bilinear form \cref{eq_bilinear_proof_conv} becomes
+	\begin{align*}
+		b(e_i, e_j) &= \ip{e_i}{
+			\lb \sum_{a=-\infty}^{\infty} 
+				\hat{k}(a-m)
+				(\hat{s}_{\text{pad}}(e_j))(\tau+a)
+			\rb_{\tau=1}^d
+		} \\
+		&= \hat{k}((m-j+1-i)-m) + \hat{k}((j+m-i)-m) + \hat{k}((2d+m-j+1-i)-m) \\
+		&= \hat{k}(1-j-i) + \hat{k}(j-i) + \hat{k}(1+2d-j-i)
+	\end{align*}
+	The kernel $k$ is symmetric, thus $\hat{k}(j-i) = \hat{k}(i-j) \implies b(e_i, e_j) = b(e_j,e_i)$.
+\end{proof}
 
 Let ${b_1, b_2, \dots b_m} \in \mathbb{R}^{2m+1}$ be a basis of the space 
-$\{ k \in \mathbb{R}^{2m+1} : k \text{ is symmetric} \}$.
+$\{ k \in \mathbb{R}^{2m+1} : k \text{ is a symmetric kernel} \}$.
 The symmetric kernel $k$ is then parametrized by the coefficients $\beta \in \mathbb{R}^m$ via
 \begin{equation*}
 	k = (b_1, b_2, \dots, b_m) \beta = \beta_1 b_1 + \beta_2 b_2 + \dots + \beta_m b_m
 \end{equation*}
 
-We can choose the canonical basis with basis vectors
-\begin{align*}
-	b_1^C = (0, \dots, 0, 0, 0, &1, 0, 0, 0, \dots, 0)^T \in \mathbb{R}^{2m+1}, \\
-	b_2^C = (0, \dots, 0, 0, 1, &0, 1, 0, 0, \dots, 0)^T \in \mathbb{R}^{2m+1}, \\
-	b_3^C = (0, \dots, 0, 1, 0, &0, 0, 1, 0, \dots, 0)^T \in \mathbb{R}^{2m+1}, \\
-	&\vdots \\
-	b_m^C = (1, 0, \dots, &0, \dots, 0, 1)^T \in \mathbb{R}^{2m+1}
-\end{align*}
+The basis vectors $b_1, \dots, b_m \in \mathbb{R}^{2m+1}$ for the canonical basis are given by
+\begin{equation*}
+	(b_i)_{j+m+1} = \hat{k}(b_i)(j) = \begin{cases}
+		1 &: \abs{j} = i-1 \\
+		0 &:else
+	\end{cases} 
+	\quad (j=-m, \dots, m)
+\end{equation*}
 
 Another possible basis choice inspired by finite differences is
 \todo{Cite paper with similar idea?}
@@ -757,13 +886,12 @@ Another possible basis choice inspired by finite differences is
 The entries for a basis vector $b_i^{FD} \in \mathbb{R}^{2m+1}$ $(1 \leq i \leq m)$ 
 originate from Pascal's triangle.
 \begin{equation*}
-	\lb b_i^{FD} \rb_j = \begin{dcases}
-		(-1)^j \binom{2(i-1)}{j+i-1} : \abs{j} < i \\
-		0 : else
+	\lb b_i^{FD} \rb_{j+m+1} = \hat{k}(b_i^{FD})(j) = \begin{dcases}
+		(-1)^j \binom{2(i-1)}{j+i-1} &: \abs{j} < i \\
+		0 &: else
 	\end{dcases}
-	\quad (1 \leq i \leq m, -m \leq j \leq m )
+	\quad (j=-m, \dots, m)
 \end{equation*}
-where $j$ is indexed from $-m$ to $m$ in accordance to how we defined indexing for kernel entries.
 
 \todo{Move this to Appendix?}
 The symmetry of the kernel basis vectors $b_i^{FD}$ follows with the definition of the binomial coefficient.
@@ -775,9 +903,9 @@ Thus we have
 \begin{equation*}
 	\binom{2(i-1)}{(-j)+i-1} = \binom{2(i-1)}{j+i-1}
 \end{equation*}
-and
+and for $i=1, \dots, m$ and $j= 0, \dots, m$
 \begin{align*}
-	\lb b_i^{FD} \rb_{-j} &= \begin{dcases}
+	\hat{k}(b_i^{FD})(-j) &= \begin{dcases}
 		(-1)^{-j} \binom{2(i-1)}{(-j)+i-1} : \abs{-j} < i \\
 		0 : else
 	\end{dcases} \\
@@ -785,10 +913,10 @@ and
 		(-1)^{j} \binom{2(i-1)}{j+i-1} : \abs{j} < i \\
 		0 : else
 	\end{dcases} \\
-	&= (b_i^{FD})_j
+	&= \hat{k}(b_i^{FD})(j) 
 \end{align*}
-for $i=1, \dots, m$ and $j= 0, \dots, m$. So $b_i^{FD}$ $(i=1, \dots, m)$ are a valid basis of
-the space $\{ k \in \mathbb{R}^{2m+1} : k \text{ is symmetric} \}$.
+So $b_i^{FD}$ $(i=1, \dots, m)$ form a valid basis of
+the space $\{ k \in \mathbb{R}^{2m+1} : k \text{ is a symmetric kernel} \}$.
 
 \todo{Interesting: Finite difference basis only contains even-order derivatives, otherwise it
 would not be symplectic (symmetric). What happens if Hamiltonian contains even-order derivative?
@@ -797,226 +925,6 @@ Relation to Störmer-Verlet.}
 
 As it turns out in our numerical experiments
 parametrization plays an important role how well a neural network learns.
-
-\todo{Maybe move the proof of these theorems to Appendices to keep this cleaner?}
-
-\begin{theorem}
-	The $1$-dimensional convolution layers $\mathcal{C}_{up}$ and $\mathcal{C}_{low}$
-	with $pad[m,\dots] = constant\_pad[m,l,r]$ ($l,r \in \mathbb{R}^p$) are symplectic.
-\end{theorem}
-\begin{proof}
-	We show that the Jacobian matrix 
-	\begin{equation*}
-		\jac{\lb conv1d \lsb k \rsb \circ constant\_pad \lsb m,l,r \rsb \rb}{p}
-	\end{equation*}
-	is symmetric according to \cref{jacobi_symmetric}.
-
-	We have
-	\begin{equation*}
-		\lb \jac{conv1d \lsb k \rsb}{x} \rb_{ij} = \begin{cases}
-			k_{j-i-m} & : \abs{j-i-m} \leq m \\
-			0 & : else
-		\end{cases}
-		\quad (1 \leq i \leq d, 1 \leq j \leq d+2m)
-	\end{equation*}
-	and
-	\begin{equation*}
-		\lb \jac{constant\_pad \lsb m,l,r \rsb}{x} \rb_{ij} = \begin{cases}
-			1 & : i-j=m \\
-			0 & : else
-		\end{cases}
-		\quad (1 \leq i \leq d+2m, 1 \leq j \leq d)
-	\end{equation*}
-	Let $1 \leq i,j \leq d$. By the chain rule we have
-	\begin{align*}
-		\lb \jac{\lb conv1d \lsb k \rsb \circ constant\_pad \lsb m,l,r \rsb \rb}{p} \rb_{ij}
-		&= \lb  
-			\jac{conv1d \lsb k \rsb}{x}
-			\jac{constant\_pad \lsb m,l,r \rsb}{x} 
-		\rb_{ij} \\
-		&= \sum_{u=1}^{d+2m} \lb \jac{conv1d \lsb k \rsb}{x} \rb_{iu}
-		\lb \jac{constant\_pad \lsb m,l,r \rsb}{x} \rb_{uj} \\
-		&= \lb \jac{conv1d \lsb k \rsb}{x} \rb_{i(j+m)}
-		\quad (\text{bc. } u-j=m \iff u=j+m) \\
-		&= \begin{cases}
-			k_{(j+m)-i-m} & : \abs{(j+m)-i-m} \leq m \\
-			0 & : else
-		\end{cases} \\
-		&= \begin{cases}
-			k_{j-i} & : \abs{j-i} \leq m \\
-			0 & : else
-		\end{cases}
-	\end{align*}
-	Then 
-	\begin{align*}
-		\lb \jac{\lb conv1d \lsb k \rsb \circ constant\_pad \lsb m,l,r \rsb \rb}{p} \rb_{ji}
-		&= \begin{cases}
-			k_{i-j} & : \abs{i-j} \leq m \\
-			0 & : else
-		\end{cases} \\
-		&= \begin{cases}
-			k_{j-i} & : \abs{j-i} \leq m \\
-			0 & : else
-		\end{cases} \quad \text{($k$ symmetric)} \\
-		&= \lb \jac{\lb conv1d \lsb k \rsb \circ constant\_pad \lsb m,l,r \rsb \rb}{p} \rb_{ij}
-	\end{align*}
-	We have shown that the Jacobian matrix is symmetric.
-\end{proof}
-
-\begin{theorem}
-	The $1$-dimensional convolution layers $\mathcal{C}_{up}$ and $\mathcal{C}_{low}$
-	with $pad[m,\dots] = symmetric\_pad[m]$ are symplectic.
-\end{theorem}
-\begin{proof}
-	Let $1 \leq i \leq d$.
-	Then
-	\begin{equation*}
-		\lb conv1d \lsb k \rsb \circ symmetric\_pad \lsb m \rsb(p) \rb_i
-		= \sum_{u=-m}^m k_u \lb symmetric\_pad \lsb m \rsb(p) \rb_{i+u+m} = (*)
-	\end{equation*}
-	With the variable transform $v=v(u):=i+u+m \iff u=v-i-m$ we have
-	\begin{equation*}
-		(*) = \sum_{v=i}^{i+2m} k_{v-i-m} \lb symmetric\_pad \lsb m \rsb(p) \rb_{v}
-	\end{equation*}
-	Let $I := \{ v \in \mathbb{N} : i \leq v \leq i+2m \}$ and
-	\begin{align*}
-		I_1 &:= I \cap \{ v \in \mathbb{N} : 1 \leq v \leq m \} \\
-		I_2 &:= I \cap \{ v \in \mathbb{N} : m+1 \leq v \leq d+m \} \\
-		I_3 &:= I \cap \{ v \in \mathbb{N} : d+m+1 \leq v \leq d+2m \}
-	\end{align*}
-	Then
-	\begin{align*}
-		(*) &= \sum_{v_1 \in I_1} k_{v_1-i-m} p_{m+1-v_1} +
-		\sum_{v_2 \in I_2} k_{v_2-i-m} p_{v_2-m} +
-		\sum_{v_3 \in I_3} k_{v_3-i-m} p_{2d+m+1-v_3}
-	\end{align*}
-	We apply a variable transform on each sum.
-	\begin{align*}
-		w_1 = w_1(v_1) := m-v_1+1 &\implies v_1=m+1-w_1 \\
-		&\implies \widetilde{I_1} := w_1(I_1) \\
-		& \phantomrel{\implies \widetilde{I_1} :}
-		= \{ w \in \mathbb{N} : 1-m-i \leq w \leq 1+m-i \} \\
-		& \phantomrel{\implies \widetilde{I_1} :=}
-		\cap \{ w \in \mathbb{N} : 1 \leq w \leq m \}  \\
-		& \phantomrel{\implies \widetilde{I_1} :}
-		= \{ w \in \mathbb{N} : 1 \leq w \leq 1+m-i \} \\[20pt]
-		%
-		w_2 = w_2(v_2) := v_2-m &\implies v_2=w+m \\
-		&\implies \widetilde{I_2} := w_2(I_2) \\
-		&\phantomrel{\implies \widetilde{I_2} :}
-		= \{ w \in \mathbb{N} : i-m \leq w \leq i+m \} \\
-		& \phantomrel{\implies \widetilde{I_2} :=}
-		\cap \{ w \in \mathbb{N} : 1 \leq w \leq d \}  \\
-		&\phantomrel{\implies \widetilde{I_2} :}
-		= \{ w \in \mathbb{N} : i-m \leq w \leq i+m \} \\[20pt]
-		%
-		w_3 = w_3(v_3) := 2d+m+1-v_3 &\implies v_3=2d+m+1-w \\
-		&\implies \widetilde{I_3} := w_3(I_3) \\
-		& \phantomrel{\implies \widetilde{I_3} :}
-		= \{ w \in \mathbb{N} : 2d+1-m-i \leq w \leq 2d+m+1-i \} \\
-		& \phantomrel{\implies \widetilde{I_3} :=}
-		\cap \{ w \in \mathbb{N} : d+1-m \leq w \leq d \} \\
-		& \phantomrel{\implies \widetilde{I_3} :}
-		= \{ w \in \mathbb{N} : 2d+1-m-i \leq w \leq d \}
-	\end{align*}
-	Then
-	\begin{align*}
-		(*) = \sum_{w_1 \in \widetilde{I_1}} k_{1-i-w_1} p_{w_1} +
-		\sum_{w_2 \in \widetilde{I_2}} k_{w_2-i} p_{w_2} +
-		\sum_{w_3 \in \widetilde{I_3}} k_{2d+1-i-w_3} p_{w_3}
-	\end{align*}
-	Let $ 1 \leq j \leq d$. Then for the Jacobian holds
-	\begin{align*}
-		\hspace{6em}&\hspace{-6em}
-		\lb conv1d \lsb k \rsb \circ symmetric\_pad \lsb m \rsb(p) \rb_{ij}
-		= \deldel{p_j} \lb conv1d \lsb k \rsb \circ symmetric\_pad \lsb m \rsb(p) \rb_i \\
-		&= \underbrace{\lb \begin{cases}
-			k_{1-i-j} & : j \in \widetilde{I_1} \\
-			0 & : else
-		\end{cases} \rb}_{:= K_1(i,j)} + \underbrace{\lb \begin{cases}
-			k_{j-i} & : j \in \widetilde{I_2} \\
-			0 & : else
-		\end{cases} \rb}_{:= K_2(i,j)} + \underbrace{\lb \begin{cases}
-			k_{2d+1-i-j} & : j \in \widetilde{I_3} \\
-			0 & : else
-		\end{cases} \rb}_{:= K_3(i,j)} \\
-		&= K_1(i,j) + K_2(i,j) + K_3(i,j)
-	\end{align*}
-	We have
-	\begin{align*}
-		 K_1(i,j) &= \begin{cases}
-			k_{1-i-j} & : j \in \widetilde{I_1} \\
-			0 & : else
-		\end{cases} = \begin{cases}
-			k_{1-i-j} & : 1 \leq j \leq 1+m-i \\
-			0 & : else
-		\end{cases} \\[7pt]
-		&= \begin{cases}
-			k_{1-i-j} & : j \leq 1+m-i \\
-			0 & : else
-		\end{cases} = \begin{cases}
-			k_{1-i-j} & : j+i \leq 1+m \\
-			0 & : else
-		\end{cases} \\[25pt]
-		%
-		K_2(i,j) &= \begin{cases}
-			k_{j-i} & : j \in \widetilde{I_2} \\
-			0 & : else
-		\end{cases} = \begin{cases}
-			k_{j-i} & : i-m \leq j \leq i+m \\
-			0 & : else
-		\end{cases} = \begin{cases}
-			k_{j-i} & : \abs{j-i} \leq m \\
-			0 & : else
-		\end{cases} \\[25pt]
-		%
-		K_3(i,j) &= \begin{cases}
-			k_{2d+1-i-j} & : j \in \widetilde{I_3} \\
-			0 & : else
-		\end{cases} = \begin{cases}
-			k_{2d+1-i-j} & : 2d+1-m-i \leq j \leq d \\
-			0 & : else
-		\end{cases} \\[7pt]
-		&= \begin{cases}
-			k_{2d+1-i-j} & : 2d+1-m-i \leq j \\
-			0 & : else
-		\end{cases}
-		= \begin{cases}
-			k_{2d+1-i-j} & : 2d+1-m \leq j+i \\
-			0 & : else
-		\end{cases}
-	\end{align*}
-	We show that $K_l$, $l=1,2,3$ are symmetric, i.e. $K_l(j,i) = K_l(i,j)$ for
-	$l=1,2,3$. This implies that the Jacobian is symmetric.
-	\begin{equation*}
-		K_1(j,i) = \begin{cases}
-			k_{1-j-i} & : i+j \leq 1+m \\
-			0 & : else
-		\end{cases} = \begin{cases}
-			k_{1-i-j} & : j+i \leq 1+m \\
-			0 & : else
-		\end{cases} = K_1(i,j) \\[20pt]
-	\end{equation*}
-	\begin{equation*}
-		K_2(j,i) = \begin{cases}
-			k_{i-j} & : \abs{i-j} \leq m \\
-			0 & : else
-		\end{cases} \stackrel{k \text{ symmetric}}{=} \begin{cases}
-			k_{j-i} & : \abs{j-i} \leq m \\
-			0 & : else
-		\end{cases} = K_2(i,j) \\[20pt]
-	\end{equation*}
-	\begin{equation*}
-		K_3(j,i) = \begin{cases}
-			k_{2d+1-j-i} & : 2d+1-m \leq i+j \\
-			0 & : else
-		\end{cases} = \begin{cases}
-			k_{2d+1-i-j} & : 2d+1-m \leq j+i \\
-			0 & : else
-		\end{cases} = K_3(i,j)
-	\end{equation*}
-	Thus symplecticity follows with \cref{jacobi_symmetric}.
-\end{proof}
 
 \subsection{Activation layers}
 
@@ -1176,10 +1084,12 @@ deep learning frameworks, as for backpropagation during training
 $\jac{BN_{\gamma, \beta}}{(\gamma, \beta)}$ is obtained via automatic differentiation.
 
 If the training data is small enough so that splitting the data into multiple mini batches
-is not necessary, the mean and variance are calculated for the whole training data. This is the
+is not necessary, the mean and variance are calculated for the whole training data set. This is the
 case for our numerical experiments, as we work with very small training data sets.
-If the training data set is split into mini batches there exist also alternative methods to estimate
+If the training data set is split into mini batches, there exist also alternative methods to estimate
 the mean and variance for the whole training data set, for example using moving averages.
+
+\todo{Add special note for convolution, respect convolution when normalizing.}
 
 \subsubsection{Normalized gradient layers}
 
@@ -1416,6 +1326,43 @@ from \cref{gradient_corollary} and the fact that the composition of symplectic m
 \subsubsection{Harmonic Oscillator}
 
 \subsubsection{Simple Pendulum}
+
+\begin{tikzpicture}
+	\begin{axis}[
+		title={Phase plot},
+		xlabel={q},
+		ylabel={p},
+	]
+
+	\addplot[
+		color=red,
+		no markers
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/exact_phase_plot.csv};
+
+	\addplot[
+		color=blue,
+		no markers
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/la-sympnet_phase_plot.csv};
+
+	\addplot[
+		color=green,
+		no markers
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet_phase_plot.csv};
+
+	\addplot[
+		color=blue,
+		dashed,
+		no markers
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-la-sympnet_phase_plot.csv};
+
+	\addplot[
+		color=green,
+		dashed,
+		no markers
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-g-sympnet_phase_plot.csv};
+		
+	\end{axis}
+\end{tikzpicture}
 
 \subsection{High-dimensional systems}
 
