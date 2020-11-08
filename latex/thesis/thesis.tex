@@ -343,9 +343,11 @@ canonical form (see \citet[Remark 3.8]{peng2016}). \todo{Maybe add more details?
 
 Our goal is to learn the flow map $\phi_{t,H} : U \to \mathbb{R}^{2d}$ with a neural network
 for fixed $t$.
-This leads to the idea that we embed symplecticity into the neural network itself structurally. 
+This leads to the idea that we embed symplecticity into the neural network itself structurally.
 
-\section{Architecture}
+\section{Architecture of SympNets}
+
+\subsection{General architecture}
 
 In this section we describe the architecture of our symplectic neural networks.
 The linear layers, activation layers and gradient layers are recapitulated as 
@@ -626,6 +628,91 @@ because this reduces to a single upper or lower linear layer:
 	\end{pmatrix} b_1
 	+ b_2$.
 \end{proof}
+
+\subsection{Activation layers}
+
+\begin{alignat*}{2}
+	\mathcal{N}_{up} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d},
+	\quad \mathcal{N}_{up} \qpvec &:= \uppersympop{\hat{\activation}_a}
+	:= \begin{pmatrix}
+		q + diag(a)\activation(p) \\
+		p
+	\end{pmatrix} \\[7pt]
+	%
+	\mathcal{N}_{low} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d},
+	\quad \mathcal{N}_{low} \qpvec &:= \lowersympop{\hat{\activation}_a}
+	:= \begin{pmatrix}
+		q \\
+		diag(a)\activation(q) + p
+	\end{pmatrix}
+\end{alignat*}
+where $a \in \mathbb{R}^d$ is a learnable parameter and 
+$\activation : \mathbb{R} \to \mathbb{R}$ an activation function,
+which is applied element-wise.
+
+\begin{corollary}
+	Given an activation function $\activation \in \mathbb{C}^1$
+	the activation layers $\mathcal{N}_{up}$ and $\mathcal{N}_{low}$ are symplectic.
+\end{corollary}
+\begin{proof}
+	Let $\mathcal{A}: \mathbb{R} \to \mathbb{R}$ be the antiderivative of $\activation$, 
+	i.e. $\dd{x} \mathcal{A} = \activation$ and $V(p) := a^T\mathcal{A}(p)$.
+
+	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and
+	\begin{equation*}
+		\grad{V}(p) = \lb\jac{V}{p}(p)\rb^T = \lb a^Tdiag\lb\sigma(p)\rb\rb^T
+		= diag(\activation(p)) a
+		= diag(a) \activation(p)
+	\end{equation*}
+	Symplecticity follows with \cref{gradient_corollary}.
+\end{proof}
+
+\subsection{Gradient layers}
+
+\begin{alignat*}{2}
+	\mathcal{G}_{up} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
+	\mathcal{G}_{up} \qpvec &:= \uppersympop{\hat{\activation}_g} := \begin{pmatrix}
+		q + K^T diag(a) \activation(Kp + b) \\
+		p
+	\end{pmatrix} \\[7pt]
+	%
+	\mathcal{G}_{low} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
+	\mathcal{G}_{low} \qpvec &:= \lowersympop{\hat{\activation}_g} := \begin{pmatrix}
+		q \\
+		K^T diag(a) \activation(Kq + b) + p
+	\end{pmatrix}
+\end{alignat*}
+where $K \in \mathbb{R}^{n \times d}$ and $a,b \in \mathbb{R}^n$
+are learnable parameters. $\activation : \mathbb{R} \to \mathbb{R}$ 
+is an activation function, which is applied element-wise.
+$n \in \mathbb{N}$ denotes the width of the gradient layer and can be chosen freely.
+
+\begin{corollary}
+	Given an activation function $\sigma \in C^1$ the gradient layers $\mathcal{G}_{up}$
+	and $\mathcal{G}_{low}$ are symplectic.
+\end{corollary}
+\begin{proof}
+	Let $\mathcal{A}: \mathbb{R} \to \mathbb{R}$ be the antiderivative of $\activation$, 
+	i.e. $\dd{x} \mathcal{A} = \activation$ and
+	$V(p) := \onevec{n}^Tdiag(a)\mathcal{A}(Kp+b)$.
+
+	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and
+	\begin{align*}
+		\grad{V(p)} &= \left(\jac{V}{p}(p)\right)^T \\
+		&= \left(1_n^Tdiag(a)diag\left(\sigma(Kp+b)\right)K\right)^T \\
+		&= K^Tdiag\left(\sigma(Kp+b)\right)diag(a)1_n \\
+		&= K^Tdiag(a)diag\left(\sigma(Kp+b)\right)1_n \\
+		&= K^Tdiag(a)\sigma(Kp+b)
+	\end{align*}
+
+	With \cref{gradient_corollary} follows that the Gradient layers
+	$\mathcal{G}_{up}$ and $\mathcal{G}_{low}$ are symplectic.
+\end{proof}
+
+Note that activation layers are a subset of gradient layers. We can see this by choosing
+$n=d$, $K=I_d$ and $b=0$.
+
+\section{Convolution and Normalization for SympNets}
 
 \subsection{Convolution layers}
 
@@ -926,88 +1013,9 @@ Relation to Störmer-Verlet.}
 As it turns out in our numerical experiments
 parametrization plays an important role how well a neural network learns.
 
-\subsection{Activation layers}
+\subsection{Convolution Gradient Layers}
 
-\begin{alignat*}{2}
-	\mathcal{N}_{up} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d},
-	\quad \mathcal{N}_{up} \qpvec &:= \uppersympop{\hat{\activation}_a}
-	:= \begin{pmatrix}
-		q + diag(a)\activation(p) \\
-		p
-	\end{pmatrix} \\[7pt]
-	%
-	\mathcal{N}_{low} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d},
-	\quad \mathcal{N}_{low} \qpvec &:= \lowersympop{\hat{\activation}_a}
-	:= \begin{pmatrix}
-		q \\
-		diag(a)\activation(q) + p
-	\end{pmatrix}
-\end{alignat*}
-where $a \in \mathbb{R}^d$ is a learnable parameter and 
-$\activation : \mathbb{R} \to \mathbb{R}$ an activation function,
-which is applied element-wise.
-
-\begin{corollary}
-	Given an activation function $\activation \in \mathbb{C}^1$
-	the activation layers $\mathcal{N}_{up}$ and $\mathcal{N}_{low}$ are symplectic.
-\end{corollary}
-\begin{proof}
-	Let $\mathcal{A}: \mathbb{R} \to \mathbb{R}$ be the antiderivative of $\activation$, 
-	i.e. $\dd{x} \mathcal{A} = \activation$ and $V(p) := a^T\mathcal{A}(p)$.
-
-	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and
-	\begin{equation*}
-		\grad{V}(p) = \lb\jac{V}{p}(p)\rb^T = \lb a^Tdiag\lb\sigma(p)\rb\rb^T
-		= diag(\activation(p)) a
-		= diag(a) \activation(p)
-	\end{equation*}
-	Symplecticity follows with \cref{gradient_corollary}.
-\end{proof}
-
-\subsection{Gradient layers}
-
-\begin{alignat*}{2}
-	\mathcal{G}_{up} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
-	\mathcal{G}_{up} \qpvec &:= \uppersympop{\hat{\activation}_g} := \begin{pmatrix}
-		q + K^T diag(a) \activation(Kp + b) \\
-		p
-	\end{pmatrix} \\[7pt]
-	%
-	\mathcal{G}_{low} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
-	\mathcal{G}_{low} \qpvec &:= \lowersympop{\hat{\activation}_g} := \begin{pmatrix}
-		q \\
-		K^T diag(a) \activation(Kq + b) + p
-	\end{pmatrix}
-\end{alignat*}
-where $K \in \mathbb{R}^{n \times d}$ and $a,b \in \mathbb{R}^n$
-are learnable parameters. $\activation : \mathbb{R} \to \mathbb{R}$ 
-is an activation function, which is applied element-wise.
-$n \in \mathbb{N}$ denotes the width of the gradient layer and can be chosen freely.
-
-\begin{corollary}
-	Given an activation function $\sigma \in C^1$ the gradient layers $\mathcal{G}_{up}$
-	and $\mathcal{G}_{low}$ are symplectic.
-\end{corollary}
-\begin{proof}
-	Let $\mathcal{A}: \mathbb{R} \to \mathbb{R}$ be the antiderivative of $\activation$, 
-	i.e. $\dd{x} \mathcal{A} = \activation$ and
-	$V(p) := \onevec{n}^Tdiag(a)\mathcal{A}(Kp+b)$.
-
-	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and
-	\begin{align*}
-		\grad{V(p)} &= \left(\jac{V}{p}(p)\right)^T \\
-		&= \left(1_n^Tdiag(a)diag\left(\sigma(Kp+b)\right)K\right)^T \\
-		&= K^Tdiag\left(\sigma(Kp+b)\right)diag(a)1_n \\
-		&= K^Tdiag(a)diag\left(\sigma(Kp+b)\right)1_n \\
-		&= K^Tdiag(a)\sigma(Kp+b)
-	\end{align*}
-
-	With \cref{gradient_corollary} follows that the Gradient layers
-	$\mathcal{G}_{up}$ and $\mathcal{G}_{low}$ are symplectic.
-\end{proof}
-
-Note that activation layers are a subset of gradient layers. We can see this by choosing
-$n=d$, $K=I_d$ and $b=0$.
+\todo{...}
 
 \todo{For high dimensions $K$ and $K^T$ can be implemented as transposed convolution
 and convolution operators.}
