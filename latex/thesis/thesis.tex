@@ -280,32 +280,29 @@ If $f: \mathbb{R}^{n_1} \to \mathbb{R}^{n_2}$ is a multi-dimensional function
 	\end{equation*}
 \end{definition}
 
-A Hamiltonian (ODE) system can be written in canonical form as
-\begin{align*}
-	\dot{y} &= J \grad{H}(y) \\
-	y(t_0) &= y_0
-\end{align*}
-where $y: \mathbb{R} \to \mathbb{R}^{2d},\, t \mapsto y(t) = \begin{pmatrix}
-	q(t) \\
-	p(t)
-\end{pmatrix}$ and $y_0 = \begin{pmatrix}
-	q_0 \\
-	p_0
-\end{pmatrix} \in \mathbb{R}^{2d}$ the initial value for $t_0 \in \mathbb{R}$. 
-The map $H: \mathbb{R}^{2d} \to \mathbb{R}$ is called the Hamiltonian 
-or the total energy. $q = q(t) \in \mathbb{R}^d$ are called generalized coordinates
-and $p=p(t) \in \mathbb{R}^d$ are called conjugate momenta. 
-The phase space $\mathbb{R}^{2d}$ has even dimension for Hamiltonian systems.
+\begin{definition}
+	A Hamiltonian (ODE) system can be written in canonical form as
+	\begin{align*}
+		\dot{y}(t) &= J \grad{H}(y(t)) \quad \text{for } t \in I \subset \mathbb{R} \\
+		y(t_0) &= y_0
+	\end{align*}
+	where $y: I \subset \mathbb{R} \to \mathbb{R}^{2d},\, t \mapsto y(t) = (q(t),p(t))$ and 
+	$y_0 = (q_0, p_0) \in \mathbb{R}^{2d}$ the initial value for $t_0 \in \mathbb{R}$. 
+	The function $H: \mathbb{R}^{2d} \to \mathbb{R}$ is called the Hamiltonian 
+	or the total energy. $q = q(t) \in \mathbb{R}^d$ are called generalized coordinates
+	and $p=p(t) \in \mathbb{R}^d$ are called conjugate momenta. 
+	The phase space $\mathbb{R}^{2d}$ has even dimension for Hamiltonian systems.
+\end{definition}
 
 Note that the Hamiltonian $H$ is a first integral, i.e. the total energy is preserved, because
 \begin{equation*}
 	\ddt H(y(t)) = \lsb \grad{H}(y(t)) \rsb^T \dot{y}(t) = 
 	\lsb \grad{H}(y(t)) \rsb^T J \grad{H}(y(t)) = 0
 \end{equation*}
-with $J$ skew-symmetric.
+since $J$ skew-symmetric.
 
-Let $\phi_{t,H} : U \subset \mathbb{R}^{2d} \to \mathbb{R}^{2d}$ be the flow for a Hamiltonian system 
-with Hamiltonian $H$ for a fixed time step $t$, i.e.
+Let $\phi_{t,H} : U \subset \mathbb{R}^{2d} \to \mathbb{R}^{2d}$ be the flow for a 
+canonical Hamiltonian system with Hamiltonian $H$ for a fixed time step $t$, i.e.
 \begin{equation*}
 	\phi_{t,H}\begin{pmatrix}
 		q_0 \\
@@ -317,10 +314,8 @@ with Hamiltonian $H$ for a fixed time step $t$, i.e.
 	\end{pmatrix}
 \end{equation*}
 where $q(t; q_0, p_0)$ and $p(t; q_0, p_0)$ denote the solution of the Hamiltonian system
-at time $t$ for initial conditions $y_0 = \begin{pmatrix}
-	q_0 \\
-	p_0
-\end{pmatrix}$. Poincaré has shown that the flow of a Hamiltonian system is symplectic.
+at time $t$ for initial conditions $y_0 = (q_0,p_0) \in \mathbb{R}^{2d}$. 
+Poincaré has shown that the flow of a Hamiltonian system is symplectic.
 
 \begin{theorem}(Poincaré 1899)
 	Let $H: \mathbb{R}^{2d} \to \mathbb{R}$ be a twice continuously differentiable
@@ -332,30 +327,31 @@ at time $t$ for initial conditions $y_0 = \begin{pmatrix}
 	or to \citet[Theorem 1, p.~54]{leimkuhler_reich_2005}.
 \end{proof}
 
-Note that a Hamiltonian ODE system in general can be written as
+Note that a Hamiltonian (ODE) system in general can be written as
 \begin{align*}
-	\dot{y} &= S \grad{H}(y) \\
+	\dot{y(t)} &= S \grad{H}(y(t)) \quad \text{for } t \in I \subset \mathbb{R} \\
 	y(t_0) &= y_0
 \end{align*}
 with an arbitrary nondegenerate skew-symmetric matrix $S \in \mathbb{R}^{2d \times 2d}$.
 However there always exists a transformation to express such a Hamiltonian ODE system in
-canonical form (see \citet[Remark 3.8]{peng2016}). \todo{Maybe add more details?}
+canonical form (see \citet[Remark 3.8]{peng2016}).
 
-Our goal is to learn the flow map $\phi_{t,H} : U \to \mathbb{R}^{2d}$ with a neural network
-for fixed $t$.
+Our goal is to learn the flow map $\phi_{t,H} : U \to \mathbb{R}^{2d}$ for fixed $t$ with a neural network.
+To be specific, for fixed $t$, we supply the neural network with training pairs $(y_i, \phi_{t,H}(y_i))$
+($y_i \in \mathbb{R}^{2d}$ and $i=1, \dots, n_{\text{train}}$) and want the neural network
+to be able to predict $\phi_{t,H}(y)$ for arbitrary $y \in \mathbb{R}^{2d}$.
 This leads to the idea that we embed symplecticity into the neural network itself structurally.
+
+Symplecticity has already been successfully embedded into numerical integrators, which
+led to the development of geometric integrators.
 
 \section{Architecture of SympNets}
 
-\subsection{General architecture}
+In this section we recapitulate the architecture of SympNets as
+proposed by \citeauthor{Jin2020} in \cite{Jin2020}. We proof
+symplecticity for all layer types.
 
-In this section we describe the architecture of our symplectic neural networks.
-The linear layers, activation layers and gradient layers are recapitulated as 
-proposed by \citeauthor{Jin2020} in \cite{Jin2020}.
-The convolution layers and normalized variants of the activation and gradient layers
-are contributions of this work. 
-\todo{Convolution gradient module, refer to similar reference}
-We proof symplecticity for all layer types. 
+\subsection{General architecture}
 
 We use that the composition of symplectic maps is again symplectic. So we impose that every
 layer of the neural network must be symplectic, which leads to the overall neural network
@@ -714,24 +710,35 @@ $n=d$, $K=I_d$ and $b=0$.
 
 \section{Convolution and Normalization for SympNets}
 
-\subsection{Convolution layers}
+In this section we introduce extensions to SympNets. In particular, we bring the concept
+of convolution to SympNets and we propose a possibility how to embed normalization while
+maintaining symplecticity.
+
+\subsection{Introduction to Convolution}
 
 \todo{Motivate convolution layers}
 
-Given two discrete functions $f,g \in \mathbb{R}^\mathbb{Z}$ the convolution is defined as 
+We introduce convolution in a rather abstract way in order to simplify the following proofs.
+General convolution is defined on infinite-dimensional function spaces.
+Neural networks implement a finite-dimensional version, as the operation has to be
+computable.
+
+Given two discrete functions $f,g \in \mathbb{R}^\mathbb{Z}$ convolution is defined as 
 \begin{equation*}
-	(f*g)(\tau) = \sum^{\infty}_{a=-\infty} f(a) g(\tau - a)
+	*: \mathbb{R}^{\mathbb{Z}} \times \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
+	\quad (f*g)(\tau) = \sum^{\infty}_{a=-\infty} f(a) g(\tau - a)
 \end{equation*}
 However, must popular neural network libraries implement the so called cross-correlation.
 Cross-correlation is a flipped convolution
 \begin{equation*}
-	(f*g)(\tau) = \sum^{\infty}_{a=-\infty} f(a) g(\tau + a)
+	*: \mathbb{R}^{\mathbb{Z}} \times \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
+	\quad (f*g)(\tau) = \sum^{\infty}_{a=-\infty} f(a) g(\tau + a)
 \end{equation*}
 For this reason, if we write $*$, we mean cross-correlation from now on. However, all following statements 
 could also be proofed with convolution.
 \todo{Write this in a better way... and cite Goodfellow?}
 
-We work with finite-dimensional vectors in practice. Therefore, we define a bijective mapping between
+We work with finite-dimensional vectors in neural networks. Therefore, we define a bijective mapping between
 finite-dimensionial vectors and $\mathbb{R}^{\mathbb{Z}}$ via zero continuation on $\mathbb{Z}$:
 \begin{align*}
 	\mathcal{I}_k &: \mathbb{R}^k \to \mathbb{R}^{\mathbb{Z}},
@@ -749,19 +756,53 @@ in the right direction
 	\quad \lb \mathcal{S}_v(f) \rb (\tau) := f(\tau - v)
 \end{equation*}
 
-We define the valid cross-correlation of a finite-dimensional kernel $k \in \mathbb{R}^{n_k}$ and 
-a finite-dimensional input $x \in \mathbb{R}^{n_x}$ with $n_x \geq n_k$ as
-\begin{equation*}
-	*_{\text{v}} : \mathbb{R}^{n_k} \times \mathbb{R}^{n_x} \to \mathbb{R}^{n_x-n_k+1},
-	\quad *_{\text{v}}(k,x) := \mathcal{I}_{n_x-n_k+1}^{-1} (
-		\mathcal{S}_{-1}( \mathcal{I}_{n_k}(k)) * \mathcal{I}_{n_x}(x)
-	)
-\end{equation*}
+\begin{definition}
+	(Valid cross-correlation)
+	We define the valid cross-correlation of a finite-dimensional kernel $k \in \mathbb{R}^{n_k}$ and 
+	a finite-dimensional input $x \in \mathbb{R}^{n_x}$ with $n_x \geq n_k$ as
+	\begin{equation*}
+		*_{\text{v}} : \mathbb{R}^{n_k} \times \mathbb{R}^{n_x} \to \mathbb{R}^{n_x-n_k+1},
+		\quad *_{\text{v}}(k,x) := \mathcal{I}_{n_x-n_k+1}^{-1} (
+			\mathcal{S}_{-1}( \mathcal{I}_{n_k}(k)) * \mathcal{I}_{n_x}(x)
+		)
+	\end{equation*}
+\end{definition}
 In other words, the valid cross-correlation $*_{\text{v}}$ evaluates the cross-correlation 
 only at positions where the finite-dimensional kernel $k$ and the 
 finite-dimensional input $x$ fully overlap and puts the result into a finite-dimensional vector.
 
-The cross correlation has the output dimension $n_x - n_k + 1$.
+\todo{Add illustration}
+
+We define a stride operator $\mathcal{D}_v$ for a stride number $v \in \mathbb{N}$ with
+\begin{equation*}
+	\mathcal{D}_v : \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
+	\quad (\mathcal{D}_v)(\tau) := f(v \tau)
+\end{equation*}
+The stride operators skips $v$ entries of $f \in \mathbb{R}^\mathbb{Z}$.
+
+\begin{definition}
+	(Valid cross-correlation with stride)
+	Given a finite-dimensional kernel $k \in \mathbb{R}^{n_k}$, a finite-dimensional
+	input $x \in \mathbb{R}^{n_x}$, stride number $v \in \mathbb{N}$ and output dimension
+	\begin{equation*}
+		n_{\text{out}} = \left\lfloor \frac{n_x - n_k}{v} \right\rfloor + 1
+	\end{equation*}
+	the valid-cross correlation with stride is defined as
+	\begin{equation*}
+		*_{\text{v}} : \mathbb{R}^{n_k} \times \mathbb{R}^{n_x} \to \mathbb{R}^{n_{\text{out}}},
+		\quad *_{\text{v}}(k,x) := 
+		(\mathcal{I}_{n_{\text{out}}}^{-1} \circ D_v)
+		(
+			\mathcal{S}_{-1}( \mathcal{I}_{n_k}(k)) * \mathcal{I}_{n_x}(x)
+		)
+	\end{equation*}
+\end{definition}
+
+\todo{Add illustration}
+
+\subsection{Convolution layers}
+
+The valid cross correlation (without stride) has the output dimension $n_x - n_k + 1$.
 Thus, the valid cross-correlation $*_{\text{v}}$ decreases the dimension of the input $x$.
 However, we want to incorporate the valid cross-correlation as the layer transform of a
 unit triangular layer. The layer transform must keep the dimension.
@@ -785,7 +826,7 @@ $n_k = 2m+1$ for a $m \in \mathbb{N}_0$, and $c=2m$. We define two different pad
 which both increase the input vector dimension by $2m$.
 
 \begin{definition}
-	Given the padding values $l,r \in \mathbb{R}^m$ we define constant padding 
+	Given the padding values $l,r \in \mathbb{R}^m$, we define constant padding 
 	$c_{\text{pad},m}$ as
 	\begin{equation*}
 		c_{\text{pad},m} : \mathbb{R}^d \to \mathbb{R}^{d+2m},
@@ -946,6 +987,8 @@ $\jac{f}{x} \big|_{x=v} = \jac{f}{x}$.
 	The kernel $k$ is symmetric, thus $\hat{k}(j-i) = \hat{k}(i-j) \implies b(e_i, e_j) = b(e_j,e_i)$.
 \end{proof}
 
+\subsubsection*{Parametrization of a symmetric kernel}
+
 Let ${b_1, b_2, \dots b_m} \in \mathbb{R}^{2m+1}$ be a basis of the space 
 $\{ k \in \mathbb{R}^{2m+1} : k \text{ is a symmetric kernel} \}$.
 The symmetric kernel $k$ is then parametrized by the coefficients $\beta \in \mathbb{R}^m$ via
@@ -1005,20 +1048,40 @@ and for $i=1, \dots, m$ and $j= 0, \dots, m$
 So $b_i^{FD}$ $(i=1, \dots, m)$ form a valid basis of
 the space $\{ k \in \mathbb{R}^{2m+1} : k \text{ is a symmetric kernel} \}$.
 
-\todo{Interesting: Finite difference basis only contains even-order derivatives, otherwise it
-would not be symplectic (symmetric). What happens if Hamiltonian contains even-order derivative?
-Symmetric Hessian does not explain it, because we only take gradient of Hamiltonian and not Hessian.
-Relation to Störmer-Verlet.}
-
-As it turns out in our numerical experiments
+It turns out in our numerical experiments that
 parametrization plays an important role how well a neural network learns.
 
 \subsection{Convolution Gradient Layers}
 
-\todo{...}
+As we have seen valid cross-correlation is a linear operator. Therefore
+there exists a representative matrix $A_{*_{\text{v}}}$ with $*_{\text{v}}(p) = A_{*_{\text{v}}}p$.
+Transposed valid cross-correlation 
+is defined as the linear map associated with the transpose $A_{*_{\text{v}}}^T$ of $A_{*_{\text{v}}}$.
 
-\todo{For high dimensions $K$ and $K^T$ can be implemented as transposed convolution
-and convolution operators.}
+Again, most popular neural network libraries say convolution, but actually implement
+valid cross-correlation. In this case transposed convolution actually refers to
+transposed valid cross-correlation.
+
+For large $d \in \mathbb{N}$, it can make sense to use convolution inside Gradient layers 
+instead of a full matrix $W$.
+
+\begin{equation*}
+	\mathcal{G}_{up} : \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
+	\mathcal{G}_{up} \qpvec := \uppersympop{\hat{\activation}_g} := \begin{pmatrix}
+		q + K^T diag(a) \activation(Kp + b) \\
+		p
+	\end{pmatrix}
+\end{equation*}
+
+In particular, a Gradient layer with width $n \in \mathbb{N}$ can be implemented by 
+using valid cross-correlation (with stride) for $K^T \in \mathbb{R}^{d \times n}$ and the
+corresponding transposed valid cross-correlation (with stride) for $K \in \mathbb{R}^{n \times d}$.
+The choice is intentional, because we want to upscale the input $p \in \mathbb{R}^d$ ($n >> d$). 
+Cross-correlation without padding decreases the dimension. Therefore we first apply 
+transposed cross-correlation on $p$, because the transpose increases the dimension.
+A large kernel size $s_k$ and a large stride value $v$ allow for significant upscaling.
+We emphasize that the kernel $k$ has not to be symmetric in this setting.
+\todo{Cite similar idea}
 
 \subsection{Normalization}
 
