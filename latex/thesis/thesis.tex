@@ -342,7 +342,7 @@ To be specific, for fixed $t$, we supply the neural network with training pairs 
 to be able to predict $\phi_{t,H}(y)$ for arbitrary $y \in \mathbb{R}^{2d}$.
 This leads to the idea that we embed symplecticity into the neural network itself structurally.
 
-Symplecticity has already been successfully embedded into numerical integrators, which
+Symplecticity has already been successfully embedded into numerical integrators for ODEs, which
 led to the development of geometric integrators.
 
 \section{Architecture of SympNets}
@@ -350,6 +350,16 @@ led to the development of geometric integrators.
 In this section we recapitulate the architecture of SympNets as
 proposed by \citeauthor{Jin2020} in \cite{Jin2020}. We proof
 symplecticity for all layer types.
+
+\todo{Briefly introduce neural network terminology:}
+
+\todo{Layer}
+
+\todo{Forward pass}
+
+\todo{Mini-batch}
+
+\todo{Training, backpropagation}
 
 \subsection{General architecture}
 
@@ -480,8 +490,6 @@ The next corollary is useful to construct symplectic maps.
 	i.e. $\jac{(\grad{V})}{p} = HD$. \todo{Notation for Hessian}
 	The Hessian is symmetric, thus the result follows with \cref{jacobi_symmetric}.
 \end{proof}
-
-\todo{Relation to 'Generating functions' in symplectic literature?}
 
 \subsection{Linear layers}
 
@@ -1058,7 +1066,7 @@ parametrization plays an important role how well a neural network learns.
 
 \subsection{Convolution Gradient Layers}
 
-Valid cross-correlation is a linear operator. Therefore
+Valid cross-correlation is a linear map. Therefore
 there exists a representation matrix $A_{*_{\text{v}}}$ with $*_{\text{v}}(p) = A_{*_{\text{v}}}p$.
 Transposed valid cross-correlation 
 is defined as the linear map associated with the transpose $A_{*_{\text{v}}}^T$ of $A_{*_{\text{v}}}$.
@@ -1090,110 +1098,109 @@ We emphasize that the kernel $k$ has not to be symmetric in this setting.
 
 \subsection{Normalization}
 
-\todo{Introduce batch normalization from literature.}
-
-Batch normalization is a well-known method to accelerate training initially proposed by
+Batch normalization is a standard method to accelerate training initially proposed by
 \citeauthor{batchnorm-ioffe15} in \cite{batchnorm-ioffe15}. 
 We introduce a possibility to incorporate batch normalization
 into activation and gradient layers while maintaining symplecticity.
 \todo{Cite similar idea}
 
-Sigmoid activation function saturates for large values. Vanishing gradient.
-Therefore normalize input before applying activation function.
+\todo{Sigmoid activation function saturates for large values. Vanishing gradient.
+Therefore normalize input before applying activation function.}
 
-Let us define the batch normalization transformation.
+Let us define the batch normalization transformation
 \begin{equation*}
-	BN_{\gamma, \beta} : \mathbb{R}^d \to \mathbb{R}^d,\quad
-	BN_{\gamma, \beta}(p) 
-	:= diag(\gamma)diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb (p-\mu_\mathcal{B}) + \beta
+	\eta_{\gamma, \beta} : \mathbb{R}^n \to \mathbb{R}^n,\quad
+	\eta_{\gamma, \beta}(x) 
+	:= diag(\gamma)diag \lb \lb \frac{1}{\sqrt{\lb \sigma^2_\mathcal{B} \rb_i + \epsilon}} \rb_{i=1}^n \rb 
+	(x-\mu_\mathcal{B}) + \beta
 \end{equation*}
-where $\gamma, \beta \in \mathbb{R}^{d}$ are learnable parameters.
-$\epsilon \in \mathbb{R}$ is a small positive value to avoid division by zero.
+where $n$ is the input dimension of the input $x \in \mathbb{R}^n$ and $\gamma, \beta \in \mathbb{R}^{d}$ 
+are learnable parameters.
+The scalar $\epsilon \in \mathbb{R}$ is a small positive value to avoid division by zero.
 $\sigma^2_\mathcal{B} \in \mathbb{R}^{d}$ refers to the mini-batch variance and
 $\mu_\mathcal{B} \in \mathbb{R}^{d}$ refers to the mini-batch mean.
-
-\todo{Move this to Notation}
-The fraction has to be interpreted in broadcasting sense, i.e.
-$\frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \in \mathbb{R}^d$ is a vector with entries
-\begin{equation*}
-	\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb_i
-	:= \frac{1}{ \sqrt{ \lb \sigma^2_\mathcal{B} \rb_i + \epsilon}}
-	\quad (1 \leq i \leq d)
-\end{equation*}
-
-Given a mini-batch $\mathcal{B}$ with input training data $p_1, p_2, \dots, p_n \in \mathbb{R}^{d}$ the
-mean and variance are estimated by
-\begin{align*}
-	\mu_\mathcal{B} &= \frac{1}{n} \sum_{i=1}^{n} p_i \\
-	\sigma^2_\mathcal{B} &= \frac{1}{n} \sum_{i=1}^n (p_i - \mu_\mathcal{B})^2
-\end{align*}
-
-During training the mini-batch variance $\sigma^2_\mathcal{B} \in \mathbb{R}^{d}$ and
-the mini-batch $\mu_\mathcal{B} \in \mathbb{R}^{d}$ are continously updated.
-When training has finished we switch to evaluation mode. In evaluation mode we keep
-$\sigma^2_\mathcal{B} \in \mathbb{R}^{d}$ and $\mu_\mathcal{B} \in \mathbb{R}^{d}$ constant
-and remember the last value from training.
 
 The learnable parameters $\gamma, \beta \in \mathbb{R}^{d}$ allow the neural network to modify
 the normalization during training if necessary. The batch normalization transform is able to 
 represent the identity transform by setting appropriate $\gamma, \beta$.
 
-\begin{algorithm}
+Given a mini-batch $\mathcal{B}$ with size $k$ and input training data 
+$x_1, x_2, \dots, x_k \in \mathbb{R}^{n}$, the
+mean and variance are estimated by
+\begin{align*}
+	\mu_\mathcal{B} &= \frac{1}{k} \sum_{i=1}^{k} x_i \\
+	\sigma^2_\mathcal{B} &= \frac{1}{k} \sum_{i=1}^{k} (x_i - \mu_\mathcal{B})^2
+\end{align*}
+
+During training the mini-batch variance $\sigma^2_\mathcal{B} \in \mathbb{R}^{d}$ and
+the mini-batch $\mu_\mathcal{B} \in \mathbb{R}^{d}$ are continously updated in the forward pass.
+To be precise, for a new mini-batch $\mathcal{B} = \{ x_1, x_2, \dots, x_k \}$, 
+the mean $\mu_\mathcal{B}$ and variance $\sigma^2_\mathcal{B}$
+are updated based on $\mathcal{B}$, before $\eta_{\gamma, \beta}(x_j)$ for
+$x_j \in \mathcal{B}$ is evaluated (see Algorithm 1).
+When training has finished the neural network does not update $\sigma^2$ and $\mu_\mathcal{B}$ anymore.
+Instead, the neural network remembers the last value from training.
+
+Note that the batch normalization transformation may be incorporated into a layer
+deep inside a neural network. 
+If this is the case, the mini-batch $\mathcal{B}$ refers to the collective output of the previous layer.
+
+\begin{algorithm}\label{algo_batch_norm}
 	\caption{Batch normalization transform}
-	\textbf{Input:} $p_j$ and mini batch $\mathcal{B} = \{p_1, p_2, \dots, p_n\}$  \\
-	\textbf{Output:} $BN_{\gamma, \beta}(p_j)$
+	\textbf{Input:} $x_j$ and mini batch $\mathcal{B} = \{x_1, x_2, \dots, x_{k}\}$  \\
+	\textbf{Output:} $\eta_{\gamma, \beta}(p_j)$
 	\setstretch{1.5}
 	\begin{algorithmic}
 		\If{training\_mode} \Comment{Update mean and variane if training, otherwise
 		keep previous values}
-			\State $\mu_\mathcal{B} \gets \frac{1}{n} \sum_{i=1}^{n} p_i$
-			\State $\sigma^2_\mathcal{B} \gets \frac{1}{n} \sum_{i=1}^n (p_i - \mu_\mathcal{B})^2$
+			\State $\mu_\mathcal{B} \gets \frac{1}{k} \sum_{i=1}^{k} x_i$
+			\State $\sigma^2_\mathcal{B} \gets \frac{1}{k} \sum_{i=1}^{k} 
+			(x_i - \mu_\mathcal{B})^2$
 		\EndIf
 		\State \Return 
-		$diag(\gamma)diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb 
-		(p-\mu_\mathcal{B}) + \beta$
+		$diag(\gamma)diag 
+		\lb \lb \frac{1}{\sqrt{\lb \sigma^2_\mathcal{B} \rb_i + \epsilon}} \rb_{i=1}^n \rb
+		(x_j-\mu_\mathcal{B}) + \beta$
 	\end{algorithmic}
 \end{algorithm}
 
 The batch normalization transform can be implemented in a straightforward way with modern
-deep learning frameworks, as for backpropagation during training 
-$\jac{BN_{\gamma, \beta}}{(\gamma, \beta)}$ is obtained via automatic differentiation.
+neural network libraries, as during training the Jacobian $\jac{\eta_{\gamma, \beta}}{(\gamma, \beta)}$ 
+is obtained via automatic differentiation.
 
-If the training data is small enough so that splitting the data into multiple mini batches
+If the training data is small enough, so that splitting the data into multiple mini batches
 is not necessary, the mean and variance are calculated for the whole training data set. This is the
 case for our numerical experiments, as we work with very small training data sets.
-If the training data set is split into mini batches, there exist also alternative methods to estimate
-the mean and variance for the whole training data set, for example using moving averages.
-
-\todo{Add special note for convolution, respect convolution when normalizing.}
 
 \subsubsection{Normalized gradient layers}
 
 \begin{alignat*}{2}
-	\mathcal{G}^{BN}_{up} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
-	\mathcal{G}^{BN}_{up} \qpvec &:= \uppersympop{\hat{\activation}^{BN}_g} := \begin{pmatrix}
-		q + \hat{\activation}^{BN}_g(p) \\
+	\mathcal{G}^{\eta}_{up} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
+	\mathcal{G}^{\eta}_{up} \qpvec &:= \uppersympop{\hat{\activation}^{\eta}_g} := \begin{pmatrix}
+		q + \hat{\activation}^{\eta}_g(p) \\
 		p
 	\end{pmatrix} \\[7pt]
 	%
-	\mathcal{G}^{BN}_{low} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
-	\mathcal{G}^{BN}_{low} \qpvec &:= \lowersympop{\hat{\activation}^{BN}_g} := \begin{pmatrix}
+	\mathcal{G}^{\eta}_{low} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
+	\mathcal{G}^{\eta}_{low} \qpvec &:= \lowersympop{\hat{\activation}^{\eta}_g} := \begin{pmatrix}
 		q \\
-		\hat{\activation}^{BN}_g(q) + p
+		\hat{\activation}^{\eta}_g(q) + p
 	\end{pmatrix}
 \end{alignat*}
-with $\hat{\activation}^{BN}_g : \mathbb{R}^d \to \mathbb{R}^d$ defined as
+with $\hat{\activation}^{\eta}_g : \mathbb{R}^d \to \mathbb{R}^d$ defined as
 \begin{equation*}
-	\hat{\activation}^{BN}_g(p) := 
+	\hat{\activation}^{\eta}_g(p) := 
 	K^T diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb diag(\gamma)
-	diag(a) \activation(BN_{\gamma, \beta}(Kp+b))
+	diag(a) \activation(\eta_{\gamma, \beta}(Kp+b))
 \end{equation*}
 where $K \in \mathbb{R}^{n \times d}$ and $a,b, \gamma, \beta \in \mathbb{R}^n$
 are learnable parameters. $\activation : \mathbb{R} \to \mathbb{R}$ 
 is an activation function, which is applied element-wise.
 $n \in \mathbb{N}$ denotes the width of the gradient layer.
-$\sigma^2_\mathcal{B}$ refers to the mini-batch variance of $Kp+b$ for $\mathcal{G}^{BN}_{up}$
-or $Kq+b$ for $\mathcal{G}^{BN}_{low}$.
+$\sigma^2_\mathcal{B}$ refers to the mini-batch variance of $Kp+b$ for $\mathcal{G}^{\eta}_{up}$
+or $Kq+b$ for $\mathcal{G}^{\eta}_{low}$.
+
+\todo{Add special note for convolution gradient layers, respect convolution when normalizing.}
 
 \todo{$diag(\gamma)$ and $\beta$ redundant, but numerical experiments better result
 with $diag(\gamma)$ and ease of implementation. Double-check?
@@ -1204,14 +1211,14 @@ learning.}
 
 \begin{corollary}
 	Given an activation function $\sigma \in C^1$
-	the normalized gradient layers $\mathcal{G}^{BN}_{up}$ and $\mathcal{G}^{BN}_{down}$
+	the normalized gradient layers $\mathcal{G}^{\eta}_{up}$ and $\mathcal{G}^{\eta}_{down}$
 	are symplectic.
 \end{corollary}
 \begin{proof}
 	Let $\mathcal{A}: \mathbb{R} \to \mathbb{R}$ be the antiderivative of $\activation$, 
 	i.e. $\dd{x} \mathcal{A} = \activation$ and
 	\begin{equation*}
-		V(p) := \onevec{n}^Tdiag(a)\mathcal{A}(BN_{\gamma, \beta}(Kp+b))
+		V(p) := \onevec{n}^Tdiag(a)\mathcal{A}(\eta_{\gamma, \beta}(Kp+b))
 	\end{equation*}
 
 	We have $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and
@@ -1223,51 +1230,51 @@ learning.}
 	Then
 	\begin{align*}
 		\grad{V(p)} &= \left(\jac{V}{p}(p)\right)^T \\
-		&= \left( 1_n^T diag(a) diag \lb \activation(BN_{\gamma, \beta}(Kp+b))\rb
+		&= \left( 1_n^T diag(a) diag \lb \activation(\eta_{\gamma, \beta}(Kp+b))\rb
 		\jac{BN_{\gamma, \beta}(p)}{p} K \right)^T \\
-		&= \left( 1_n^T diag(a) diag \lb \activation(BN_{\gamma, \beta}(Kp+b))\rb
+		&= \left( 1_n^T diag(a) diag \lb \activation(\eta_{\gamma, \beta}(Kp+b))\rb
 		diag(\gamma) diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb K \right)^T \\
 		&= K^T diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb diag(\gamma)
-		diag\left(\activation(BN_{\gamma, \beta}(Kp+b))\right) diag(a) 1_n \\
+		diag\left(\activation(\eta_{\gamma, \beta}(Kp+b))\right) diag(a) 1_n \\
 		&= K^T diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb diag(\gamma)
-		diag(a) diag\left(\activation(BN_{\gamma, \beta}(Kp+b))\right) 1_n \\
+		diag(a) diag\left(\activation(\eta_{\gamma, \beta}(Kp+b))\right) 1_n \\
 		&= K^T diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb diag(\gamma)
-		diag(a) \activation(BN_{\gamma, \beta}(Kp+b)) = \hat{\activation}^{BN}_g(p)
+		diag(a) \activation(\eta_{\gamma, \beta}(Kp+b)) = \hat{\activation}^{BN}_g(p)
 	\end{align*}
 
 	With \cref{gradient_corollary} follows that the Gradient layers
-	$\mathcal{G}^{BN}_{up}$ and $\mathcal{G}^{BN}_{low}$ are symplectic.
+	$\mathcal{G}^{\eta}_{up}$ and $\mathcal{G}^{\eta}_{low}$ are symplectic.
 \end{proof}
 
 \subsubsection{Normalized activation layers}
 
 \begin{alignat*}{2}
-	\mathcal{N}^{BN}_{up} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
-	\mathcal{N}^{BN}_{up} \qpvec &:= \uppersympop{\hat{\activation}^{BN}_a} := \begin{pmatrix}
-		q + \hat{\activation}^{BN}_a(p) \\
+	\mathcal{N}^{\eta}_{up} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
+	\mathcal{N}^{\eta}_{up} \qpvec &:= \uppersympop{\hat{\activation}^{\eta}_a} := \begin{pmatrix}
+		q + \hat{\activation}^{\eta}_a(p) \\
 		p
 	\end{pmatrix} \\[7pt]
 	%
-	\mathcal{N}^{BN}_{low} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
-	\mathcal{N}^{BN}_{low} \qpvec &:= \lowersympop{\hat{\activation}^{BN}_a} := \begin{pmatrix}
+	\mathcal{N}^{\eta}_{low} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
+	\mathcal{N}^{\eta}_{low} \qpvec &:= \lowersympop{\hat{\activation}^{\eta}_a} := \begin{pmatrix}
 		q \\
-		\hat{\activation}^{BN}_a(q) + p
+		\hat{\activation}^{\eta}_a(q) + p
 	\end{pmatrix}
 \end{alignat*}
-with $\hat{\activation}^{BN}_a : \mathbb{R}^d \to \mathbb{R}^d$ defined as
+with $\hat{\activation}^{\eta}_a : \mathbb{R}^d \to \mathbb{R}^d$ defined as
 \begin{equation*}
-	\hat{\activation}^{BN}_a(p) := 
+	\hat{\activation}^{\eta}_a(p) := 
 	diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb diag(\gamma)
-	diag(a) \activation(BN_{\gamma, \beta}(p))
+	diag(a) \activation(\eta_{\gamma, \beta}(p))
 \end{equation*}
 where $a, \gamma, \beta \in \mathbb{R}^d$ are learnable parameters and 
 $\activation : \mathbb{R} \to \mathbb{R}$ an activation function,
 which is applied element-wise. $\sigma^2_\mathcal{B}$ refers to the mini-batch variance of $p$
-for $\mathcal{N}^{BN}_{up}$ or $q$ for $\mathcal{N}^{BN}_{low}$.
+for $\mathcal{N}^{\eta}_{up}$ or $q$ for $\mathcal{N}^{\eta}_{low}$.
 
 \begin{corollary}
 	Given an activation function $\sigma \in C^1$
-	the normalized activation layers $\mathcal{N}^{BN}_{up}$ and $\mathcal{N}^{BN}_{low}$
+	the normalized activation layers $\mathcal{N}^{\eta}_{up}$ and $\mathcal{N}^{\eta}_{low}$
 	are symplectic.
 \end{corollary}
 \begin{proof}
