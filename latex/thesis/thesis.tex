@@ -711,12 +711,12 @@ $n=d$, $K=I_d$ and $b=0$.
 \section{Convolution and Normalization for SympNets}
 
 In this section we introduce extensions to SympNets. In particular, we bring the concept
-of convolution to SympNets and we propose a possibility how to embed normalization while
+of convolution to SympNets and we propose a possibility how to embed normalization into SympNets while
 maintaining symplecticity.
 
 \subsection{Introduction to Convolution}
 
-\todo{Motivate convolution layers}
+\todo{Motivate convolution layers (weight sharing, sparse-connectivity)}
 
 We introduce convolution in a rather abstract way in order to simplify the following proofs.
 General convolution is defined on infinite-dimensional function spaces.
@@ -728,15 +728,20 @@ Given two discrete functions $f,g \in \mathbb{R}^\mathbb{Z}$ convolution is defi
 	*: \mathbb{R}^{\mathbb{Z}} \times \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
 	\quad (f*g)(\tau) = \sum^{\infty}_{a=-\infty} f(a) g(\tau - a)
 \end{equation*}
-However, must popular neural network libraries implement the so called cross-correlation.
-Cross-correlation is a flipped convolution
+However, most popular neural network libraries actually do not implement real convolution
+in convolution layers. Instead, they implement the so called cross-correlation, but call it convolution. 
+Cross-correlation is a flipped convolution and is defined as
 \begin{equation*}
 	*: \mathbb{R}^{\mathbb{Z}} \times \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
 	\quad (f*g)(\tau) = \sum^{\infty}_{a=-\infty} f(a) g(\tau + a)
 \end{equation*}
-For this reason, if we write $*$, we mean cross-correlation from now on. However, all following statements 
-could also be proofed with convolution.
-\todo{Write this in a better way... and cite Goodfellow?}
+Our goal is to replace $f$ with a finite-dimensional kernel $k$. The neural network should learn the kernel $k$.
+Note that in this context it does not make a difference if we use convolution or cross-correlation, because
+the neural network would just learn a flipped version of the kernel $k$ in the opposite case.
+Because most popular neural network libraries implement cross correlation and call it convolution,
+we stick to the same convention and mean cross-correlation if we write $*$.
+Still, the choice is arbitrary, as the following statements could be constructed analogously with convolution.
+\todo{cite Goodfellow?}
 
 We work with finite-dimensional vectors in neural networks. Therefore, we define a bijective mapping between
 finite-dimensionial vectors and $\mathbb{R}^{\mathbb{Z}}$ via zero continuation on $\mathbb{Z}$:
@@ -748,12 +753,12 @@ finite-dimensionial vectors and $\mathbb{R}^{\mathbb{Z}}$ via zero continuation 
 	\quad \mathcal{I}_k^{-1}(f) := \lb f(\tau) \rb_{\tau=1}^k
 \end{align*}
 
-Additionially, we define a shift operator $\mathcal{S}_v$, 
-which shifts a discrete function $f \in \mathbb{R}^\mathbb{Z}$ by $v \in \mathbb{Z}$ positions
+Additionially, we define a shift operator $\mathcal{S}_k$, 
+which shifts a discrete function $f \in \mathbb{R}^\mathbb{Z}$ by $k \in \mathbb{Z}$ positions
 in the right direction
 \begin{equation*}
-	\mathcal{S}_v : \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
-	\quad \lb \mathcal{S}_v(f) \rb (\tau) := f(\tau - v)
+	\mathcal{S}_k : \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
+	\quad \lb \mathcal{S}_v(f) \rb (\tau) := f(\tau - k)
 \end{equation*}
 
 \begin{definition}
@@ -773,12 +778,12 @@ finite-dimensional input $x$ fully overlap and puts the result into a finite-dim
 
 \todo{Add illustration}
 
-We define a stride operator $\mathcal{D}_v$ for a stride number $v \in \mathbb{N}$ with
+We define a stride operator $\mathcal{D}_k$ for a stride number $k \in \mathbb{N}$ with
 \begin{equation*}
-	\mathcal{D}_v : \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
-	\quad (\mathcal{D}_v)(\tau) := f(v \tau)
+	\mathcal{D}_k : \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
+	\quad (\mathcal{D}_k)(\tau) := f(k \tau)
 \end{equation*}
-The stride operators skips $v$ entries of $f \in \mathbb{R}^\mathbb{Z}$.
+The stride operators skips $k$ entries of $f \in \mathbb{R}^\mathbb{Z}$.
 
 \begin{definition}
 	(Valid cross-correlation with stride)
@@ -1053,8 +1058,8 @@ parametrization plays an important role how well a neural network learns.
 
 \subsection{Convolution Gradient Layers}
 
-As we have seen valid cross-correlation is a linear operator. Therefore
-there exists a representative matrix $A_{*_{\text{v}}}$ with $*_{\text{v}}(p) = A_{*_{\text{v}}}p$.
+Valid cross-correlation is a linear operator. Therefore
+there exists a representation matrix $A_{*_{\text{v}}}$ with $*_{\text{v}}(p) = A_{*_{\text{v}}}p$.
 Transposed valid cross-correlation 
 is defined as the linear map associated with the transpose $A_{*_{\text{v}}}^T$ of $A_{*_{\text{v}}}$.
 
@@ -1076,10 +1081,10 @@ instead of a full matrix $W$.
 In particular, a Gradient layer with width $n \in \mathbb{N}$ can be implemented by 
 using valid cross-correlation (with stride) for $K^T \in \mathbb{R}^{d \times n}$ and the
 corresponding transposed valid cross-correlation (with stride) for $K \in \mathbb{R}^{n \times d}$.
-The choice is intentional, because we want to upscale the input $p \in \mathbb{R}^d$ ($n >> d$). 
+The choice of transpose is intentional, because we want to upscale the input $p \in \mathbb{R}^d$ ($n >> d$). 
 Cross-correlation without padding decreases the dimension. Therefore we first apply 
 transposed cross-correlation on $p$, because the transpose increases the dimension.
-A large kernel size $s_k$ and a large stride value $v$ allow for significant upscaling.
+A large kernel size $s_k$ and a large stride value $k$ allow for significant upscaling.
 We emphasize that the kernel $k$ has not to be symmetric in this setting.
 \todo{Cite similar idea}
 
@@ -1272,7 +1277,13 @@ for $\mathcal{N}^{BN}_{up}$ or $q$ for $\mathcal{N}^{BN}_{low}$.
 
 \section{Relation to geometric integrators}
 
-The symplectic Euler schemes are given by
+The symplectic Euler and Störmer-Verlet schemes are two geometric integrators. Geometric integrators
+are numerical integrators for ODE systems, which preserve a geometric property. In our context,
+this geometric property is symplecticity. Precisely, if we denote the numerical integrator with
+$\phi^{\text{h}}_{t,H} : \mathbb{R}^{2d} \to \mathbb{R}^{2d}$, the map $\phi^{\text{h}}_{t,H}$ is
+symplectic.
+
+The two variants of the symplectic Euler scheme are given by
 \begin{equation*}
 	\begin{split}
 			p_{n+1} &= p_n - h \grad[q]{H} (p_{n+1}, q_n) \\
@@ -1285,8 +1296,24 @@ The symplectic Euler schemes are given by
 	\end{split}
 \end{equation*}
 
-If the Hamiltonian $H$ is separable, i.e. $H(q,p) = U(q) + T(p)$, both variants
-become explicit. Then the left variant can be expressed as
+The $p$-staggered variant of the Störmer-Verlet scheme is given by
+\begin{align*}
+	p_{n+1/2} &= p_n - \frac{h}{2} \grad[q]{H}(p_{n+1/2}, q_n) \\[7pt]
+	q_{n+1} &= q_n + \frac{h}{2} \lb \grad[p]{H}(p_{n+1/2}, q_n) + \grad[p]{H}(p_{n+1/2}, q_{n+1}) \rb \\[7pt]
+	p_{n+1} &= p_{n+1/2} - \frac{h}{2} \grad[q]{H}(p_{n+1/2}, q_{n+1})
+\end{align*}
+and the $q$-staggered variant of the Störmer-Verlet scheme is given by
+\begin{align*}
+	q_{n+1/2} &= q_n + \frac{h}{2} \grad[p]{H}(p_n, q_{n+1/2}) \\[7pt]
+	p_{n+1} &= q_n - \frac{h}{2} \lb \grad[q]{H}(p_n, q_{n+1/2}) + \grad[q]{H}(p_{n+1}, q_{n+1/2}) \rb \\[7pt]
+	q_{n+1} &= q_{n+1/2} + \frac{h}{2} \grad[p]{H}(p_{n+1}, q_{n+1/2})
+\end{align*}
+We refer to \citet[p.~189 and p.~190]{hairer2006} for details.
+
+If the Hamiltonian $H$ is separable, i.e. $H(q,p) = U(q) + T(p)$, the sympletic Euler and Störmer-Verlet
+schemes become explicit. Then given $\grad[p]{H} : \mathbb{R}^d \to \mathbb{R}^d$, $p \mapsto \grad[p]{H}(p)$ 
+and $\grad[q]{H} : \mathbb{R}^d \to \mathbb{R}^d$, $q \mapsto \grad[q]{H}(q)$,
+the left variant of the symplectic Euler scheme can be expressed as
 \begin{equation*}
 	\begin{pmatrix}
 		q_{n+1} \\
@@ -1304,7 +1331,7 @@ become explicit. Then the left variant can be expressed as
 		p_{n}
 	\end{pmatrix} 
 \end{equation*}
-and the right variant as
+and the right variant of the symplectic Euler scheme as
 \begin{equation*}
 	\begin{pmatrix}
 		q_{n+1} \\
@@ -1323,16 +1350,8 @@ and the right variant as
 		p_{n}
 	\end{pmatrix}
 \end{equation*}
-where $\grad[p]{H} : \mathbb{R}^d \to \mathbb{R}^d$, $p \mapsto \grad[p]{H}(p)$ 
-and $\grad[q]{H} : \mathbb{R}^d \to \mathbb{R}^d$, $q \mapsto \grad[q]{H}(q)$.
 
-Similarly given a separable Hamiltonian $H(q,p) = U(q) + T(p)$ the $p$-staggered Störmer-Verlet scheme
-\begin{align*}
-	p_{n+1/2} &= p_n - \frac{h}{2} \grad[q]{H}(p_{n+1/2}, q_n) \\[7pt]
-	q_{n+1} &= q_n + \frac{h}{2} \lb \grad[p]{H}(p_{n+1/2}, q_n) + \grad[p]{H}(p_{n+1/2}, q_{n+1}) \rb \\[7pt]
-	p_{n+1} &= p_{n+1/2} - \frac{h}{2} \grad[q]{H}(p_{n+1/2}, q_{n+1})
-\end{align*}
-becomes explicit and can be expressed as
+Similarly, the $p$-staggered Störmer-Verlet scheme can be expressed as
 \begin{equation*}
 	\begin{pmatrix}
 		q_{n+1} \\
@@ -1355,13 +1374,7 @@ becomes explicit and can be expressed as
 		p_{n}
 	\end{pmatrix}
 \end{equation*}
-and the $q$-staggered Störmer-Verlet scheme
-\begin{align*}
-	q_{n+1/2} &= q_n + \frac{h}{2} \grad[p]{H}(p_n, q_{n+1/2}) \\[7pt]
-	p_{n+1} &= q_n - \frac{h}{2} \lb \grad[q]{H}(p_n, q_{n+1/2}) + \grad[q]{H}(p_{n+1}, q_{n+1/2}) \rb \\[7pt]
-	q_{n+1} &= q_{n+1/2} + \frac{h}{2} \grad[p]{H}(p_{n+1}, q_{n+1/2})
-\end{align*}
-becomes explicit can be expressed as
+and the $q$-staggered Störmer-Verlet scheme as
 \begin{equation*}
 	\begin{pmatrix}
 		q_{n+1} \\
@@ -1384,11 +1397,12 @@ becomes explicit can be expressed as
 		p_{n}
 	\end{pmatrix}
 \end{equation*}
+
+To conclude, the explicit Euler and Störmer-Verlet schemes can be expressed with
+the same unit triangular structure we use for SympNets. \todo{Recurrent networks?}
 
 Symplecticity for the explicit Euler and Störmer-Verlet schemes follows directly 
 from \cref{gradient_corollary} and the fact that the composition of symplectic maps is again symplectic.
-
-\todo{Add specific example like linear wave equation or Sine-Gordon and relate to neural network layers.}
 
 \section{Numerical experiments}
 
@@ -1413,24 +1427,46 @@ from \cref{gradient_corollary} and the fact that the composition of symplectic m
 	\addplot[
 		color=blue,
 		no markers
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/la-sympnet_phase_plot.csv};
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/la-sympnet/phase_plot.csv};
 
 	\addplot[
 		color=green,
 		no markers
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet_phase_plot.csv};
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/phase_plot.csv};
 
 	\addplot[
 		color=blue,
 		dashed,
 		no markers
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-la-sympnet_phase_plot.csv};
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-la-sympnet/phase_plot.csv};
 
 	\addplot[
 		color=green,
 		dashed,
 		no markers
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-g-sympnet_phase_plot.csv};
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-g-sympnet/phase_plot.csv};
+		
+	\end{axis}
+\end{tikzpicture}
+
+\begin{tikzpicture}
+	\begin{axis}[
+		no markers, smooth,
+		title={Training loss},
+		xlabel={Epoch},
+		ylabel={Loss},
+		ymax=1e-3,
+		ymin=0,
+		restrict y to domain=0:1e-3
+	]
+
+	\addplot[
+		color=blue
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/loss.csv};
+
+	\addplot[
+		color=red
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-g-sympnet/loss.csv};
 		
 	\end{axis}
 \end{tikzpicture}
