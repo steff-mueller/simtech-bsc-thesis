@@ -251,7 +251,7 @@ If $f: \mathbb{R}^{n_1} \to \mathbb{R}^{n_2}$ is a multi-dimensional function
 
 \todo{Gradient}
 
-\todo{Describe $d$}
+\todo{Describe special meaning of dimension $d$}
 
 \begin{equation*}
 	J := \begin{pmatrix}
@@ -259,6 +259,14 @@ If $f: \mathbb{R}^{n_1} \to \mathbb{R}^{n_2}$ is a multi-dimensional function
 		-I_d & 0
 	\end{pmatrix}
 \end{equation*}
+
+vector $v \in \R^n$
+\begin{equation*}
+	v = \begin{pmatrix}
+		v_i
+	\end{pmatrix}_{i=1}^n
+\end{equation*}
+
 
 %----------------------------------------------------------------------------------------
 %
@@ -347,7 +355,7 @@ led to the development of geometric integrators.
 
 \section{Architecture of SympNets}
 
-In this section we recapitulate the architecture of SympNets as
+In this section we recapitulate the architecture of SympNets (Symplectic Networks) as
 proposed by \citeauthor{Jin2020} in \cite{Jin2020}. We proof
 symplecticity for all layer types.
 
@@ -359,7 +367,7 @@ symplecticity for all layer types.
 
 \todo{Mini-batch}
 
-\todo{Training, backpropagation}
+\todo{Training, backpropagation, learnable parameters}
 
 \subsection{General architecture}
 
@@ -367,190 +375,132 @@ We use that the composition of symplectic maps is again symplectic. So we impose
 layer of the neural network must be symplectic, which leads to the overall neural network
 to be symplectic.
 
-All layers we introduce will have unit triangular structure in block matrix notation, 
-i.e. can either be expressed in upper variant
-\begin{equation*}
-	L_{up} : \mathbb{R}^{2d} \to \mathbb{R}^{2d},
-	\quad \mathcal{L} \qpvec = \uppersympop{\hat{\activation}_L}
-	= \begin{pmatrix}
-		q + \hat{\activation}_L(p) \\
-		p
-	\end{pmatrix}
-\end{equation*}
-or lower variant
-\begin{equation*}
-	L_{low} : \mathbb{R}^{2d} \to \mathbb{R}^{2d},
-	\quad \mathcal{L} \qpvec = \lowersympop{\hat{\activation}_L}
-	= \begin{pmatrix}
-		q \\
-		\hat{\activation}_L(q) + p
-	\end{pmatrix}
-\end{equation*}
-where $\hat{\activation}_L : \mathbb{R}^d \to \mathbb{R}^d$ is a Layer-specific transformation.
-In order that $L_{up}$ and $L_{low}$ are symplectic we have to demand additional requirements
-to $\hat{\activation}_L$ as the following lemma and corollaries will show.
+\begin{definition}
+	(Unit Triangular Layer) A layer $\mathcal{L} : \mathbb{R}^{2d} \to \mathbb{R}^{2d}$ 
+	is called a unit triangular layer with layer transform 
+	$\hat{\sigma}_{\mathcal{L}} : \mathbb{R}^d \to \mathbb{R}^d,\, p \mapsto \layertf(p)$
+	and bias $b \in \R^{2d}$,
+	if $\mathcal{L}$ can be expressed as
+	\begin{equation*}
+		\mathcal{L} \qpvec = \uppersympop{\hat{\activation}_L} + b
+		= \begin{pmatrix}
+			q + \hat{\sigma}_{\mathcal{L}}(p) \\
+			p
+		\end{pmatrix} + b \quad \text{(upper unit triangular layer)}
+	\end{equation*}
+	or
+	\begin{equation*}
+		\mathcal{L} \qpvec = \lowersympop{\hat{\activation}_L} + b
+		= \begin{pmatrix}
+			q \\
+			\hat{\sigma}_{\mathcal{L}}(q) + p
+		\end{pmatrix} + b \quad \text{(lower unit triangular layer)}
+	\end{equation*}
 
-The structure was initially proposed by \citeauthor{Deco1995} in \cite{Deco1995} 
+	If we want to emphasize if $\mathcal{L}$ is an upper or lower
+	unit triangular layer, we write $\mathcal{L}_{\text{up}}$ or $\mathcal{L}_{\text{low}}$.
+	If we do not expllicitly specify the bias $b$, we assume $b=0=\text{const}$.
+\end{definition}
+
+This structure was initially proposed by \citeauthor{Deco1995} in \cite{Deco1995} 
 \todo{Have a deeper look at \cite{Deco1995}} for volume-conserving neural networks.
-
 \todo{Relation to Residual Networks / ResNet}
 
-\begin{lemma}\label{jacobi_symmetric}
-	Let
-	\begin{equation*}
-		f_{up} : \mathbb{R}^{2d} \to \mathbb{R}^{2d},\quad
-		f_{up} \qpvec := \uppersympop{g}
-	\end{equation*}
-	and
-	\begin{equation*}
-		f_{low} : \mathbb{R}^{2d} \to \mathbb{R}^{2d},\quad
-		f_{low} \qpvec := \lowersympop{g}
-	\end{equation*}
-	where $g: \mathbb{R}^d \to \mathbb{R}^d,\; p \mapsto g(p)$ is a function in 
-	$C^1(\mathbb{R}^d, \mathbb{R}^d)$. 
+A SympNet only consists of unit triangular layers. In order that the unit triangular layers 
+$\mathcal{L}_{\text{up}}$ or $\mathcal{L}_{\text{low}}$ are symplectic 
+we have to demand additional requirements to the layer transform $\hat{\sigma}_{\mathcal{L}}$.
 
-	$f_{up}$ and $f_{low}$ are symplectic if and only if the Jacobian matrix $\jac{g}{p}$
-	is symmetric.
+\begin{lemma}\label{jacobi_symmetric}
+	An upper or lower unit triangular layer $\mathcal{L}_{\text{up}}$ or $\mathcal{L}_{\text{low}}$
+	is symplectic if and only if the Jacobian of the layer transform
+	$\hat{\sigma}_{\mathcal{L}} \in \mathbb{C}(\mathbb{R}^d, \R^d)$ 
+	is everywhere symmetric.
 \end{lemma}
 \begin{proof}
-	We show the result for $f_{up}$ only. The proof is analogous for $f_{low}$.
+	We show the result for $\mathcal{L}_{\text{up}}$ only. 
+	The proof is analogous for $\mathcal{L}_{\text{low}}$.
 
 	\begin{equation*}
-		\deldel[f_{up}]{(q,p)} = \begin{pmatrix}
-			I & \deldel[g]{p} \\
+		\jac{\mathcal{L}_{\text{up}}}{(q,p)} = \begin{pmatrix}
+			I & \jac{\hat{\sigma}_{\mathcal{L}}}{p} \\
 			0 & I
 		\end{pmatrix}
 	\end{equation*}
 	It follows
 	\begin{align*}
-		\jacp{f_{up}}{(q,p)}^T J \jacp{f_{up}}{(q,p)} 
-		&= \left(\deldel[f_{up}]{(q,p)}\right)^T \begin{pmatrix}
+		\lb \jac{\mathcal{L}_{\text{up}}}{(q,p)} \rb^T J \lb \jac{\mathcal{L}_{\text{up}}}{(q,p)} \rb
+		&= \lb \jac{\mathcal{L}_{\text{up}}}{(q,p)} \rb^T \begin{pmatrix}
 			0 & I \\
-			-I & -\jac{g}{p}
+			-I & -\jac{\hat{\sigma}_{\mathcal{L}}}{p}
 		\end{pmatrix} \\
 		&= \begin{pmatrix}
 			I & 0 \\
-			\jacp{g}{p}^T & Id
+			\lb \jac{\hat{\sigma}_{\mathcal{L}}}{p} \rb^T & Id
 		\end{pmatrix} \begin{pmatrix}
 			0 & I \\
-			-I & -\jac{g}{p}
+			-I & -\jac{\hat{\sigma}_{\mathcal{L}}}{p}
 		\end{pmatrix} \\
 		&= \begin{pmatrix}
 			0 & I \\
-			-I & \jacp{g}{p}^T-\jac{g}{p}
-		\end{pmatrix}
+			-I & \lb \jac{\hat{\sigma}_{\mathcal{L}}}{p} \rb ^T-\jac{\hat{\sigma}_{\mathcal{L}}}{p}
+		\end{pmatrix} \overset{!}{=} J
 	\end{align*}
-	Thus $f_{up}$ is symplectic if and only if $\jacp{g}{p}^T-\jac{g}{p}=0$, 
-	i.e. if and only if the Jacobian $\deldel[g]{p}$ is everywhere symmetric.
+	Thus, $\mathcal{L}_{\text{up}}$ is symplectic if and only if
+	$\lb \jac{\hat{\sigma}_{\mathcal{L}}}{p} \rb ^T-\jac{\hat{\sigma}_{\mathcal{L}}}{p}=0$, 
+	i.e. if and only if the Jacobian $\jac{\hat{\sigma}_{\mathcal{L}}}{p}$ is everywhere symmetric.
 \end{proof}
 
-\begin{corollary}\label{matrix_symmetric}
-	Let
-	\begin{equation*}
-		f_{up} : \mathbb{R}^{2d} \to \mathbb{R}^{2d},\quad
-		f_{up} \qpvec := \begin{pmatrix}
-			I & S \\
-			0 & I
-		\end{pmatrix} \qpvec
-	\end{equation*}
-	and
-	\begin{equation*}
-		f_{low} : \mathbb{R}^{2d} \to \mathbb{R}^{2d},\quad
-		f_{low} \qpvec := \begin{pmatrix}
-			I & 0 \\
-			S & I
-		\end{pmatrix} \qpvec
-	\end{equation*}
-	where $S \in \mathbb{R}^{dxd}$. 
-
-	$f_{up}$ and $f_{low}$ are symplectic if and only if the matrix $S$
-	is symmetric.
-\end{corollary}
-
-The next corollary is useful to construct symplectic maps.
+The next corollary is useful to construct symplectic unit triangular layers.
 \begin{corollary}\label{gradient_corollary}
 	Let $V: \mathbb{R}^d \to \mathbb{R}, \; p \mapsto V(p)$ be a function in 
-	$\mathbb{C}^2$. 
-	
-	Then
+	$\mathbb{C}^2(\R^d)$. Then the upper and lower triangular layers with layer transform
 	\begin{equation*}
-		f_{up} : \mathbb{R}^{2d} \to \mathbb{R}^{2d},\quad
-		f_{up} \qpvec := \uppersympop{\grad{V}}
+		\layertf(p) = \grad{V}(p)
 	\end{equation*}
-	and
-	\begin{equation*}
-		f_{low} : \mathbb{R}^{2d} \to \mathbb{R}^{2d},\quad
-		f_{low} \qpvec := \lowersympop{\grad{V}}
-	\end{equation*}
-	define a symplectic map with $\grad{V} : \mathbb{R}^d \to \mathbb{R}^d,\, p \mapsto \grad{V}(p)$. 
-	We call $V$ a potential.
+	are symplectic. We call $V$ a potential.
 \end{corollary}
 \begin{proof}
 	The Jacobian matrix of $\grad{V}$ corresponds to the Hessian matrix of $V$,
 	i.e. $\jac{(\grad{V})}{p} = HD$. \todo{Notation for Hessian}
-	The Hessian is symmetric, thus the result follows with \cref{jacobi_symmetric}.
+	The Hessian is everywhere symmetric, thus the result follows with \cref{jacobi_symmetric}.
 \end{proof}
 
 \subsection{Linear layers}
 
-\begin{alignat*}{2}
-	\ell_{up}&: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad \ell_{up} \qpvec &:= \begin{pmatrix}
+\begin{definition}
+	(Linear layers)
+	Given a symmetric matrix $S \in \R^{d \times d}$ and bias $b \in \R^{2d}$,
+	we call the upper and lower unit triangular layers
+	with layer transform $\layertf(p) = Sp$ the (symplectic) linear layers $\ell_\up$ and $\ell_\low$.
+\end{definition}
+
+The linear layers can be expressed with matrix-vector multiplication, for example
+\begin{equation*}
+	\ell_\up \qpvec = \begin{pmatrix}
 		I & S \\
 		0 & I
-	\end{pmatrix} \qpvec + b, \\[7pt]
-	\ell_{low}&: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad \ell_{low} \qpvec &:= \begin{pmatrix}
-		I & 0 \\
-		S & I
 	\end{pmatrix} \qpvec + b
-\end{alignat*}
-where $S \in \mathbb{R}^{d \times d}$ symmetric and $b \in \mathbb{R}^{2d}$
-are learnable parameters. In practice, we parametrize the symmetric matrix $S\in \mathbb{R}^{d \times d}$
+\end{equation*}
+
+The matrix $S$ and the bias $b$ are learnable parameters.
+In practice, we parametrize the symmetric matrix $S\in \mathbb{R}^{d \times d}$
 with $S = A^T + A$ via another arbitrary matrix $A\in \mathbb{R}^{d \times d}$, as
 most optimization methods used for learning neural networks are designed for
 unconstrained optimization problems.
 
-It follows directly from \cref{matrix_symmetric} that the linear layers are
-symplectic. Alternatively, we can apply \cref{gradient_corollary} by
+The linear layers are symplectic, because the Jacobian of the layer transform $\jac{\layertf}{p} = S$
+is a symmetric matrix by defintion. Alternatively, we can apply \cref{gradient_corollary} by
 choosing the potential $V(p) := p^TAp$.
 
 \begin{proof}
-	Let
+	For $k=1, \dots, d$ we have
 	\begin{align*}
-		\phi_1: \mathbb{R}^d \to \mathbb{R}^{2d}, \quad &\phi_1(p) := \begin{pmatrix}
-			p \\
-			Ap
-		\end{pmatrix} \\
-		\phi_2: \mathbb{R}^{2d} \to \mathbb{R}, \quad &\phi_2(p, \hat{p}) := 
-		p^T\hat{p}
+		\lb \grad{V}(p) \rb_k &= \deldel{p_k} \lb \sum_{i,j=1}^d A_{ij} p_i p_j \rb
+		= \sum_{i,j=1}^d A_{ij} \deldel{p_k}(p_i) p_j + \sum_{i,j=1}^d A_{ij} p_i \deldel{p_k}(p_j) \\
+		&= \sum_{j=1}^d A_{kj} p_j + \sum_{i=1}^d A_{ik} p_i = ((A+A^T)p)_k \\
 	\end{align*}
-	
-	Then $V(p) = \phi_2(\phi_1(p))$ and the corresponding Jacobian matrices are
-	\begin{align*}
-		\jac{\phi_1}{p}(p) &= \begin{pmatrix}
-			I \\
-			A
-		\end{pmatrix} \\
-		\jac{\phi_2}{(p,\hat{p})}(p, \hat{p}) &= \begin{pmatrix}
-			\hat{p}^T && p^T
-		\end{pmatrix}
-	\end{align*}
-	Thus
-	\begin{align*}
-		\jac{V}{p}(p) &= 
-		\jac{\phi_2}{(p,\hat{p})} (\phi_1(p))
-		\jac{\phi_1}{p}(p) \\
-		&= \begin{pmatrix}
-			(Ap)^T && p^T
-		\end{pmatrix}
-		\begin{pmatrix}
-			I \\
-			A
-		\end{pmatrix} \\
-		&= (Ap)^T + p^TA = (Ap + A^Tp)^T \\
-		&= ((A+A^T)p)^T
-	\end{align*}
-	Therefore $\grad{V}(p) = \lb \deldel{p}V(p) \rb^T = (A+A^T)p = Sp$ with
-	$S := A+A^T$ symmetric. Symplecticity follows with \cref{gradient_corollary}.
+	Choose $A=\frac{1}{2}S \implies A+A^T=S \implies$
+	Symplecticity follows with \cref{gradient_corollary}.
 \end{proof}
 
 We may enhance expressivity of a linear layer by alternately composing multiple
@@ -592,22 +542,21 @@ are a composition of the symplectic maps $\ell_{up}$ and $\ell_{low}$.
 \citeauthor{jin2020unit} show in \cite{jin2020unit} that $\mathcal{L}^{9}_{up}$
 can parametrize every symplectic linear map. In other words, 
 the set of all possible $\mathcal{L}^{9}_{up}$ is equal to the set of all symplectic linear maps.
-\todo{check how \cite{jin2020unit} appears in bibliography}
 
 It does not make sense to put two upper linear layers or two lower linear layers after each other,
 because this reduces to a single upper or lower linear layer:
 
 \begin{proof}
-	We show the statement for two upper linear layers.
+	We show the statement for two upper linear layers $\ell_{up,2}$ and $\ell_{up,1}$.
 	\begin{align*}
-		\ell_{up,2}\lb\ell_{up,1} \qpvec\rb &=
+		\lb \ell_{up,2} \circ \ell_{up,1} \rb \qpvec &=
 		\begin{pmatrix}
 			I && S_2 \\
 			0 && I
 		\end{pmatrix}
 		\lb
 		\begin{pmatrix}
-			I && S_1 \\
+			I && S_1 \\x
 			0 && I
 		\end{pmatrix}
 		\qpvec + b_1
@@ -635,61 +584,51 @@ because this reduces to a single upper or lower linear layer:
 
 \subsection{Activation layers}
 
-\begin{alignat*}{2}
-	\mathcal{N}_{up} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d},
-	\quad \mathcal{N}_{up} \qpvec &:= \uppersympop{\hat{\activation}_a}
-	:= \begin{pmatrix}
-		q + diag(a)\activation(p) \\
-		p
-	\end{pmatrix} \\[7pt]
-	%
-	\mathcal{N}_{low} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d},
-	\quad \mathcal{N}_{low} \qpvec &:= \lowersympop{\hat{\activation}_a}
-	:= \begin{pmatrix}
-		q \\
-		diag(a)\activation(q) + p
-	\end{pmatrix}
-\end{alignat*}
-where $a \in \mathbb{R}^d$ is a learnable parameter and 
-$\activation : \mathbb{R} \to \mathbb{R}$ an activation function,
-which is applied element-wise.
+\begin{definition}
+	Given an activation function $\activation : \R \to \R$ and coefficients $a \in \mathbb{R}^d$, 
+	we call the upper and lower unit triangular layers with bias $b=0$ and layer transform
+	\begin{equation*}
+		\layertf(p) = \lb a_i \activation(p_i) \rb_{i=1}^d
+	\end{equation*}
+	the upper and lower activation layers $\mathcal{N}_\up$ and $\mathcal{N}_\low$.
+\end{definition}
+The coefficients $a \in \mathbb{R}^d$ are learnable parameters.
 
 \begin{corollary}
-	Given an activation function $\activation \in \mathbb{C}^1$
+	Given an activation function $\activation \in \mathbb{C}^1(\R)$
 	the activation layers $\mathcal{N}_{up}$ and $\mathcal{N}_{low}$ are symplectic.
 \end{corollary}
 \begin{proof}
-	Let $\mathcal{A}: \mathbb{R} \to \mathbb{R}$ be the antiderivative of $\activation$, 
-	i.e. $\dd{x} \mathcal{A} = \activation$ and $V(p) := a^T\mathcal{A}(p)$.
-
-	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and
+	Let $\mathcal{A}: \mathbb{R} \to \mathbb{R}$ be an antiderivative of $\activation$, 
+	i.e. $\dd{x} \mathcal{A} = \activation$. We define the potential
 	\begin{equation*}
-		\grad{V}(p) = \lb\jac{V}{p}(p)\rb^T = \lb a^Tdiag\lb\sigma(p)\rb\rb^T
-		= diag(\activation(p)) a
-		= diag(a) \activation(p)
+		V(p) := \sum_{k=1}^d a_k \mathcal{A}(p_k)
+	\end{equation*}
+
+	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and for $k=1, \dots d$
+	\begin{equation*}
+		\lb \grad{V}(p) \rb_i = \deldel{p_i} \lb \sum_{k=1}^d a_k \mathcal{A}(p_k) \rb
+		= a_i \activation(p_i) = \lb \layertf(p) \rb_i
 	\end{equation*}
 	Symplecticity follows with \cref{gradient_corollary}.
 \end{proof}
 
 \subsection{Gradient layers}
 
-\begin{alignat*}{2}
-	\mathcal{G}_{up} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
-	\mathcal{G}_{up} \qpvec &:= \uppersympop{\hat{\activation}_g} := \begin{pmatrix}
-		q + K^T diag(a) \activation(Kp + b) \\
-		p
-	\end{pmatrix} \\[7pt]
-	%
-	\mathcal{G}_{low} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
-	\mathcal{G}_{low} \qpvec &:= \lowersympop{\hat{\activation}_g} := \begin{pmatrix}
-		q \\
-		K^T diag(a) \activation(Kq + b) + p
-	\end{pmatrix}
-\end{alignat*}
-where $K \in \mathbb{R}^{n \times d}$ and $a,b \in \mathbb{R}^n$
-are learnable parameters. $\activation : \mathbb{R} \to \mathbb{R}$ 
-is an activation function, which is applied element-wise.
+\begin{definition}
+	(Gradient layers)
+	Given $K \in \mathbb{R}^{n \times d}$, $a,\hat{b} \in \mathbb{R}^n$ and
+	an activation function $\activation : \R \to \R$,
+	we call the upper and lower triangular layers with bias $b=0$ and layer transform
+	\begin{equation*}
+		\layertf(p) = K^T \bigg( a_j \activation \lb (Kp)_j + \hat{b} \rb \bigg)_{j=1}^n
+	\end{equation*}
+	the upper and lower gradient layers $\mathcal{G}_\up$ and $\mathcal{G}_\low$.
+\end{definition}
+$K \in \mathbb{R}^{n \times d}$ and $a,b \in \mathbb{R}^n$
+are learnable parameters. 
 $n \in \mathbb{N}$ denotes the width of the gradient layer and can be chosen freely.
+In practice, we choose $n >> d$ for large expressivity.
 
 \begin{corollary}
 	Given an activation function $\sigma \in C^1$ the gradient layers $\mathcal{G}_{up}$
@@ -697,18 +636,18 @@ $n \in \mathbb{N}$ denotes the width of the gradient layer and can be chosen fre
 \end{corollary}
 \begin{proof}
 	Let $\mathcal{A}: \mathbb{R} \to \mathbb{R}$ be the antiderivative of $\activation$, 
-	i.e. $\dd{x} \mathcal{A} = \activation$ and
-	$V(p) := \onevec{n}^Tdiag(a)\mathcal{A}(Kp+b)$.
-
-	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and
+	i.e. $\dd{x} \mathcal{A} = \activation$. We define the potential
+	\begin{equation*}
+		V(p) := \sum_{j=1}^n a_k \mathcal{A}((Kp)_j + \hat{b})
+	\end{equation*}
+	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and for $i=1, \dots, d$
 	\begin{align*}
-		\grad{V(p)} &= \left(\jac{V}{p}(p)\right)^T \\
-		&= \left(1_n^Tdiag(a)diag\left(\sigma(Kp+b)\right)K\right)^T \\
-		&= K^Tdiag\left(\sigma(Kp+b)\right)diag(a)1_n \\
-		&= K^Tdiag(a)diag\left(\sigma(Kp+b)\right)1_n \\
-		&= K^Tdiag(a)\sigma(Kp+b)
+		(\grad{V(p)})_i &= \deldel{p_i} \lb \sum_{j=1}^n a_j \mathcal{A}((Kp)_j + \hat{b}) \rb
+		= \sum_{j=1}^n a_j \activation((Kp)_k + \hat{b}) 
+		\underbrace{\deldel{p_i} \lb (Kp)_k \rb}_{=K_{ji}} \\
+		&= \lb K^T \bigg( a_j \activation \lb (Kp)_j + \hat{b} \rb \bigg)_{j=1}^n \rb_i
+		= (\layertf(p))_i
 	\end{align*}
-
 	With \cref{gradient_corollary} follows that the Gradient layers
 	$\mathcal{G}_{up}$ and $\mathcal{G}_{low}$ are symplectic.
 \end{proof}
@@ -752,21 +691,22 @@ Still, the choice is arbitrary, as the following statements could be constructed
 \todo{cite Goodfellow?}
 
 We work with finite-dimensional vectors in neural networks. Therefore, we define a bijective mapping between
-finite-dimensionial vectors and $\mathbb{R}^{\mathbb{Z}}$ via zero continuation on $\mathbb{Z}$:
+finite-dimensionial vectors in $\mathbb{R}^n$ and functions in $\mathbb{R}^{\mathbb{Z}}$ 
+via zero continuation on $\mathbb{Z}$:
 \begin{align*}
-	\mathcal{I}_k &: \mathbb{R}^k \to \mathbb{R}^{\mathbb{Z}},
-	\quad \lb\mathcal{I}_k(x)\rb(\tau) := \sum_{a=1}^{k} x_a \delta_{\tau a} \\
+	\mathcal{I}_n &: \mathbb{R}^k \to \mathbb{R}^{\mathbb{Z}},
+	\quad \lb\mathcal{I}_n(x)\rb(\tau) := \sum_{a=1}^{n} x_a \delta_{\tau a} \\
 	%
-	\mathcal{I}_k^{-1} &: \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^k,
-	\quad \mathcal{I}_k^{-1}(f) := \lb f(\tau) \rb_{\tau=1}^k
+	\mathcal{I}_n^{-1} &: \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^k,
+	\quad \mathcal{I}_n^{-1}(f) := \lb f(\tau) \rb_{\tau=1}^n
 \end{align*}
 
-Additionially, we define a shift operator $\mathcal{S}_k$, 
-which shifts a discrete function $f \in \mathbb{R}^\mathbb{Z}$ by $k \in \mathbb{Z}$ positions
+Additionially, we define a shift operator $\mathcal{S}_\zeta$, 
+which shifts a discrete function $f \in \mathbb{R}^\mathbb{Z}$ by $\zeta \in \mathbb{Z}$ positions
 in the right direction
 \begin{equation*}
-	\mathcal{S}_k : \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
-	\quad \lb \mathcal{S}_v(f) \rb (\tau) := f(\tau - k)
+	\mathcal{S}_\zeta : \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
+	\quad \lb \mathcal{S}_\zeta(f) \rb (\tau) := f(\tau - \zeta)
 \end{equation*}
 
 \begin{definition}
@@ -786,25 +726,25 @@ finite-dimensional input $x$ fully overlap and puts the result into a finite-dim
 
 \todo{Add illustration}
 
-We define a stride operator $\mathcal{D}_k$ for a stride number $k \in \mathbb{N}$ with
+We define a stride operator $\mathcal{D}_s$ for a stride number $s \in \mathbb{N}$ with
 \begin{equation*}
-	\mathcal{D}_k : \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
-	\quad (\mathcal{D}_k)(\tau) := f(k \tau)
+	\mathcal{D}_s : \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
+	\quad (\mathcal{D}_s)(\tau) := f(s \tau)
 \end{equation*}
-The stride operators skips $k$ entries of $f \in \mathbb{R}^\mathbb{Z}$.
+The stride operators skips $s$ entries of $f \in \mathbb{R}^\mathbb{Z}$.
 
 \begin{definition}
 	(Valid cross-correlation with stride)
 	Given a finite-dimensional kernel $k \in \mathbb{R}^{n_k}$, a finite-dimensional
-	input $x \in \mathbb{R}^{n_x}$, stride number $v \in \mathbb{N}$ and output dimension
+	input $x \in \mathbb{R}^{n_x}$, stride number $s \in \mathbb{N}$ and output dimension
 	\begin{equation*}
-		n_{\text{out}} = \left\lfloor \frac{n_x - n_k}{v} \right\rfloor + 1
+		n_{\text{out}} = \left\lfloor \frac{n_x - n_k}{s} \right\rfloor + 1
 	\end{equation*}
 	the valid-cross correlation with stride is defined as
 	\begin{equation*}
 		*_{\text{v}} : \mathbb{R}^{n_k} \times \mathbb{R}^{n_x} \to \mathbb{R}^{n_{\text{out}}},
 		\quad *_{\text{v}}(k,x) := 
-		(\mathcal{I}_{n_{\text{out}}}^{-1} \circ D_v)
+		(\mathcal{I}_{n_{\text{out}}}^{-1} \circ D_s)
 		(
 			\mathcal{S}_{-1}( \mathcal{I}_{n_k}(k)) * \mathcal{I}_{n_x}(x)
 		)
@@ -839,6 +779,7 @@ $n_k = 2m+1$ for a $m \in \mathbb{N}_0$, and $c=2m$. We define two different pad
 which both increase the input vector dimension by $2m$.
 
 \begin{definition}
+	(Constant padding)
 	Given the padding values $l,r \in \mathbb{R}^m$, we define constant padding 
 	$c_{\text{pad},m}$ as
 	\begin{equation*}
@@ -854,6 +795,7 @@ The constant padding $c_{\text{pad},m}$ is an affine linear map, because we can 
 and $c_{\text{pad},m}(p;0_m,0_m)$ is linear regarding $p$.
 
 \begin{definition}
+	(Symmetric padding)
 	We define symmetric padding as
 	\begin{equation*}
 		s_{\text{pad},m} : \mathbb{R}^d \to \mathbb{R}^{d+2m},
@@ -886,6 +828,7 @@ because
 \end{equation*}
 
 \begin{definition}
+	(Symmetric kernel)
 	We call an odd kernel $k \in \mathbb{R}^{2m+1}$ symmetric if
 	\begin{equation*}
 		\hat{k}(\tau) = \hat{k}(-\tau)
@@ -896,14 +839,19 @@ because
 Let us now define symplectic convolution layers by combining padding and valid 
 cross-convolution.
 \begin{definition}
+	(Convolution layers)
 	Given a symmetric kernel $k \in \mathbb{R}^{2m+1}$ and padding
 	$(\bullet)_{\text{pad},m} = c_{\text{pad},m}$ or $(\bullet)_{\text{pad},m} = s_{\text{pad},m}$,
-	we call the upper and lower unit triangular layers with layer transform
+	we call the upper and lower unit triangular layers with bias $b \in \R^{2d}$ and layer transform
 	\begin{equation*}
 		\activation_{\mathcal{C}}(p) := *_{\text{v}}(k,((\bullet)_{\text{pad}})(p))
 	\end{equation*}
 	the convolution layers $\mathcal{C}_{up}$ and $\mathcal{C}_{low}$.
 \end{definition}
+The symmetric kernel $k \in \mathbb{R}^{2m+1}$ is a learnable parameter.
+We can set a constant bias (for example $b=0$) or also make the bias learnable.
+If $(\bullet)_{\text{pad},m} = c_{\text{pad},m}$, the padding values $l,r \in \R^m$ can either
+be constant or learnable.
 
 With $\hat{(\bullet)}_{\text{pad},m}(p) := \mathcal{I}_{d+2m}((\bullet)_{\text{pad},m}(p))$,
 we can write the layer transform as
@@ -1419,6 +1367,7 @@ from \cref{gradient_corollary} and the fact that the composition of symplectic m
 
 \subsubsection{Simple Pendulum}
 
+Training data from swinging and rotating domain
 \begin{tikzpicture}
 	\begin{axis}[
 		title={Phase plot},

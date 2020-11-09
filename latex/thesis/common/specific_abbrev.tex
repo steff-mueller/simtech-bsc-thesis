@@ -6,13 +6,13 @@
 \end{pmatrix}}
 
 \newcommand{\uppersympop}[1]{\begin{bmatrix}
-    I & {#1} \\
-    0 & I
+    id & {#1} \\
+    0 & id
 \end{bmatrix} \qpvec}
 
 \newcommand{\lowersympop}[1]{\begin{bmatrix}
-    I & 0 \\
-    {#1} & I
+    id & 0 \\
+    {#1} & id
 \end{bmatrix} \qpvec}
 
 \newcommand{\activation}{\sigma}
@@ -20,3 +20,7 @@
 \newcommand{\onevec}[1]{1_{#1}}
 
 \newcommand*\phantomrel[1]{\mathrel{\phantom{#1}}}
+
+\newcommand{\up}{\text{up}}
+\newcommand{\low}{\text{low}}
+\newcommand{\layertf}{\hat{\sigma}_{\mathcal{L}}}
