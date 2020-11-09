@@ -73,6 +73,17 @@
 %----------------------------------------------------------------------------------------
 \usepackage{fancyhdr}
 
+%----------------------------------------------------------------------------------------
+%	pgfplots
+%----------------------------------------------------------------------------------------
+% Style to select only points from #1 to #2 (inclusive)
+\pgfplotsset{select coords between index/.style 2 args={
+    x filter/.code={
+        \ifnum\coordindex<#1\def\pgfmathresult{}\fi
+        \ifnum\coordindex>#2\def\pgfmathresult{}\fi
+    }
+}}
+
 \makeatletter
 \newcommand{\theauthor}{Steffen Müller} %
 \makeatother
@@ -638,7 +649,7 @@ In practice, we choose $n >> d$ for large expressivity.
 	Let $\mathcal{A}: \mathbb{R} \to \mathbb{R}$ be the antiderivative of $\activation$, 
 	i.e. $\dd{x} \mathcal{A} = \activation$. We define the potential
 	\begin{equation*}
-		V(p) := \sum_{j=1}^n a_k \mathcal{A}((Kp)_j + \hat{b})
+		V(p) := \sum_{j=1}^n a_j \mathcal{A}((Kp)_j + \hat{b})
 	\end{equation*}
 	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and for $i=1, \dots, d$
 	\begin{align*}
@@ -1368,9 +1379,44 @@ from \cref{gradient_corollary} and the fact that the composition of symplectic m
 \subsubsection{Simple Pendulum}
 
 Training data from swinging and rotating domain
+
 \begin{tikzpicture}
 	\begin{axis}[
-		title={Phase plot},
+		title={Phase plot (swinging case)},
+		xlabel={q},
+		ylabel={p},
+		no markers, smooth
+	]
+
+	\addplot[
+		color=red
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/exact/swinging_case/phase_plot.csv};
+
+	%\addplot[
+	%	color=blue
+	%] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/la-sympnet/swinging_case/phase_plot.csv};
+
+	\addplot[
+		color=green
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/swinging_case/phase_plot.csv};
+
+	%\addplot[
+	%	color=blue,
+	%	dashed
+	%] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-la-sympnet/swinging_case/phase_plot.csv};
+
+	\addplot[
+		color=green,
+		dashed,
+		select coords between index={0}{72}
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-g-sympnet/swinging_case/phase_plot.csv};
+		
+	\end{axis}
+\end{tikzpicture}
+
+\begin{tikzpicture}
+	\begin{axis}[
+		title={Phase plot (rotating case)},
 		xlabel={q},
 		ylabel={p},
 	]
@@ -1378,29 +1424,29 @@ Training data from swinging and rotating domain
 	\addplot[
 		color=red,
 		no markers
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/exact_phase_plot.csv};
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/exact/rotating_case/phase_plot.csv};
 
 	\addplot[
 		color=blue,
 		no markers
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/la-sympnet/phase_plot.csv};
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/la-sympnet/rotating_case/phase_plot.csv};
 
 	\addplot[
 		color=green,
 		no markers
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/phase_plot.csv};
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/rotating_case/phase_plot.csv};
 
 	\addplot[
 		color=blue,
 		dashed,
 		no markers
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-la-sympnet/phase_plot.csv};
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-la-sympnet/rotating_case/phase_plot.csv};
 
 	\addplot[
 		color=green,
 		dashed,
 		no markers
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-g-sympnet/phase_plot.csv};
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-g-sympnet/rotating_case/phase_plot.csv};
 		
 	\end{axis}
 \end{tikzpicture}
