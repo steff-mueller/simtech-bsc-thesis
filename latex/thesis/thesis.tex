@@ -240,12 +240,6 @@ Numerical Simulation (IANS)}%
 
 \subsection{Notation}
 
-Let $f: \mathbb{R} \rightarrow \mathbb{R}$ be an arbitrary function and $x \in \mathbb{R}^n$
-a vector. When we write $f(x)$ we mean the element-wise application of $f$ 
-on the vector $x \in \mathbb{R}^n$, i.e. $f(x) = \lb
-	f(x_1), ..., f(x_n)
-\rb^T$.
-
 The $d$-by-$d$ identity matrix is denoted by $I_d$. If the dimension $d$ can be inferred
 from context we may just write $I$.
 
@@ -624,19 +618,21 @@ The coefficients $a \in \mathbb{R}^d$ are learnable parameters.
 	Symplecticity follows with \cref{gradient_corollary}.
 \end{proof}
 
+\todo{Define LA-SympNet}
+
 \subsection{Gradient layers}
 
 \begin{definition}
 	(Gradient layers)
-	Given $K \in \mathbb{R}^{n \times d}$, $a,\hat{b} \in \mathbb{R}^n$ and
+	Given width $n \in \N$, $K \in \mathbb{R}^{n \times d}$, $a,c \in \mathbb{R}^n$ and
 	an activation function $\activation : \R \to \R$,
 	we call the upper and lower triangular layers with bias $b=0$ and layer transform
 	\begin{equation*}
-		\layertf(p) = K^T \bigg( a_j \activation \lb (Kp)_j + \hat{b} \rb \bigg)_{j=1}^n
+		\layertf(p) = K^T \bigg( a_j \activation \lb (Kp)_j + c_j \rb \bigg)_{j=1}^n
 	\end{equation*}
 	the upper and lower gradient layers $\mathcal{G}_\up$ and $\mathcal{G}_\low$.
 \end{definition}
-$K \in \mathbb{R}^{n \times d}$ and $a,b \in \mathbb{R}^n$
+$K \in \mathbb{R}^{n \times d}$ and $a,c \in \mathbb{R}^n$
 are learnable parameters. 
 $n \in \mathbb{N}$ denotes the width of the gradient layer and can be chosen freely.
 In practice, we choose $n >> d$ for large expressivity.
@@ -649,14 +645,13 @@ In practice, we choose $n >> d$ for large expressivity.
 	Let $\mathcal{A}: \mathbb{R} \to \mathbb{R}$ be the antiderivative of $\activation$, 
 	i.e. $\dd{x} \mathcal{A} = \activation$. We define the potential
 	\begin{equation*}
-		V(p) := \sum_{j=1}^n a_j \mathcal{A}((Kp)_j + \hat{b})
+		V(p) := \sum_{j=1}^n a_j \mathcal{A}((Kp)_j + c_j)
 	\end{equation*}
 	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and for $i=1, \dots, d$
 	\begin{align*}
-		(\grad{V(p)})_i &= \deldel{p_i} \lb \sum_{j=1}^n a_j \mathcal{A}((Kp)_j + \hat{b}) \rb
-		= \sum_{j=1}^n a_j \activation((Kp)_k + \hat{b}) 
-		\underbrace{\deldel{p_i} \lb (Kp)_k \rb}_{=K_{ji}} \\
-		&= \lb K^T \bigg( a_j \activation \lb (Kp)_j + \hat{b} \rb \bigg)_{j=1}^n \rb_i
+		(\grad{V(p)})_i &= \deldel{p_i} \lb \sum_{j=1}^n a_j \mathcal{A}((Kp)_j + c_j) \rb
+		= \sum_{j=1}^n a_j \activation((Kp)_j + c_j) 
+		\underbrace{\deldel{p_i} \lb (Kp)_j \rb}_{=K_{ji} = K^T_{ij}}
 		= (\layertf(p))_i
 	\end{align*}
 	With \cref{gradient_corollary} follows that the Gradient layers
@@ -664,11 +659,15 @@ In practice, we choose $n >> d$ for large expressivity.
 \end{proof}
 
 Note that activation layers are a subset of gradient layers. We can see this by choosing
-$n=d$, $K=I_d$ and $b=0$.
+$n=d$, $K=I_d$ and $c=0$.
+
+\todo{Define G-SympNet}
+
+\todo{Briefly mention theoretical results from \citeauthor{Jin2020} (r-finite etc.)}
 
 \section{Convolution and Normalization for SympNets}
 
-In this section we introduce extensions to SympNets. In particular, we bring the concept
+In this section we introduce new extensions to SympNets. In particular, we bring the concept
 of convolution to SympNets and we propose a possibility how to embed normalization into SympNets while
 maintaining symplecticity.
 
@@ -699,7 +698,7 @@ the neural network would just learn a flipped version of the kernel $k$ in the o
 Because most popular neural network libraries implement cross correlation and call it convolution,
 we stick to the same convention and mean cross-correlation if we write $*$.
 Still, the choice is arbitrary, as the following statements could be constructed analogously with convolution.
-\todo{cite Goodfellow?}
+\todo{cite Goodfellow}
 
 We work with finite-dimensional vectors in neural networks. Therefore, we define a bijective mapping between
 finite-dimensionial vectors in $\mathbb{R}^n$ and functions in $\mathbb{R}^{\mathbb{Z}}$ 
@@ -978,7 +977,7 @@ The basis vectors $b_1, \dots, b_m \in \mathbb{R}^{2m+1}$ for the canonical basi
 \end{equation*}
 
 Another possible basis choice inspired by finite differences is
-\todo{Cite paper with similar idea?}
+\todo{Cite paper with similar idea}
 \begin{align*}
 	b_1^{FD} = (0, \dots, 0,& 1,0, \dots, 0)^T \in \mathbb{R}^{2m+1},\\
 	b_2^{FD} = (0, \dots, 0, 1,-&2,1, 0, \dots, 0)^T \in \mathbb{R}^{2m+1},\\
@@ -1035,17 +1034,13 @@ valid cross-correlation. In this case transposed convolution actually refers to
 transposed valid cross-correlation.
 
 For large $d \in \mathbb{N}$, it can make sense to use convolution inside Gradient layers 
-instead of a full matrix $W$.
+instead of a full matrix $K$. Let us repeat the layer transfrom $\layertf$ for Gradient layers.
 
 \begin{equation*}
-	\mathcal{G}_{up} : \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
-	\mathcal{G}_{up} \qpvec := \uppersympop{\hat{\activation}_g} := \begin{pmatrix}
-		q + K^T diag(a) \activation(Kp + b) \\
-		p
-	\end{pmatrix}
+	\layertf(p) = K^T \bigg( a_j \activation \lb (Kp)_j + \hat{b}_j \rb \bigg)_{j=1}^n
 \end{equation*}
 
-In particular, a Gradient layer with width $n \in \mathbb{N}$ can be implemented by 
+A Gradient layer with width $n \in \mathbb{N}$ can be implemented by 
 using valid cross-correlation (with stride) for $K^T \in \mathbb{R}^{d \times n}$ and the
 corresponding transposed valid cross-correlation (with stride) for $K \in \mathbb{R}^{n \times d}$.
 The choice of transpose is intentional, because we want to upscale the input $p \in \mathbb{R}^d$ ($n >> d$). 
@@ -1070,33 +1065,32 @@ Let us define the batch normalization transformation
 \begin{equation*}
 	\eta_{\gamma, \beta} : \mathbb{R}^n \to \mathbb{R}^n,\quad
 	\eta_{\gamma, \beta}(x) 
-	:= diag(\gamma)diag \lb \lb \frac{1}{\sqrt{\lb \sigma^2_\mathcal{B} \rb_i + \epsilon}} \rb_{i=1}^n \rb 
-	(x-\mu_\mathcal{B}) + \beta
+	:= \lb \frac{\gamma_j}{(\sigma^2_\mathcal{B})_j + \epsilon} 
+	\lb x_j - \lb \mu_\mathcal{B} \rb_j \rb + \beta_j \rb_{j=1}^n
 \end{equation*}
-where $n$ is the input dimension of the input $x \in \mathbb{R}^n$ and $\gamma, \beta \in \mathbb{R}^{d}$ 
+where $n$ is the input dimension of the input $x \in \mathbb{R}^n$ and $\gamma, \beta \in \mathbb{R}^{n}$ 
 are learnable parameters.
 The scalar $\epsilon \in \mathbb{R}$ is a small positive value to avoid division by zero.
-$\sigma^2_\mathcal{B} \in \mathbb{R}^{d}$ refers to the mini-batch variance and
-$\mu_\mathcal{B} \in \mathbb{R}^{d}$ refers to the mini-batch mean.
+$\sigma^2_\mathcal{B} \in \mathbb{R}^{n}$ refers to the mini-batch variance and
+$\mu_\mathcal{B} \in \mathbb{R}^{n}$ refers to the mini-batch mean.
 
-The learnable parameters $\gamma, \beta \in \mathbb{R}^{d}$ allow the neural network to modify
+The learnable parameters $\gamma, \beta \in \mathbb{R}^{n}$ allow the neural network to modify
 the normalization during training if necessary. The batch normalization transform is able to 
 represent the identity transform by setting appropriate $\gamma, \beta$.
 
-Given a mini-batch $\mathcal{B}$ with size $k$ and input training data 
-$x_1, x_2, \dots, x_k \in \mathbb{R}^{n}$, the
-mean and variance are estimated by
+Given a mini-batch $\mathcal{B} = \{  x^1, x^2, \dots, x^k \} \subset \mathbb{R}^{n}$
+with size $k$, the mean and variance are estimated by
 \begin{align*}
-	\mu_\mathcal{B} &= \frac{1}{k} \sum_{i=1}^{k} x_i \\
-	\sigma^2_\mathcal{B} &= \frac{1}{k} \sum_{i=1}^{k} (x_i - \mu_\mathcal{B})^2
+	\mu_\mathcal{B} &= \frac{1}{k} \sum_{i=1}^{k} x^i \\
+	\sigma^2_\mathcal{B} &= \frac{1}{k} \sum_{i=1}^{k} (x^i - \mu_\mathcal{B})^2
 \end{align*}
 
-During training the mini-batch variance $\sigma^2_\mathcal{B} \in \mathbb{R}^{d}$ and
-the mini-batch $\mu_\mathcal{B} \in \mathbb{R}^{d}$ are continously updated in the forward pass.
-To be precise, for a new mini-batch $\mathcal{B} = \{ x_1, x_2, \dots, x_k \}$, 
+During training the mini-batch variance $\sigma^2_\mathcal{B} \in \mathbb{R}^{n}$ and
+the mini-batch $\mu_\mathcal{B} \in \mathbb{R}^{n}$ are continously updated in the forward pass.
+To be precise, for a new mini-batch $\mathcal{B} = \{ x^1, x^2, \dots, x^k \}$, 
 the mean $\mu_\mathcal{B}$ and variance $\sigma^2_\mathcal{B}$
-are updated based on $\mathcal{B}$, before $\eta_{\gamma, \beta}(x_j)$ for
-$x_j \in \mathcal{B}$ is evaluated (see Algorithm 1).
+are updated based on $\mathcal{B}$, before $\eta_{\gamma, \beta}(x^t)$ for
+$x^t \in \mathcal{B}$ is evaluated (see Algorithm 1).
 When training has finished the neural network does not update $\sigma^2$ and $\mu_\mathcal{B}$ anymore.
 Instead, the neural network remembers the last value from training.
 
@@ -1106,8 +1100,9 @@ If this is the case, the mini-batch $\mathcal{B}$ refers to the collective outpu
 
 \begin{algorithm}\label{algo_batch_norm}
 	\caption{Batch normalization transform}
-	\textbf{Input:} $x_j$ and mini batch $\mathcal{B} = \{x_1, x_2, \dots, x_{k}\}$  \\
-	\textbf{Output:} $\eta_{\gamma, \beta}(p_j)$
+	\textbf{Input:} mini batch $\mathcal{B} = \{x^1, x^2, \dots, x^{k}\} \subset \R^n$ 
+	and $x^t \in \mathcal{B}$ \\
+	\textbf{Output:} $\eta_{\gamma, \beta}(x^t) \in \R^n$
 	\setstretch{1.5}
 	\begin{algorithmic}
 		\If{training\_mode} \Comment{Update mean and variane if training, otherwise
@@ -1117,9 +1112,8 @@ If this is the case, the mini-batch $\mathcal{B}$ refers to the collective outpu
 			(x_i - \mu_\mathcal{B})^2$
 		\EndIf
 		\State \Return 
-		$diag(\gamma)diag 
-		\lb \lb \frac{1}{\sqrt{\lb \sigma^2_\mathcal{B} \rb_i + \epsilon}} \rb_{i=1}^n \rb
-		(x_j-\mu_\mathcal{B}) + \beta$
+		$\lb \frac{\gamma_j}{(\sigma^2_\mathcal{B})_j + \epsilon} 
+		\lb x^t_j - \lb \mu_\mathcal{B} \rb_j \rb + \beta_j \rb_{j=1}^n$
 	\end{algorithmic}
 \end{algorithm}
 
@@ -1133,113 +1127,122 @@ case for our numerical experiments, as we work with very small training data set
 
 \subsubsection{Normalized gradient layers}
 
-\begin{alignat*}{2}
-	\mathcal{G}^{\eta}_{up} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
-	\mathcal{G}^{\eta}_{up} \qpvec &:= \uppersympop{\hat{\activation}^{\eta}_g} := \begin{pmatrix}
-		q + \hat{\activation}^{\eta}_g(p) \\
-		p
-	\end{pmatrix} \\[7pt]
-	%
-	\mathcal{G}^{\eta}_{low} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
-	\mathcal{G}^{\eta}_{low} \qpvec &:= \lowersympop{\hat{\activation}^{\eta}_g} := \begin{pmatrix}
-		q \\
-		\hat{\activation}^{\eta}_g(q) + p
-	\end{pmatrix}
-\end{alignat*}
-with $\hat{\activation}^{\eta}_g : \mathbb{R}^d \to \mathbb{R}^d$ defined as
-\begin{equation*}
-	\hat{\activation}^{\eta}_g(p) := 
-	K^T diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb diag(\gamma)
-	diag(a) \activation(\eta_{\gamma, \beta}(Kp+b))
-\end{equation*}
-where $K \in \mathbb{R}^{n \times d}$ and $a,b, \gamma, \beta \in \mathbb{R}^n$
-are learnable parameters. $\activation : \mathbb{R} \to \mathbb{R}$ 
-is an activation function, which is applied element-wise.
-$n \in \mathbb{N}$ denotes the width of the gradient layer.
-$\sigma^2_\mathcal{B}$ refers to the mini-batch variance of $Kp+b$ for $\mathcal{G}^{\eta}_{up}$
-or $Kq+b$ for $\mathcal{G}^{\eta}_{low}$.
+We add normalization to gradient layers.
+
+\begin{definition}
+	(Normalized gradient layers - Variant 1)
+	Given width $n \in \N$, $K \in \mathbb{R}^{n \times d}$, $a,c \in \mathbb{R}^n$ and
+	an activation function $\activation : \R \to \R$,
+	we call the upper and lower triangular layers with bias $b=0$ and layer transform
+	\begin{equation*}
+		\layertf(p) = K^T \bigg( a_j \activation
+		\lb \hat{p}_j \rb \bigg)_{j=1}^n
+		\quad \text{with } \hat{p} = \eta_{\gamma, \beta} \lb Kp + c \rb \in \R^n
+	\end{equation*}
+	the upper and lower normalized gradient layers 
+	$\mathcal{G}_\up^{\eta}$ and $\mathcal{G}_\low^{\eta}$ (variant 1).
+\end{definition}
+
+\begin{definition}
+	(Normalized gradient layers - Variant 2)
+	Given width $n \in \N$, $K \in \mathbb{R}^{n \times d}$, $a,c \in \mathbb{R}^n$ and
+	an activation function $\activation : \R \to \R$,
+	we call the upper and lower triangular layers with bias $b=0$ and layer transform
+	\begin{equation*}
+		\layertf(p) = K^T \bigg( a_j \frac{\gamma_j}{(\sigma^2_\mathcal{B})_j + \epsilon}
+		\activation \lb \hat{p}_j \rb \bigg)_{j=1}^n
+		\quad \text{with } \hat{p} = \eta_{\gamma, \beta} \lb Kp + c \rb \in \R^n
+	\end{equation*}
+	the upper and lower normalized gradient layers 
+	$\mathcal{G}_\up^{\eta}$ and $\mathcal{G}_\low^{\eta}$ (variant 2).
+	The variance $\sigma^2_\mathcal{B} \in \R^n$ refers to the mini-batch variance of $Kp+c$.
+\end{definition}
+
+$K \in \mathbb{R}^{n \times d}$ and $a,c, \gamma, \beta \in \mathbb{R}^n$
+are learnable parameters.
 
 \todo{Add special note for convolution gradient layers, respect convolution when normalizing.}
 
-\todo{$diag(\gamma)$ and $\beta$ redundant, but numerical experiments better result
-with $diag(\gamma)$ and ease of implementation. Double-check?
-Having $diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb$ greatly improves
-learning.}
+\todo{Discuss variant 1 vs. variant 2 (numerical experiments)}
 
 \todo{Maybe add illustration for normalized gradient layer}
 
-\begin{corollary}
+\begin{corollary}\label{cor_norm_gradient_layers_symp}
 	Given an activation function $\sigma \in C^1$
 	the normalized gradient layers $\mathcal{G}^{\eta}_{up}$ and $\mathcal{G}^{\eta}_{down}$
-	are symplectic.
+	(variant 1 and variant 2) are symplectic.
 \end{corollary}
 \begin{proof}
 	Let $\mathcal{A}: \mathbb{R} \to \mathbb{R}$ be the antiderivative of $\activation$, 
-	i.e. $\dd{x} \mathcal{A} = \activation$ and
+	i.e. $\dd{x} \mathcal{A} = \activation$. For arbitrary $\alpha \in \R^n$, we define the potential
 	\begin{equation*}
-		V(p) := \onevec{n}^Tdiag(a)\mathcal{A}(\eta_{\gamma, \beta}(Kp+b))
+		V(p) := \sum_{j=1}^n \alpha_j a_j \mathcal{A}(\hat{p}_j)
+		\quad \text{with } \hat{p} = \eta_{\gamma, \beta} \lb Kp + c \rb \in \R^n
 	\end{equation*}
-
-	We have $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and
-	\begin{equation*}
-		\jac{BN_{\gamma, \beta}(p)}{p} = 
-		diag(\gamma)diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb
-	\end{equation*}
-
-	Then
+	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and for $i=1, \dots, d$
 	\begin{align*}
-		\grad{V(p)} &= \left(\jac{V}{p}(p)\right)^T \\
-		&= \left( 1_n^T diag(a) diag \lb \activation(\eta_{\gamma, \beta}(Kp+b))\rb
-		\jac{BN_{\gamma, \beta}(p)}{p} K \right)^T \\
-		&= \left( 1_n^T diag(a) diag \lb \activation(\eta_{\gamma, \beta}(Kp+b))\rb
-		diag(\gamma) diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb K \right)^T \\
-		&= K^T diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb diag(\gamma)
-		diag\left(\activation(\eta_{\gamma, \beta}(Kp+b))\right) diag(a) 1_n \\
-		&= K^T diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb diag(\gamma)
-		diag(a) diag\left(\activation(\eta_{\gamma, \beta}(Kp+b))\right) 1_n \\
-		&= K^T diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb diag(\gamma)
-		diag(a) \activation(\eta_{\gamma, \beta}(Kp+b)) = \hat{\activation}^{BN}_g(p)
+		(\grad{V(p)})_i &= \deldel{p_i} \lb \sum_{j=1}^n \alpha_j a_j \mathcal{A}(\hat{p}_j) \rb
+		= \sum_{j=1}^n \alpha_j a_j \activation(\hat{p}_j) \deldel{p_i} \hat{p}_j
+		= \sum_{j=1}^n \alpha_j a_j \activation(\hat{p}_j)
+		\frac{\gamma_j}{(\sigma^2_\mathcal{B})_j + \epsilon} \underbrace{K_{ji}}_{=K^T_{ij}} \\
+		%
+		\implies
+		\grad{V(p)}
+		&= K^T \bigg( \alpha_j a_j \frac{\gamma_j}{(\sigma^2_\mathcal{B})_j + \epsilon}
+		\activation \lb \hat{p}_j \rb \bigg)_{j=1}^n
 	\end{align*}
-
-	With \cref{gradient_corollary} follows that the Gradient layers
-	$\mathcal{G}^{\eta}_{up}$ and $\mathcal{G}^{\eta}_{low}$ are symplectic.
+	If we choose $\alpha_j = 1$ follows $\grad{V(p)} = \layertf(p)$ for variant 2.
+	If we choose $\alpha_j = \frac{(\sigma^2_\mathcal{B})_j + \epsilon}{\gamma_j}$ 
+	follows $\grad{V(p)} = \layertf(p)$ for variant 1.
+	With \cref{gradient_corollary} follows that both normalized Gradient layer variants
+	$\mathcal{G}_{up}^\eta$ and $\mathcal{G}_{low}^\eta$ are symplectic.
 \end{proof}
+
+\todo{Introduce N1-G-SympNet and N2-G-SympNet}
 
 \subsubsection{Normalized activation layers}
 
-\begin{alignat*}{2}
-	\mathcal{N}^{\eta}_{up} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
-	\mathcal{N}^{\eta}_{up} \qpvec &:= \uppersympop{\hat{\activation}^{\eta}_a} := \begin{pmatrix}
-		q + \hat{\activation}^{\eta}_a(p) \\
-		p
-	\end{pmatrix} \\[7pt]
-	%
-	\mathcal{N}^{\eta}_{low} &: \mathbb{R}^{2d} \to \mathbb{R}^{2d}, \quad
-	\mathcal{N}^{\eta}_{low} \qpvec &:= \lowersympop{\hat{\activation}^{\eta}_a} := \begin{pmatrix}
-		q \\
-		\hat{\activation}^{\eta}_a(q) + p
-	\end{pmatrix}
-\end{alignat*}
-with $\hat{\activation}^{\eta}_a : \mathbb{R}^d \to \mathbb{R}^d$ defined as
-\begin{equation*}
-	\hat{\activation}^{\eta}_a(p) := 
-	diag\lb \frac{1}{\sqrt{\sigma^2_\mathcal{B} + \epsilon}} \rb diag(\gamma)
-	diag(a) \activation(\eta_{\gamma, \beta}(p))
-\end{equation*}
-where $a, \gamma, \beta \in \mathbb{R}^d$ are learnable parameters and 
-$\activation : \mathbb{R} \to \mathbb{R}$ an activation function,
-which is applied element-wise. $\sigma^2_\mathcal{B}$ refers to the mini-batch variance of $p$
-for $\mathcal{N}^{\eta}_{up}$ or $q$ for $\mathcal{N}^{\eta}_{low}$.
+\begin{definition}
+	(Normalized activation layers - Variant 1)
+	Given an activation function $\activation : \R \to \R$ and coefficients $a \in \mathbb{R}^d$, 
+	we call the upper and lower unit triangular layers with bias $b=0$ and layer transform
+	\begin{equation*}
+		\layertf(p) = \lb a_i \activation(\hat{p}_i) \rb_{i=1}^d
+		\quad \text{with } \hat{p} = \eta_{\gamma, \beta} \lb p \rb \in \R^d
+	\end{equation*}
+	the normalized upper and lower activation layers $\mathcal{N}_\up^\eta$ and $\mathcal{N}_\low^\eta$
+	(variant 1).
+\end{definition}
+
+\begin{definition}
+	(Normalized activation layers - Variant 2)
+	Given an activation function $\activation : \R \to \R$ and coefficients $a \in \mathbb{R}^d$, 
+	we call the upper and lower unit triangular layers with bias $b=0$ and layer transform
+	\begin{equation*}
+		\layertf(p) = \lb a_i \frac{\gamma_i}{(\sigma^2_\mathcal{B})_i + \epsilon} 
+		\activation(\hat{p}_i) \rb_{i=1}^d
+		\quad \text{with } \hat{p} = \eta_{\gamma, \beta} \lb p \rb \in \R^d
+	\end{equation*}
+	the normalized upper and lower activation layers $\mathcal{N}_\up^\eta$ and $\mathcal{N}_\low^\eta$
+	(variant 2).
+	The variance $\sigma^2_\mathcal{B} \in \R^d$ refers to the mini-batch variance of $p$.
+\end{definition}
+
+The coefficients $a \in \mathbb{R}^d$ are learnable parameters.
 
 \begin{corollary}
 	Given an activation function $\sigma \in C^1$
 	the normalized activation layers $\mathcal{N}^{\eta}_{up}$ and $\mathcal{N}^{\eta}_{low}$
-	are symplectic.
+	(variant 1 and variant 2) are symplectic.
 \end{corollary}
 \begin{proof}
-	Symplecticity follows because an activation layer is a gradient layer
-	(choose $n=d$, $K=I_d$ and $b=0$). We have already shown that a gradient layer is symplectic.
+	Symplecticity follows because the normalized activation layers are a special case
+	of normalized gradient layers (choose $n=d$, $K=I_d$ and $c=0$ for normalized gradient layers). 
+	We have already shown that both normalized gradient layer variants are symplectic in
+	\cref{cor_norm_gradient_layers_symp}.
 \end{proof}
+
+\todo{Introduce N1-LA-SympNet and N2-LA-SympNet}
 
 \section{Relation to geometric integrators}
 
@@ -1286,11 +1289,11 @@ the left variant of the symplectic Euler scheme can be expressed as
 		p_{n+1}
 	\end{pmatrix} =
 	\begin{bmatrix}
-		I & h \grad[p]{H} \\
-		0 & I
+		id & h \grad[p]{H} \\
+		0 & id
 	\end{bmatrix} \begin{bmatrix}
-		I & 0 \\
-		-h \grad[q]{H} & I
+		id & 0 \\
+		-h \grad[q]{H} & id
 	\end{bmatrix}
 	\begin{pmatrix}
 		q_{n} \\
@@ -1304,12 +1307,12 @@ and the right variant of the symplectic Euler scheme as
 		p_{n+1}
 	\end{pmatrix} =
 	\begin{bmatrix}
-		I & 0 \\
-		-h \grad[q]{H} & I
+		id & 0 \\
+		-h \grad[q]{H} & id
 	\end{bmatrix}
 	\begin{bmatrix}
-		I & h \grad[p]{H} \\
-		0 & I
+		id & h \grad[p]{H} \\
+		0 & id
 	\end{bmatrix}
 	\begin{pmatrix}
 		q_{n} \\
@@ -1324,16 +1327,16 @@ Similarly, the $p$-staggered Störmer-Verlet scheme can be expressed as
 		p_{n+1}
 	\end{pmatrix} =
 	\begin{bmatrix}
-		I & 0 \\
-		-\frac{h}{2} \grad[q]{H}
+		id & 0 \\
+		-\frac{h}{2} \grad[q]{H} & id
 	\end{bmatrix}
 	\begin{bmatrix}
-		I & h \grad[p]{H} \\
-		0 & I
+		id & h \grad[p]{H} \\
+		0 & id
 	\end{bmatrix}
 	\begin{bmatrix}
-		I & 0 \\
-		-\frac{h}{2} \grad[q]{H}
+		id & 0 \\
+		-\frac{h}{2} \grad[q]{H} & id
 	\end{bmatrix}
 	\begin{pmatrix}
 		q_{n} \\
@@ -1347,16 +1350,16 @@ and the $q$-staggered Störmer-Verlet scheme as
 		p_{n+1}
 	\end{pmatrix} =
 	\begin{bmatrix}
-		I & \frac{h}{2} \grad[p]{H} \\
-		0 & I
+		id & \frac{h}{2} \grad[p]{H} \\
+		0 & id
 	\end{bmatrix}
 	\begin{bmatrix}
-		I & 0 \\
-		-h \grad[q]{H} & I
+		id & 0 \\
+		-h \grad[q]{H} & id
 	\end{bmatrix}
 	\begin{bmatrix}
-		I & \frac{h}{2} \grad[p]{H} \\
-		0 & I
+		id & \frac{h}{2} \grad[p]{H} \\
+		0 & id
 	\end{bmatrix}
 	\begin{pmatrix}
 		q_{n} \\
@@ -1378,7 +1381,91 @@ from \cref{gradient_corollary} and the fact that the composition of symplectic m
 
 \subsubsection{Simple Pendulum}
 
-Training data from swinging and rotating domain
+Swinging domain
+
+$(q,p) \in [-\frac{\pi}{2}, \frac{\pi}{2}] \times [-\sqrt{2}, \sqrt{2}]$
+
+\begin{tikzpicture}
+	\begin{axis}[
+		no markers, smooth,
+		title={Training loss},
+		xlabel={Epoch},
+		ylabel={Loss},
+		restrict y to domain=0:1e-4,
+		legend style={draw=none},
+		legend entries={
+			LA-SympNet,
+			N1-LA-SympNet,
+			N2-LA-SympNet,
+			G-SympNet,
+			N1-G-SympNet,
+			N2-G-SympNet
+		}
+	]
+
+	\addplot[
+		color=red
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/la-sympnet/loss.csv};
+
+	\addplot[
+		color=red, dashed
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/normalized-la-sympnet-ignore-factor/loss.csv};
+
+	\addplot[
+		color=red, densely dotted
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/normalized-la-sympnet/loss.csv};
+
+	\addplot[
+		color=blue
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/g-sympnet/loss.csv};
+
+	\addplot[
+		color=blue, dashed
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/normalized-g-sympnet-ignore-factor/loss.csv};
+
+	\addplot[
+		color=blue, densely dotted
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/normalized-g-sympnet/loss.csv};+
+		
+	\end{axis}
+\end{tikzpicture}
+
+Rotating domain
+
+$(q,p) \in [-20, 20] \times [0.5, 2.5]$
+
+\begin{tikzpicture}
+	\begin{axis}[
+		no markers, smooth,
+		title={Training loss},
+		xlabel={Epoch},
+		ylabel={Loss},
+		restrict y to domain=0:2.4e-3,
+		legend entries={
+			G-SympNet,
+			N1-G-SympNet,
+			N2-G-Sympnet
+		}
+	]
+
+	\addplot[
+		color=blue
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/g-sympnet/loss.csv};
+
+	\addplot[
+		color=blue,dashed
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/normalized-g-sympnet-ignore-factor/loss.csv};
+
+	\addplot[
+		color=blue, densely dotted
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/normalized-g-sympnet/loss.csv};+
+		
+	\end{axis}
+\end{tikzpicture}
+
+Swinging and rotating domain
+
+$(q,p) \in [-20, 20] \times [-2.5, 2.5]$
 
 \begin{tikzpicture}
 	\begin{axis}[
@@ -1422,29 +1509,29 @@ Training data from swinging and rotating domain
 	]
 
 	\addplot[
-		color=red,
+		color=gray,
 		no markers
 	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/exact/rotating_case/phase_plot.csv};
 
 	\addplot[
-		color=blue,
+		color=red,
 		no markers
 	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/la-sympnet/rotating_case/phase_plot.csv};
 
 	\addplot[
-		color=green,
+		color=red,
+		densely dotted,
+		no markers
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-la-sympnet/rotating_case/phase_plot.csv};
+
+	\addplot[
+		color=blue,
 		no markers
 	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/rotating_case/phase_plot.csv};
 
 	\addplot[
 		color=blue,
-		dashed,
-		no markers
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-la-sympnet/rotating_case/phase_plot.csv};
-
-	\addplot[
-		color=green,
-		dashed,
+		densely dotted,
 		no markers
 	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-g-sympnet/rotating_case/phase_plot.csv};
 		
@@ -1457,9 +1544,12 @@ Training data from swinging and rotating domain
 		title={Training loss},
 		xlabel={Epoch},
 		ylabel={Loss},
-		ymax=1e-3,
-		ymin=0,
-		restrict y to domain=0:1e-3
+		restrict y to domain=0:3e-3,
+		legend entries={
+			G-SympNet,
+			N1-G-SympNet,
+			N2-G-Sympnet
+		}
 	]
 
 	\addplot[
@@ -1467,7 +1557,11 @@ Training data from swinging and rotating domain
 	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/loss.csv};
 
 	\addplot[
-		color=red
+		color=blue, dashed
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-g-sympnet-ignore-factor/loss.csv};
+
+	\addplot[
+		color=blue, densely dotted
 	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-g-sympnet/loss.csv};
 		
 	\end{axis}
