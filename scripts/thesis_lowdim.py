@@ -14,8 +14,12 @@ simple_pendulum_swing_rot_dir = data_path.joinpath('simple_pendulum_swing_rot')
 simple_pendulum_swing_rot_latex = latex_data_path.joinpath('simple_pendulum_swing_rot')
 
 architectures = [
-    'la-sympnet', 'normalized-la-sympnet', 
-    'g-sympnet', 'normalized-g-sympnet'
+    'la-sympnet', 
+    'normalized-la-sympnet',
+    'normalized-la-sympnet-ignore-factor',
+    'g-sympnet', 
+    'normalized-g-sympnet',
+    'normalized-g-sympnet-ignore-factor'
 ]
 epochs = 10000
 
@@ -26,6 +30,26 @@ class Experiment:
         self.cmd = cmd
 
 experiments = [
+    Experiment('simple_pendulum_swing', ['swinging_case', 'rotating_case'], [
+        'python', experiments_path.joinpath('lowdim.py'),
+        '--model', 'simple_pendulum',
+        '--qmin', str(-np.pi/2),
+        '--qmax', str(np.pi/2),
+        '--pmin', str(-np.sqrt(2)),
+        '--pmax', str(np.sqrt(2)),
+        '-n', '40',
+        '--epochs', str(epochs)
+    ]),
+    Experiment('simple_pendulum_rot', ['swinging_case', 'rotating_case'], [
+        'python', experiments_path.joinpath('lowdim.py'),
+        '--model', 'simple_pendulum',
+        '--qmin', '-20',
+        '--qmax', '20',
+        '--pmin', '0.5',
+        '--pmax', '2.5',
+        '-n', '400',
+        '--epochs', str(epochs)
+    ]),
     Experiment('simple_pendulum_swing_rot', ['swinging_case', 'rotating_case'], [
         'python', experiments_path.joinpath('lowdim.py'),
         '--model', 'simple_pendulum',
@@ -62,6 +86,13 @@ def save_csv(dest, vec, header):
 def save_phase_plot(dest: pathlib.Path, qpvec):
     save_csv(dest, qpvec, header='q,p')
 
+def subsample(vec: np.ndarray, every_nth: int):
+    """Subsamples rows"""
+
+    vec_sample = vec[::every_nth]
+    vec_sample[-1,:] = vec[-1,:] # return last
+    return vec_sample
+
 def update_csv(args):
     for exp in experiments:
         curr_exp_dir = data_path.joinpath(exp.name)
@@ -90,9 +121,8 @@ def update_csv(args):
                     np.arange(0, len(losses)),
                     losses
                 ], axis=1)
-                losses = losses[::5]
                 save_csv(curr_destination_dir
-                    .joinpath(arch, 'loss.csv'), losses, header='epoch,loss')
+                    .joinpath(arch, 'loss.csv'), subsample(losses,10), header='epoch,loss')
 
 
 if __name__ == '__main__':

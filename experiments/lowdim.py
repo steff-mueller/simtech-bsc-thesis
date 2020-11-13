@@ -228,18 +228,20 @@ def get_surrogate_model(architecture, dim):
             LowerNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn),
             LinearSymplectic(4, dim, bias=True)
         )
-    elif architecture == 'normalized-la-sympnet':
+    elif architecture == 'normalized-la-sympnet' or architecture == 'normalized-la-sympnet-ignore-factor':
+        ignore_factor = architecture == 'normalized-la-sympnet-ignore-factor'
+        nonlinear_args = {'dim':dim, 'bias': False, 'activation_fn': activation_fn, 'ignore_factor': ignore_factor}
         return torch.nn.Sequential(
             LinearSymplectic(4, dim, bias=True),
-            NormalizedLowerNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn),
+            NormalizedLowerNonlinearSymplectic(**nonlinear_args),
             LinearSymplectic(4, dim, bias=True),
-            NormalizedUpperNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn),
+            NormalizedUpperNonlinearSymplectic(**nonlinear_args),
             LinearSymplectic(4, dim, bias=True),
-            NormalizedLowerNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn),
+            NormalizedLowerNonlinearSymplectic(**nonlinear_args),
             LinearSymplectic(4, dim, bias=True),
-            NormalizedUpperNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn),
+            NormalizedUpperNonlinearSymplectic(**nonlinear_args),
             LinearSymplectic(4, dim, bias=True),
-            NormalizedLowerNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn),
+            NormalizedLowerNonlinearSymplectic(**nonlinear_args),
             LinearSymplectic(4, dim, bias=True)
         )
     elif architecture == 'g-sympnet':
@@ -249,12 +251,14 @@ def get_surrogate_model(architecture, dim):
             LowerGradientModule(dim, n=30, bias=False, activation_fn=activation_fn),
             UpperGradientModule(dim, n=30, bias=False, activation_fn=activation_fn)
         )
-    elif architecture == 'normalized-g-sympnet':
+    elif architecture == 'normalized-g-sympnet' or architecture == 'normalized-g-sympnet-ignore-factor':
+        ignore_factor = architecture == 'normalized-g-sympnet-ignore-factor'
+        gradient_args = {'dim':dim, 'n':30, 'bias': False, 'activation_fn': activation_fn, 'ignore_factor': ignore_factor}
         return torch.nn.Sequential(
-            NormalizedLowerGradientModule(dim, n=30, bias=False, activation_fn=activation_fn),
-            NormalizedUpperGradientModule(dim, n=30, bias=False, activation_fn=activation_fn),
-            NormalizedLowerGradientModule(dim, n=30, bias=False, activation_fn=activation_fn),
-            NormalizedUpperGradientModule(dim, n=30, bias=False, activation_fn=activation_fn)
+            NormalizedLowerGradientModule(**gradient_args),
+            NormalizedUpperGradientModule(**gradient_args),
+            NormalizedLowerGradientModule(**gradient_args),
+            NormalizedUpperGradientModule(**gradient_args)
         )
     else:
         raise ValueError('Invalid architecture {}'.format(architecture))
@@ -274,7 +278,14 @@ if __name__ == '__main__':
         choices=['implicit_midpoint', 'stoermer_verlet_q', 'stoermer_verlet_p'],
         default='stoermer_verlet_q'
     )
-    parser.add_argument('--architecture', choices=['la-sympnet', 'normalized-la-sympnet', 'g-sympnet', 'normalized-g-sympnet'], default='la-sympnet')
+    parser.add_argument('--architecture', choices=[
+        'la-sympnet', 
+        'normalized-la-sympnet', 
+        'normalized-la-sympnet-ignore-factor',
+        'g-sympnet', 
+        'normalized-g-sympnet',
+        'normalized-g-sympnet-ignore-factor'
+    ], default='la-sympnet')
     parser.add_argument('--activation', choices=['sigmoid', 'sin', 'relu', 'elu', 'snake'], default='sigmoid')
     parser.add_argument('--qmin', default=-np.pi/2, type=float)
     parser.add_argument('--qmax', default=np.pi/2, type=float)

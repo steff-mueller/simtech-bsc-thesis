@@ -60,9 +60,10 @@ class LowerGradientModule(UpperGradientModule):
 class _NormBase(SymplecticTriangularUnit):
     norm_dim: int
 
-    def __init__(self, dim: int, bias: bool, norm_dim: int, reset_params: bool):
+    def __init__(self, dim: int, bias: bool, norm_dim: int, reset_params: bool, ignore_factor: bool):
         super(_NormBase, self).__init__(dim, bias, reset_params=False)
         self.norm_dim = norm_dim
+        self.ignore_factor = ignore_factor
 
         self.register_buffer('var', torch.ones(self.norm_dim))
         self.register_buffer('mean', torch.zeros(self.norm_dim))
@@ -84,11 +85,13 @@ class _NormBase(SymplecticTriangularUnit):
             self.var, self.mean = torch.var_mean(input, 0, unbiased=True)
 
         factor = self.gamma/torch.sqrt(self.var+eps)
-        return factor*(input - self.mean) + self.beta, factor
+        return_factor = factor if not self.ignore_factor else 1
+        return factor*(input - self.mean) + self.beta, return_factor
 
 class NormalizedUpperNonlinearSymplectic(_NormBase):
-    def __init__(self, dim, bias=False, activation_fn = torch.sigmoid, scalar_weight = False):
-        super(NormalizedUpperNonlinearSymplectic, self).__init__(dim, bias, norm_dim=int(dim/2), reset_params=False)
+    def __init__(self, dim, bias=False, activation_fn = torch.sigmoid, scalar_weight = False, ignore_factor=False):
+        super(NormalizedUpperNonlinearSymplectic, self).__init__(
+            dim, bias, norm_dim=int(dim/2), reset_params=False, ignore_factor=ignore_factor)
         self.activation_fn = activation_fn
         self.a = nn.Parameter(torch.Tensor(1 if scalar_weight else self.dim_half))
         self.reset_parameters()
@@ -114,8 +117,9 @@ class NormalizedLowerNonlinearSymplectic(NormalizedUpperNonlinearSymplectic):
         return self.a*factor*self.activation_fn(x_top_normalized) + x_bottom
 
 class NormalizedUpperGradientModule(_NormBase):
-    def __init__(self, dim:int, n:int, bias=False, activation_fn = torch.sigmoid):
-        super(NormalizedUpperGradientModule, self).__init__(dim, bias, norm_dim=n, reset_params=False)
+    def __init__(self, dim:int, n:int, bias=False, activation_fn = torch.sigmoid, ignore_factor=False):
+        super(NormalizedUpperGradientModule, self).__init__(
+            dim, bias, norm_dim=n, reset_params=False, ignore_factor=ignore_factor)
         self.activation_fn = activation_fn
 
         self.a = nn.Parameter(torch.Tensor(n))
@@ -185,8 +189,9 @@ class LowerConv1dGradientModule(UpperConv1dGradientModule):
         return self._conv1d(x_top) + x_bottom
 
 class NormalizedUpperConv1dGradientModule(_NormBase):
-    def __init__(self, dim:int, n:int, bias=False, activation_fn = torch.sigmoid):
-        super(NormalizedUpperConv1dGradientModule, self).__init__(dim, bias, norm_dim=n, reset_params=False)
+    def __init__(self, dim:int, n:int, bias=False, activation_fn = torch.sigmoid, ignore_factor=False):
+        super(NormalizedUpperConv1dGradientModule, self).__init__(
+            dim, bias, norm_dim=n, reset_params=False, ignore_factor=ignore_factor)
         self.n = n
         self.activation_fn = activation_fn
         self.a = nn.Parameter(torch.Tensor(self.n))
