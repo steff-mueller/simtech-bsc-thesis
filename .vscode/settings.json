@@ -6,5 +6,29 @@
         "--disable=not-callable" // https://github.com/pytorch/pytorch/issues/24807
     ],
     "python.linting.enabled": true,
-    "latex-workshop.viewer.pdf.internal.port": 53900
+    "latex-workshop.viewer.pdf.internal.port": 53900,
+    "latex-workshop.latex.recipes": [
+        {
+            "name": "latexmk 🔃",
+            "tools": [
+                "latexmk"
+            ]
+        }
+    ],
+    "latex-workshop.latex.tools": [
+        {
+            "name": "latexmk",
+            "command": "latexmk",
+            "args": [
+                "-synctex=1",
+                "-shell-escape", "thesis",
+                "-interaction=nonstopmode",
+                "-file-line-error",
+                "-pdf",
+                "-outdir=%OUTDIR%",
+                "%DOC%"
+            ],
+            "env": {}
+        }
+    ]
 }

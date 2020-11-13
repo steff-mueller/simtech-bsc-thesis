@@ -38,6 +38,7 @@ lecture/.env
 *.synctex.gz
 *.synctex.gz(busy)
 *.pdfsync
+*.dep
 
 ## Auxiliary and intermediate files from other packages:
 # algorithms
