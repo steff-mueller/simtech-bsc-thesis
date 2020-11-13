@@ -243,9 +243,7 @@ Numerical Simulation (IANS)}%
 The $d$-by-$d$ identity matrix is denoted by $I_d$. If the dimension $d$ can be inferred
 from context we may just write $I$.
 
-$\onevec{n}$ denotes the $n$-dimensional $1$-vector.
-
-\todo{Introduce block matrix notation for general functions}
+$\onevec{n} \in \R^n$ denotes the $n$-dimensional $1$-vector.
 
 We denote the $k$-th partial derivative of a function $f: \mathbb{R}^n \to \mathbb{R},
 x \mapsto f(x)$ with $\deldel{x_k} f(x)$.
@@ -270,6 +268,34 @@ vector $v \in \R^n$
 	v = \begin{pmatrix}
 		v_i
 	\end{pmatrix}_{i=1}^n
+\end{equation*}
+
+We denote the $i$-th entry of a vector $v \in \R^n$ with $v_i$ or $(v)_i$.
+
+For $q,p \in \R^{d}$ and maps $f_{11}, f_{12}, f_{21}, f_{22} : \R^d \to \R^d$
+we define the block operator as
+\begin{equation*}
+	\begin{bmatrix}
+		f_{11} & f_{12} \\
+		f_{21} & f_{22}
+	\end{bmatrix}
+	\qpvec
+	:= \begin{pmatrix}
+		f_{11}(q) + f_{12}(p) \\
+		f_{21}(q) + f_{22}(p)
+	\end{pmatrix} \in \R^{2d}
+\end{equation*}
+
+identity map $id$
+
+$\R^{\mathbb{Z}} := \{ f : \mathbb{Z} \to \mathbb{R} \}$
+
+Kronecker delta
+\begin{equation*}
+	\delta_{ij} := \begin{cases}
+		1 &: i = j \\
+		0 &: \text{else}
+	\end{cases}
 \end{equation*}
 
 
@@ -342,12 +368,13 @@ Poincaré has shown that the flow of a Hamiltonian system is symplectic.
 
 Note that a Hamiltonian (ODE) system in general can be written as
 \begin{align*}
-	\dot{y(t)} &= S \grad{H}(y(t)) \quad \text{for } t \in I \subset \mathbb{R} \\
+	\dot{y}(t) &= S \grad{H}(y(t)) \quad \text{for } t \in I \subset \mathbb{R} \\
 	y(t_0) &= y_0
 \end{align*}
 with an arbitrary nondegenerate skew-symmetric matrix $S \in \mathbb{R}^{2d \times 2d}$.
 However there always exists a transformation to express such a Hamiltonian ODE system in
-canonical form (see \citet[Remark 3.8]{peng2016}).
+canonical form (see \citet[Remark 3.8]{peng2016}). Thus, we restrict w.l.o.g.
+to canonical systems.
 
 Our goal is to learn the flow map $\phi_{t,H} : U \to \mathbb{R}^{2d}$ for fixed $t$ with a neural network.
 To be specific, for fixed $t$, we supply the neural network with training pairs $(y_i, \phi_{t,H}(y_i))$
@@ -356,7 +383,8 @@ to be able to predict $\phi_{t,H}(y)$ for arbitrary $y \in \mathbb{R}^{2d}$.
 This leads to the idea that we embed symplecticity into the neural network itself structurally.
 
 Symplecticity has already been successfully embedded into numerical integrators for ODEs, which
-led to the development of geometric integrators.
+led to the development of geometric integrators, see for example \citeauthor{hairer2006}
+(\cite{hairer2006}).
 
 \section{Architecture of SympNets}
 
@@ -364,15 +392,68 @@ In this section we recapitulate the architecture of SympNets (Symplectic Network
 proposed by \citeauthor{Jin2020} in \cite{Jin2020}. We proof
 symplecticity for all layer types.
 
-\todo{Briefly introduce neural network terminology:}
+Let us briefly introduce neural network terminology we will use.
 
-\todo{Layer}
+\todo{Finish this introduction of neural networks terminology}
 
-\todo{Forward pass}
+\begin{definition}
+	(Layer)
+	A neural network layer with input dimension $n_1$ and output dimension $n_2$
+	and parameters $\theta \in \R^{n_\theta}$ is a map 
+	$\phi : \R^{n_1} \to \R^{n_2},\, x \mapsto \mathcal{L}(x;\theta) = \mathcal{L}(x)$.
+\end{definition}
 
-\todo{Mini-batch}
+A common layer is the so called fully-connected layer
+$\phi(x) = Wx +b$ with parameters $W \in \R^{n_2 \times n_1},\, b \in \R^{n_2}$,
+i.e. $\theta = (vec(W), b)^T \in \R^{n_2 n_1 + n_2}$.
 
-\todo{Training, backpropagation, learnable parameters}
+In our special case we will always have $n_1 = n_2 = 2d$.
+
+\begin{definition}
+	(Neural Network)
+	A neural network $\Phi$ is a composition of one or multiple layers with
+	compatible input and ouput dimensions. 
+	\begin{equation*}
+		\Phi(x;\Theta) = \phi_{n_L} \lb \phi_{n_L-1} \lb \cdots
+		\lb \phi_2(
+		\phi_1(x;\theta_1); \theta_2 ) \cdots \rb ; \theta_{n_L-1} \rb ; \theta_{n_L} \rb
+	\end{equation*}
+	We denote the vector of all
+	layer parameters with $\Theta = (\theta_1^T, \dots, \theta_{n_L}^T)^T$.
+\end{definition}
+
+For a given loss function $L$, the neural network tries to minimize the loss 
+function $L$ by learning locally optimal parameters $\Theta$.
+
+\todo{Training data}
+$\mathcal{T} = \{(x_1, y_1) \dots, (x_{n_{\text{train}}},y_{n_{\text{train}}}) \}
+\subset \R^{n_x} \times \R^{n_y}$
+
+\todo{$x_i$ refers to input, $y_i$ refers to the expected output (supervised learning)}
+
+\todo{Mini batch}
+$\mathcal{B} = \{(x_{i_1}, y_{i_1}), \dots, (x_{i_2},y_{i_2}) \} \subset \mathcal{T}$
+
+\begin{equation*}
+	L(\mathcal{B}; \Theta) = \sum_{(x_i,y_i) \in \mathcal{B}} l(\Phi(x_i; \Theta), y_i)
+\end{equation*}
+
+\todo{$l$ can be some norm}
+\begin{equation*}
+	l(x,y) = \norm{x-y}
+\end{equation*}
+
+\todo{Gradient descent}
+\begin{equation*}
+	\grad[\Theta]{L(\mathcal{B};\Theta)}
+\end{equation*}
+
+\todo{Forward pass, backward pass, automatic differentiation. 
+Apply chain rule on computational graph to compute gradient.}
+
+\todo{Add illustration}
+
+\todo{Training}
 
 \subsection{General architecture}
 
@@ -381,30 +462,27 @@ layer of the neural network must be symplectic, which leads to the overall neura
 to be symplectic.
 
 \begin{definition}
-	(Unit Triangular Layer) A layer $\mathcal{L} : \mathbb{R}^{2d} \to \mathbb{R}^{2d}$ 
+	(Unit Triangular Layer) A layer $\phi : \mathbb{R}^{2d} \to \mathbb{R}^{2d}$ 
 	is called a unit triangular layer with layer transform 
-	$\hat{\sigma}_{\mathcal{L}} : \mathbb{R}^d \to \mathbb{R}^d,\, p \mapsto \layertf(p)$
-	and bias $b \in \R^{2d}$,
-	if $\mathcal{L}$ can be expressed as
+	$\layertf : \mathbb{R}^d \to \mathbb{R}^d,\, p \mapsto \layertf(p)$
+	and bias parameter $b \in \R^{2d}$, if $\phi$ can be expressed as
 	\begin{equation*}
-		\mathcal{L} \qpvec = \uppersympop{\hat{\activation}_L} + b
+		\phi_\up \qpvec = \uppersympop{\layertf} + b
 		= \begin{pmatrix}
-			q + \hat{\sigma}_{\mathcal{L}}(p) \\
+			q + \layertf(p) \\
 			p
 		\end{pmatrix} + b \quad \text{(upper unit triangular layer)}
 	\end{equation*}
 	or
 	\begin{equation*}
-		\mathcal{L} \qpvec = \lowersympop{\hat{\activation}_L} + b
+		\phi_\low \qpvec = \lowersympop{\layertf} + b
 		= \begin{pmatrix}
 			q \\
-			\hat{\sigma}_{\mathcal{L}}(q) + p
+			\layertf(q) + p
 		\end{pmatrix} + b \quad \text{(lower unit triangular layer)}
 	\end{equation*}
-
-	If we want to emphasize if $\mathcal{L}$ is an upper or lower
-	unit triangular layer, we write $\mathcal{L}_{\text{up}}$ or $\mathcal{L}_{\text{low}}$.
-	If we do not expllicitly specify the bias $b$, we assume $b=0=\text{const}$.
+	If we do not explicitly specify the bias parameter $b$, we assume
+	that $b$ is a non-learnable constant with value $b=0$.
 \end{definition}
 
 This structure was initially proposed by \citeauthor{Deco1995} in \cite{Deco1995} 
@@ -412,53 +490,53 @@ This structure was initially proposed by \citeauthor{Deco1995} in \cite{Deco1995
 \todo{Relation to Residual Networks / ResNet}
 
 A SympNet only consists of unit triangular layers. In order that the unit triangular layers 
-$\mathcal{L}_{\text{up}}$ or $\mathcal{L}_{\text{low}}$ are symplectic 
-we have to demand additional requirements to the layer transform $\hat{\sigma}_{\mathcal{L}}$.
+$\mathcal{L}_{\text{up}}$ or $\mathcal{L}_{\text{low}}$ are symplectic,
+we have to put additional requirements on the layer transform $\layertf$.
 
 \begin{lemma}\label{jacobi_symmetric}
-	An upper or lower unit triangular layer $\mathcal{L}_{\text{up}}$ or $\mathcal{L}_{\text{low}}$
+	An upper or lower unit triangular layer $\phi_{\text{up}}$ or $\phi_{\text{low}}$
 	is symplectic if and only if the Jacobian of the layer transform
-	$\hat{\sigma}_{\mathcal{L}} \in \mathbb{C}(\mathbb{R}^d, \R^d)$ 
+	$\layertf \in C(\mathbb{R}^d, \R^d)$ 
 	is everywhere symmetric.
 \end{lemma}
 \begin{proof}
-	We show the result for $\mathcal{L}_{\text{up}}$ only. 
-	The proof is analogous for $\mathcal{L}_{\text{low}}$.
+	We show the result for $\phi_{\text{up}}$ only. 
+	The proof is analogous for $\phi_{\text{low}}$.
 
 	\begin{equation*}
-		\jac{\mathcal{L}_{\text{up}}}{(q,p)} = \begin{pmatrix}
-			I & \jac{\hat{\sigma}_{\mathcal{L}}}{p} \\
+		\jac{\phi_{\text{up}}}{(q,p)} = \begin{pmatrix}
+			I & \jac{\layertf}{p} \\
 			0 & I
 		\end{pmatrix}
 	\end{equation*}
 	It follows
 	\begin{align*}
-		\lb \jac{\mathcal{L}_{\text{up}}}{(q,p)} \rb^T J \lb \jac{\mathcal{L}_{\text{up}}}{(q,p)} \rb
-		&= \lb \jac{\mathcal{L}_{\text{up}}}{(q,p)} \rb^T \begin{pmatrix}
+		\lb \jac{\phi_{\text{up}}}{(q,p)} \rb^T J \lb \jac{\phi_{\text{up}}}{(q,p)} \rb
+		&= \lb \jac{\phi_{\text{up}}}{(q,p)} \rb^T \begin{pmatrix}
 			0 & I \\
-			-I & -\jac{\hat{\sigma}_{\mathcal{L}}}{p}
+			-I & -\jac{\layertf}{p}
 		\end{pmatrix} \\
 		&= \begin{pmatrix}
 			I & 0 \\
-			\lb \jac{\hat{\sigma}_{\mathcal{L}}}{p} \rb^T & Id
+			\lb \jac{\layertf}{p} \rb^T & Id
 		\end{pmatrix} \begin{pmatrix}
 			0 & I \\
-			-I & -\jac{\hat{\sigma}_{\mathcal{L}}}{p}
+			-I & -\jac{\layertf}{p}
 		\end{pmatrix} \\
 		&= \begin{pmatrix}
 			0 & I \\
-			-I & \lb \jac{\hat{\sigma}_{\mathcal{L}}}{p} \rb ^T-\jac{\hat{\sigma}_{\mathcal{L}}}{p}
+			-I & \lb \jac{\layertf}{p} \rb ^T-\jac{\layertf}{p}
 		\end{pmatrix} \overset{!}{=} J
 	\end{align*}
-	Thus, $\mathcal{L}_{\text{up}}$ is symplectic if and only if
-	$\lb \jac{\hat{\sigma}_{\mathcal{L}}}{p} \rb ^T-\jac{\hat{\sigma}_{\mathcal{L}}}{p}=0$, 
-	i.e. if and only if the Jacobian $\jac{\hat{\sigma}_{\mathcal{L}}}{p}$ is everywhere symmetric.
+	Thus, $\phi_{\text{up}}$ is symplectic if and only if
+	$\lb \jac{\layertf}{p} \rb ^T-\jac{\layertf}{p}=0$, 
+	i.e. if and only if the Jacobian $\jac{\layertf}{p}$ is everywhere symmetric.
 \end{proof}
 
 The next corollary is useful to construct symplectic unit triangular layers.
 \begin{corollary}\label{gradient_corollary}
 	Let $V: \mathbb{R}^d \to \mathbb{R}, \; p \mapsto V(p)$ be a function in 
-	$\mathbb{C}^2(\R^d)$. Then the upper and lower triangular layers with layer transform
+	$C^2(\R^d)$. Then the upper and lower triangular layers with layer transform
 	\begin{equation*}
 		\layertf(p) = \grad{V}(p)
 	\end{equation*}
@@ -466,8 +544,9 @@ The next corollary is useful to construct symplectic unit triangular layers.
 \end{corollary}
 \begin{proof}
 	The Jacobian matrix of $\grad{V}$ corresponds to the Hessian matrix of $V$,
-	i.e. $\jac{(\grad{V})}{p} = HD$. \todo{Notation for Hessian}
-	The Hessian is everywhere symmetric, thus the result follows with \cref{jacobi_symmetric}.
+	i.e. $\jac{(\grad{V})}{p} = HV$. \todo{Notation for Hessian}
+	The Hessian is everywhere symmetric due to $V \in C^2(\R^d)$ (Lemma of Schwarz),
+	thus the result follows with \cref{jacobi_symmetric}.
 \end{proof}
 
 \subsection{Linear layers}
@@ -504,8 +583,8 @@ choosing the potential $V(p) := p^TAp$.
 		= \sum_{i,j=1}^d A_{ij} \deldel{p_k}(p_i) p_j + \sum_{i,j=1}^d A_{ij} p_i \deldel{p_k}(p_j) \\
 		&= \sum_{j=1}^d A_{kj} p_j + \sum_{i=1}^d A_{ik} p_i = ((A+A^T)p)_k \\
 	\end{align*}
-	Choose $A=\frac{1}{2}S \implies A+A^T=S \implies$
-	Symplecticity follows with \cref{gradient_corollary}.
+	Choose $A=\frac{1}{2}S \implies A+A^T=S$.
+	Thus, symplecticity follows with \cref{gradient_corollary}.
 \end{proof}
 
 We may enhance expressivity of a linear layer by alternately composing multiple
@@ -561,7 +640,7 @@ because this reduces to a single upper or lower linear layer:
 		\end{pmatrix}
 		\lb
 		\begin{pmatrix}
-			I && S_1 \\x
+			I && S_1 \\
 			0 && I
 		\end{pmatrix}
 		\qpvec + b_1
@@ -591,7 +670,7 @@ because this reduces to a single upper or lower linear layer:
 
 \begin{definition}
 	Given an activation function $\activation : \R \to \R$ and coefficients $a \in \mathbb{R}^d$, 
-	we call the upper and lower unit triangular layers with bias $b=0$ and layer transform
+	we call the upper and lower unit triangular layers and layer transform
 	\begin{equation*}
 		\layertf(p) = \lb a_i \activation(p_i) \rb_{i=1}^d
 	\end{equation*}
@@ -626,7 +705,7 @@ The coefficients $a \in \mathbb{R}^d$ are learnable parameters.
 	(Gradient layers)
 	Given width $n \in \N$, $K \in \mathbb{R}^{n \times d}$, $a,c \in \mathbb{R}^n$ and
 	an activation function $\activation : \R \to \R$,
-	we call the upper and lower triangular layers with bias $b=0$ and layer transform
+	we call the upper and lower triangular layers layer transform
 	\begin{equation*}
 		\layertf(p) = K^T \bigg( a_j \activation \lb (Kp)_j + c_j \rb \bigg)_{j=1}^n
 	\end{equation*}
@@ -692,22 +771,19 @@ Cross-correlation is a flipped convolution and is defined as
 	*: \mathbb{R}^{\mathbb{Z}} \times \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
 	\quad (f*g)(\tau) = \sum^{\infty}_{a=-\infty} f(a) g(\tau + a)
 \end{equation*}
-Our goal is to replace $f$ with a finite-dimensional kernel $k$. The neural network should learn the kernel $k$.
-Note that in this context it does not make a difference if we use convolution or cross-correlation, because
-the neural network would just learn a flipped version of the kernel $k$ in the opposite case.
 Because most popular neural network libraries implement cross correlation and call it convolution,
 we stick to the same convention and mean cross-correlation if we write $*$.
 Still, the choice is arbitrary, as the following statements could be constructed analogously with convolution.
 \todo{cite Goodfellow}
 
 We work with finite-dimensional vectors in neural networks. Therefore, we define a bijective mapping between
-finite-dimensionial vectors in $\mathbb{R}^n$ and functions in $\mathbb{R}^{\mathbb{Z}}$ 
-via zero continuation on $\mathbb{Z}$:
+vectors in $\mathbb{R}^n$ and functions in $\mathbb{R}^{\mathbb{Z}}$ 
+via zero-continuation on $\mathbb{Z}$:
 \begin{align*}
-	\mathcal{I}_n &: \mathbb{R}^k \to \mathbb{R}^{\mathbb{Z}},
+	\mathcal{I}_n &: \mathbb{R}^n \to \mathbb{R}^{\mathbb{Z}},
 	\quad \lb\mathcal{I}_n(x)\rb(\tau) := \sum_{a=1}^{n} x_a \delta_{\tau a} \\
 	%
-	\mathcal{I}_n^{-1} &: \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^k,
+	\mathcal{I}_n^{-1} &: \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^n,
 	\quad \mathcal{I}_n^{-1}(f) := \lb f(\tau) \rb_{\tau=1}^n
 \end{align*}
 
@@ -719,7 +795,7 @@ in the right direction
 	\quad \lb \mathcal{S}_\zeta(f) \rb (\tau) := f(\tau - \zeta)
 \end{equation*}
 
-\begin{definition}
+\begin{definition}\label{def_cross_corr}
 	(Valid cross-correlation)
 	We define the valid cross-correlation of a finite-dimensional kernel $k \in \mathbb{R}^{n_k}$ and 
 	a finite-dimensional input $x \in \mathbb{R}^{n_x}$ with $n_x \geq n_k$ as
@@ -736,6 +812,10 @@ finite-dimensional input $x$ fully overlap and puts the result into a finite-dim
 
 \todo{Add illustration}
 
+The kernel $k$ will be a parameter which the neural network should learn.
+Note that in this context it does not make a difference if we use convolution or cross-correlation, because
+the neural network would just learn a flipped version of the kernel $k$ in the opposite case.
+
 We define a stride operator $\mathcal{D}_s$ for a stride number $s \in \mathbb{N}$ with
 \begin{equation*}
 	\mathcal{D}_s : \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
@@ -743,7 +823,7 @@ We define a stride operator $\mathcal{D}_s$ for a stride number $s \in \mathbb{N
 \end{equation*}
 The stride operators skips $s$ entries of $f \in \mathbb{R}^\mathbb{Z}$.
 
-\begin{definition}
+\begin{definition}\label{def_cross_corr_stride}
 	(Valid cross-correlation with stride)
 	Given a finite-dimensional kernel $k \in \mathbb{R}^{n_k}$, a finite-dimensional
 	input $x \in \mathbb{R}^{n_x}$, stride number $s \in \mathbb{N}$ and output dimension
@@ -763,19 +843,21 @@ The stride operators skips $s$ entries of $f \in \mathbb{R}^\mathbb{Z}$.
 
 \todo{Add illustration}
 
+Note that \cref{def_cross_corr_stride} equals \cref{def_cross_corr} for stride number $s=1$.
+
 \subsection{Convolution layers}
 
 The valid cross correlation (without stride) has the output dimension $n_x - n_k + 1$.
 Thus, the valid cross-correlation $*_{\text{v}}$ decreases the dimension of the input $x$.
-However, we want to incorporate the valid cross-correlation as the layer transform of a
-unit triangular layer. The layer transform must keep the dimension.
-Therefore we apply a padding operation on $x$ before passing it to the valid
-cross-correlation. The padding operation increases the dimension of $x$ in order
+However, we want to incorporate the valid cross-correlation as the layer transform $\layertf$ of an
+unit triangular layer. The layer transform $\layertf$ must keep the dimension $d$.
+Therefore we apply a so-called padding operation on the layer transform input $p \in \R^d$ 
+before passing it to the valid
+cross-correlation. The padding operation increases the dimension of $p$ in order
 that the composition of padding and cross-correlation keeps the overall dimension.
-More specifically, let $d \in \mathbb{N}$ denote the input dimension of the layer transform.
 Let $c \in \mathbb{N}$ denote the number by which the padding operator increases 
-the input dimension. In order that the composition of padding and cross-correlation
-keeps the dimension, it must hold
+the input dimension, such that dimension is $n_x = d+c$. 
+In order that the composition of padding and cross-correlation keeps the dimension, it must hold
 \begin{equation*}
 	n_x - n_k + 1 = \underbrace{(d+c)}_{\substack{
 		\text{increased dim.} \\
@@ -783,9 +865,10 @@ keeps the dimension, it must hold
 	}} - \, n_k + 1 = d \iff c = n_k-1
 \end{equation*}
 For symmetry reasons, we pad the same number of values at the beginning and 
-the end of the input vector. This means that the number of padding values $c$ is even. 
-Consequently, the equation above implies that the kernel size $n_k$ is odd, i.e. we can write
-$n_k = 2m+1$ for a $m \in \mathbb{N}_0$, and $c=2m$. We define two different padding operators,
+the end of the input vector $p$. This means that the number of padded values $c$ has to be even,
+i.e. we can write $c=2m$ for a $m \in \mathbb{N}_0$.
+Consequently, the equation above implies that the kernel size $n_k$ has to be odd, i.e. 
+$n_k = 2m+1$. We define two different padding operators,
 which both increase the input vector dimension by $2m$.
 
 \begin{definition}
@@ -797,7 +880,7 @@ which both increase the input vector dimension by $2m$.
 		\quad c_{\text{pad},m}(p) = c_{\text{pad},m}(p;l,r) := \lb l^T, p^T, r^T \rb^T
 	\end{equation*}
 \end{definition}
-The constant padding $c_{\text{pad},m}$ is an affine linear map, because we can write
+The constant padding $c_{\text{pad},m}$ is an affine linear map in $p$, because we can write
 \begin{equation}\label{cpad_affine}
 	c_{\text{pad},m}(p;l,r) = c_{\text{pad}}(p;0_m,0_m)
 	+ c_{\text{pad},m}(0_d;l,r)
@@ -816,9 +899,11 @@ and $c_{\text{pad},m}(p;0_m,0_m)$ is linear regarding $p$.
 		)^T
 	\end{equation*}
 \end{definition}
-The symmetric padding $s_{\text{pad},m}$ is a linear map.
+The symmetric padding $s_{\text{pad},m}$ is a linear map. We call the operation symmetric padding,
+because the outermost left and right inner vector entries are mirrored at the beginning and the end
+of the vector.
 
-Given an odd kernel $k \in \mathbb{R}^{2m+1}$ we set
+Given an odd kernel $k \in \mathbb{R}^{2m+1}$, we set
 \begin{equation*}
 	\hat{k} = \hat{k}(k) := \mathcal{S}_{-m-1}(\mathcal{I}_{2m+1}(k))
 \end{equation*}
@@ -850,25 +935,26 @@ Let us now define symplectic convolution layers by combining padding and valid
 cross-convolution.
 \begin{definition}
 	(Convolution layers)
-	Given a symmetric kernel $k \in \mathbb{R}^{2m+1}$ and padding
-	$(\bullet)_{\text{pad},m} = c_{\text{pad},m}$ or $(\bullet)_{\text{pad},m} = s_{\text{pad},m}$,
+	Given a symmetric kernel $k \in \mathbb{R}^{2m+1}$, padding
+	$\chi_{\text{pad},m} = c_{\text{pad},m}$ or $\chi_{\text{pad},m} = s_{\text{pad},m}$,
 	we call the upper and lower unit triangular layers with bias $b \in \R^{2d}$ and layer transform
 	\begin{equation*}
-		\activation_{\mathcal{C}}(p) := *_{\text{v}}(k,((\bullet)_{\text{pad}})(p))
+		\layertf(p) := *_{\text{v}}(k,\chi_{\text{pad},m}(p))
 	\end{equation*}
 	the convolution layers $\mathcal{C}_{up}$ and $\mathcal{C}_{low}$.
 \end{definition}
 The symmetric kernel $k \in \mathbb{R}^{2m+1}$ is a learnable parameter.
-We can set a constant bias (for example $b=0$) or also make the bias learnable.
-If $(\bullet)_{\text{pad},m} = c_{\text{pad},m}$, the padding values $l,r \in \R^m$ can either
-be constant or learnable.
+If $\chi_{\text{pad},m} = c_{\text{pad},m}$, the padding values $l,r \in \R^m$ can either
+be learnable parameters or constant. The convolution layers can be used without any bias ($b=0$), a
+constant non-learnable bias ($b \neq 0 =$ const), or with a learnable bias parameter 
+($b$ is a learnable parameter). We stick to $b=0$ in our experiments.
 
-With $\hat{(\bullet)}_{\text{pad},m}(p) := \mathcal{I}_{d+2m}((\bullet)_{\text{pad},m}(p))$,
+With $\hat{\chi}_{\text{pad},m}(p) := \mathcal{I}_{d+2m}(\chi_{\text{pad},m}(p))$,
 we can write the layer transform as
 \begin{equation}\label{eq_conv_layer_transform}
-	\activation_{\mathcal{C}}(p) =
+	\layertf(p) =
 	\mathcal{I}_{d}^{-1} (
-		\mathcal{S}_{m}(\hat{k}) * \hat{(\bullet)}_{\text{pad}}(p)
+		\mathcal{S}_{m}(\hat{k}) * \hat{\chi}_{\text{pad},m}(p)
 	)
 \end{equation}
 
@@ -894,33 +980,33 @@ $\jac{f}{x} \big|_{x=v} = \jac{f}{x}$.
 
 \begin{theorem}\label{thm_conv_const_pad_symplectic}
 	The convolution layers $\mathcal{C}_{up}$ and $\mathcal{C}_{low}$
-	with padding $(\bullet)_{\text{pad},m} = c_{\text{pad},m}$ are symplectic.
+	with padding $\chi_{\text{pad},m} = c_{\text{pad},m}$ are symplectic.
 \end{theorem}
 \begin{proof}
-	We have to show that the Jacobian of the layer transform $\activation_{\mathcal{C}}(p)$
+	We have to show that the Jacobian of the layer transform $\layertf(p)$
 	is symmetric (\cref{jacobi_symmetric}).
 	Because of \cref{cpad_affine}, it suffices to show the case $l,r=0$ (the Jacobian
 	of a constant has only zero-valued entries). For $l,r=0$, the layer transform 
-	$\activation_{\mathcal{C}}(p)$ 
+	$\layertf(p)$ 
 	is a linear map, because it is a composition of linear maps only.
 
 	Define the bilinear form
 	\begin{equation}\label{eq_bilinear_proof_conv}
 		b : \mathbb{R}^d \times \mathbb{R}^d \to \mathbb{R},
-		\quad b(v,w) := \ip{v}{\lb \jac{\activation_{\mathcal{C}}}{p} \rb w}
+		\quad b(v,w) := \ip{v}{\lb \jac{\layertf}{p} \rb w}
 	\end{equation}
 	To show symmetry of the Jacobian, we show that 
 	$b(e_i, e_j) = b(e_j, e_i)$ for all $i,j=1,\dots,d$.
 	\begin{align*}
-		b(e_i, e_j) &= \ip{e_i}{\lb \jac{\activation_{\mathcal{C}}}{p} \rb e_j}
+		b(e_i, e_j) &= \ip{e_i}{\lb \jac{\layertf}{p} \rb e_j}
 		= \ip{e_i}{\activation_{\mathcal{C}}(e_j)} \quad \text{(\cref{jac_linear_map})} \\
 		&\stackrel{\cref{eq_conv_layer_transform}}{=} \ip{e_i}{\mathcal{I}_{d}^{-1} (
-			\mathcal{S}_{m}(\hat{k}) * \hat{c}_{\text{pad}}(e_j)
+			\mathcal{S}_{m}(\hat{k}) * \hat{c}_{\text{pad},m}(e_j)
 		)} \\
 		&= \ip{e_i}{
 			\lb \sum_{a=-\infty}^{\infty} 
 				\hat{k}(a-m)
-				\underbrace{(\hat{c}_{\text{pad}}(e_j))(\tau+a)}_{
+				\underbrace{(\hat{c}_{\text{pad},m}(e_j))(\tau+a)}_{
 					= \delta_{(\tau+a) (j+m)}
 				}
 			\rb_{\tau=1}^d
@@ -932,24 +1018,24 @@ $\jac{f}{x} \big|_{x=v} = \jac{f}{x}$.
 
 \begin{theorem}
 	The convolution layers $\mathcal{C}_{up}$ and $\mathcal{C}_{low}$
-	with padding $(\bullet)_{\text{pad},m} = s_{\text{pad},m}$ are symplectic.
+	with padding $\chi_{\text{pad},m} = s_{\text{pad},m}$ are symplectic.
 \end{theorem}
 \begin{proof}
-	With $(\bullet)_{\text{pad},m} = s_{\text{pad},m}$, the layer transform 
-	$\activation_{\mathcal{C}}$ is linear, because it is a composition of linear maps. Thus,
+	With $\chi_{\text{pad},m} = s_{\text{pad},m}$, the layer transform 
+	$\layertf$ is linear, because it is a composition of linear maps. Thus,
 	we proof the statement the same way as \cref{thm_conv_const_pad_symplectic} above.
 	For $\tau,a \in \mathbb{Z}$ we have
 	\begin{equation*}
 		\hat{s}_{\text{pad},m}(e_j)(\tau + a) = 
 		\delta_{(\tau + a) (m-j+1)} + \delta_{(\tau + a) (j+m)} + \delta_{(\tau + a) (2d+m-j+1)}
 	\end{equation*}
-	Consequently, for $(\bullet)_{\text{pad},m} = s_{\text{pad},m}$ and $i,j=1, \dots, d$, 
+	Consequently, for $\chi_{\text{pad},m} = s_{\text{pad},m}$ and $i,j=1, \dots, d$, 
 	the bilinear form \cref{eq_bilinear_proof_conv} becomes
 	\begin{align*}
 		b(e_i, e_j) &= \ip{e_i}{
 			\lb \sum_{a=-\infty}^{\infty} 
 				\hat{k}(a-m)
-				(\hat{s}_{\text{pad}}(e_j))(\tau+a)
+				(\hat{s}_{\text{pad},m}(e_j))(\tau+a)
 			\rb_{\tau=1}^d
 		} \\
 		&= \hat{k}((m-j+1-i)-m) + \hat{k}((j+m-i)-m) + \hat{k}((2d+m-j+1-i)-m) \\
@@ -960,14 +1046,14 @@ $\jac{f}{x} \big|_{x=v} = \jac{f}{x}$.
 
 \subsubsection*{Parametrization of a symmetric kernel}
 
-Let ${b_1, b_2, \dots b_m} \in \mathbb{R}^{2m+1}$ be a basis of the space 
+Let $\{b_1, b_2, \dots b_m \} \subset \mathbb{R}^{2m+1}$ be a basis of the space 
 $\{ k \in \mathbb{R}^{2m+1} : k \text{ is a symmetric kernel} \}$.
 The symmetric kernel $k$ is then parametrized by the coefficients $\beta \in \mathbb{R}^m$ via
 \begin{equation*}
 	k = (b_1, b_2, \dots, b_m) \beta = \beta_1 b_1 + \beta_2 b_2 + \dots + \beta_m b_m
 \end{equation*}
 
-The basis vectors $b_1, \dots, b_m \in \mathbb{R}^{2m+1}$ for the canonical basis are given by
+One choice is the canonical basis with basis vectors $b_1, \dots, b_m \in \mathbb{R}^{2m+1}$ given by
 \begin{equation*}
 	(b_i)_{j+m+1} = \hat{k}(b_i)(j) = \begin{cases}
 		1 &: \abs{j} = i-1 \\
@@ -984,12 +1070,12 @@ Another possible basis choice inspired by finite differences is
 	b_3^{FD} = (0, 0, \dots, 0, 1,-4,& 6,-4,1, 0, \dots, 0)^T \in \mathbb{R}^{2m+1} \\
 	&\vdots
 \end{align*}
-The entries for a basis vector $b_i^{FD} \in \mathbb{R}^{2m+1}$ $(1 \leq i \leq m)$ 
+In general, the entries for a basis vector $b_i^{FD} \in \mathbb{R}^{2m+1}$ $(1 \leq i \leq m)$ 
 originate from Pascal's triangle.
 \begin{equation*}
 	\lb b_i^{FD} \rb_{j+m+1} = \hat{k}(b_i^{FD})(j) = \begin{dcases}
 		(-1)^j \binom{2(i-1)}{j+i-1} &: \abs{j} < i \\
-		0 &: else
+		0 &: \text{else}
 	\end{dcases}
 	\quad (j=-m, \dots, m)
 \end{equation*}
@@ -1016,28 +1102,28 @@ and for $i=1, \dots, m$ and $j= 0, \dots, m$
 	\end{dcases} \\
 	&= \hat{k}(b_i^{FD})(j) 
 \end{align*}
-So $b_i^{FD}$ $(i=1, \dots, m)$ form a valid basis of
+So $\{ b_i^{FD} \}_{i=1}^m$ is a valid basis of
 the space $\{ k \in \mathbb{R}^{2m+1} : k \text{ is a symmetric kernel} \}$.
 
-It turns out in our numerical experiments that
+In our numerical experiments, it turns out that
 parametrization plays an important role how well a neural network learns.
 
 \subsection{Convolution Gradient Layers}
 
-Valid cross-correlation is a linear map. Therefore
-there exists a representation matrix $A_{*_{\text{v}}}$ with $*_{\text{v}}(p) = A_{*_{\text{v}}}p$.
-Transposed valid cross-correlation 
-is defined as the linear map associated with the transpose $A_{*_{\text{v}}}^T$ of $A_{*_{\text{v}}}$.
+For a fixed kernel $k$, valid cross-correlation is a linear map regarding the second argument. 
+Therefore there exists a representation matrix $A_{k}$ with 
+$*_{\text{v}}(k,p) = A_{k}p$. Transposed valid cross-correlation 
+is defined as the linear map associated with the transpose $A_{k}^T$ of $A_{k}$.
 
 Again, most popular neural network libraries say convolution, but actually implement
-valid cross-correlation. In this case transposed convolution actually refers to
+valid cross-correlation. In this case, transposed convolution actually refers to
 transposed valid cross-correlation.
 
 For large $d \in \mathbb{N}$, it can make sense to use convolution inside Gradient layers 
 instead of a full matrix $K$. Let us repeat the layer transfrom $\layertf$ for Gradient layers.
 
 \begin{equation*}
-	\layertf(p) = K^T \bigg( a_j \activation \lb (Kp)_j + \hat{b}_j \rb \bigg)_{j=1}^n
+	\layertf(p) = K^T \bigg( a_j \activation \lb (Kp)_j + c_j \rb \bigg)_{j=1}^n
 \end{equation*}
 
 A Gradient layer with width $n \in \mathbb{N}$ can be implemented by 
@@ -1061,7 +1147,8 @@ into activation and gradient layers while maintaining symplecticity.
 \todo{Sigmoid activation function saturates for large values. Vanishing gradient.
 Therefore normalize input before applying activation function.}
 
-Let us define the batch normalization transformation
+Given a mini-batch input $\mathcal{B} = \{  x_1, x_2, \dots, x_{n_{\mathcal{B}}} \} \subset \mathbb{R}^{n}$ 
+with size $n_{\mathcal{B}}$, we define the batch normalization transformation as
 \begin{equation*}
 	\eta_{\gamma, \beta} : \mathbb{R}^n \to \mathbb{R}^n,\quad
 	\eta_{\gamma, \beta}(x) 
@@ -1072,48 +1159,50 @@ where $n$ is the input dimension of the input $x \in \mathbb{R}^n$ and $\gamma, 
 are learnable parameters.
 The scalar $\epsilon \in \mathbb{R}$ is a small positive value to avoid division by zero.
 $\sigma^2_\mathcal{B} \in \mathbb{R}^{n}$ refers to the mini-batch variance and
-$\mu_\mathcal{B} \in \mathbb{R}^{n}$ refers to the mini-batch mean.
+$\mu_\mathcal{B} \in \mathbb{R}^{n}$ refers to the mini-batch mean. The batch normalization results 
+in zero mean and unit variance of the whole mini-batch input.
 
 The learnable parameters $\gamma, \beta \in \mathbb{R}^{n}$ allow the neural network to modify
 the normalization during training if necessary. The batch normalization transform is able to 
 represent the identity transform by setting appropriate $\gamma, \beta$.
 
-Given a mini-batch $\mathcal{B} = \{  x^1, x^2, \dots, x^k \} \subset \mathbb{R}^{n}$
-with size $k$, the mean and variance are estimated by
+The mean $\mu_\mathcal{B} \in \R^n$ and variance $\sigma^2_\mathcal{B} \in \R^n$ are estimated by
 \begin{align*}
-	\mu_\mathcal{B} &= \frac{1}{k} \sum_{i=1}^{k} x^i \\
-	\sigma^2_\mathcal{B} &= \frac{1}{k} \sum_{i=1}^{k} (x^i - \mu_\mathcal{B})^2
+	\mu_\mathcal{B} &= \frac{1}{n_{\mathcal{B}}} \sum_{i=1}^{n_{\mathcal{B}}} x_i \\
+	\sigma^2_\mathcal{B} &= \frac{1}{n_{\mathcal{B}}} 
+	\sum_{i=1}^{n_{\mathcal{B}}} (x_i - \mu_\mathcal{B})^2
 \end{align*}
 
 During training the mini-batch variance $\sigma^2_\mathcal{B} \in \mathbb{R}^{n}$ and
 the mini-batch $\mu_\mathcal{B} \in \mathbb{R}^{n}$ are continously updated in the forward pass.
-To be precise, for a new mini-batch $\mathcal{B} = \{ x^1, x^2, \dots, x^k \}$, 
+To be precise, for a new mini-batch input
+$\mathcal{B} = \{ x_1, x_2, \dots, x_{n_{\mathcal{B}}} \} \subset \R^n$, 
 the mean $\mu_\mathcal{B}$ and variance $\sigma^2_\mathcal{B}$
-are updated based on $\mathcal{B}$, before $\eta_{\gamma, \beta}(x^t)$ for
-$x^t \in \mathcal{B}$ is evaluated (see Algorithm 1).
-When training has finished the neural network does not update $\sigma^2$ and $\mu_\mathcal{B}$ anymore.
-Instead, the neural network remembers the last value from training.
+are updated based on $\mathcal{B}$, before $\eta_{\gamma, \beta}(x_k)$ for
+$x_k \in \mathcal{B}$ is evaluated (see Algorithm 1).
+When training has finished the neural network does not update $\sigma_\mathcal{B}^2$ 
+and $\mu_\mathcal{B}$ anymore. Instead, the neural network remembers the last value from training.
 
 Note that the batch normalization transformation may be incorporated into a layer
-deep inside a neural network. 
-If this is the case, the mini-batch $\mathcal{B}$ refers to the collective output of the previous layer.
+deep inside a neural network. If this is the case, the mini-batch input $\mathcal{B}$ 
+refers to the collective output of the previous layer.
 
 \begin{algorithm}\label{algo_batch_norm}
 	\caption{Batch normalization transform}
-	\textbf{Input:} mini batch $\mathcal{B} = \{x^1, x^2, \dots, x^{k}\} \subset \R^n$ 
-	and $x^t \in \mathcal{B}$ \\
-	\textbf{Output:} $\eta_{\gamma, \beta}(x^t) \in \R^n$
+	\textbf{Input:} mini batch $\mathcal{B} = \{x_1, x_2, \dots, x_{n_\mathcal{B}}\} \subset \R^n$ 
+	and $x_k \in \mathcal{B}$ \\
+	\textbf{Output:} $\eta_{\gamma, \beta}(x_k) \in \R^n$
 	\setstretch{1.5}
 	\begin{algorithmic}
 		\If{training\_mode} \Comment{Update mean and variane if training, otherwise
 		keep previous values}
-			\State $\mu_\mathcal{B} \gets \frac{1}{k} \sum_{i=1}^{k} x_i$
-			\State $\sigma^2_\mathcal{B} \gets \frac{1}{k} \sum_{i=1}^{k} 
+			\State $\mu_\mathcal{B} \gets \frac{1}{n_\mathcal{B}} \sum_{i=1}^{n_\mathcal{B}} x_i$
+			\State $\sigma^2_\mathcal{B} \gets \frac{1}{n_\mathcal{B}} \sum_{i=1}^{n_\mathcal{B}} 
 			(x_i - \mu_\mathcal{B})^2$
 		\EndIf
 		\State \Return 
 		$\lb \frac{\gamma_j}{(\sigma^2_\mathcal{B})_j + \epsilon} 
-		\lb x^t_j - \lb \mu_\mathcal{B} \rb_j \rb + \beta_j \rb_{j=1}^n$
+		\lb (x_k)_j - \lb \mu_\mathcal{B} \rb_j \rb + \beta_j \rb_{j=1}^n$
 	\end{algorithmic}
 \end{algorithm}
 
@@ -1133,11 +1222,11 @@ We add normalization to gradient layers.
 	(Normalized gradient layers - Variant 1)
 	Given width $n \in \N$, $K \in \mathbb{R}^{n \times d}$, $a,c \in \mathbb{R}^n$ and
 	an activation function $\activation : \R \to \R$,
-	we call the upper and lower triangular layers with bias $b=0$ and layer transform
+	we call the upper and lower triangular layers with layer transform
 	\begin{equation*}
 		\layertf(p) = K^T \bigg( a_j \activation
-		\lb \hat{p}_j \rb \bigg)_{j=1}^n
-		\quad \text{with } \hat{p} = \eta_{\gamma, \beta} \lb Kp + c \rb \in \R^n
+		\lb \overline{p}_j \rb \bigg)_{j=1}^n
+		\quad \text{with } \overline{p} = \eta_{\gamma, \beta} \lb Kp + c \rb \in \R^n
 	\end{equation*}
 	the upper and lower normalized gradient layers 
 	$\mathcal{G}_\up^{\eta}$ and $\mathcal{G}_\low^{\eta}$ (variant 1).
@@ -1147,11 +1236,11 @@ We add normalization to gradient layers.
 	(Normalized gradient layers - Variant 2)
 	Given width $n \in \N$, $K \in \mathbb{R}^{n \times d}$, $a,c \in \mathbb{R}^n$ and
 	an activation function $\activation : \R \to \R$,
-	we call the upper and lower triangular layers with bias $b=0$ and layer transform
+	we call the upper and lower triangular layers with layer transform
 	\begin{equation*}
 		\layertf(p) = K^T \bigg( a_j \frac{\gamma_j}{(\sigma^2_\mathcal{B})_j + \epsilon}
-		\activation \lb \hat{p}_j \rb \bigg)_{j=1}^n
-		\quad \text{with } \hat{p} = \eta_{\gamma, \beta} \lb Kp + c \rb \in \R^n
+		\activation \lb \overline{p}_j \rb \bigg)_{j=1}^n
+		\quad \text{with } \overline{p} = \eta_{\gamma, \beta} \lb Kp + c \rb \in \R^n
 	\end{equation*}
 	the upper and lower normalized gradient layers 
 	$\mathcal{G}_\up^{\eta}$ and $\mathcal{G}_\low^{\eta}$ (variant 2).
@@ -1168,7 +1257,7 @@ are learnable parameters.
 \todo{Maybe add illustration for normalized gradient layer}
 
 \begin{corollary}\label{cor_norm_gradient_layers_symp}
-	Given an activation function $\sigma \in C^1$
+	Given an activation function $\sigma \in C^1(\R)$,
 	the normalized gradient layers $\mathcal{G}^{\eta}_{up}$ and $\mathcal{G}^{\eta}_{down}$
 	(variant 1 and variant 2) are symplectic.
 \end{corollary}
@@ -1176,23 +1265,23 @@ are learnable parameters.
 	Let $\mathcal{A}: \mathbb{R} \to \mathbb{R}$ be the antiderivative of $\activation$, 
 	i.e. $\dd{x} \mathcal{A} = \activation$. For arbitrary $\alpha \in \R^n$, we define the potential
 	\begin{equation*}
-		V(p) := \sum_{j=1}^n \alpha_j a_j \mathcal{A}(\hat{p}_j)
-		\quad \text{with } \hat{p} = \eta_{\gamma, \beta} \lb Kp + c \rb \in \R^n
+		V(p) := \sum_{j=1}^n \alpha_j a_j \mathcal{A}(\overline{p}_j)
+		\quad \text{with } \overline{p} = \eta_{\gamma, \beta} \lb Kp + c \rb \in \R^n
 	\end{equation*}
 	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and for $i=1, \dots, d$
 	\begin{align*}
 		(\grad{V(p)})_i &= \deldel{p_i} \lb \sum_{j=1}^n \alpha_j a_j \mathcal{A}(\hat{p}_j) \rb
-		= \sum_{j=1}^n \alpha_j a_j \activation(\hat{p}_j) \deldel{p_i} \hat{p}_j
-		= \sum_{j=1}^n \alpha_j a_j \activation(\hat{p}_j)
+		= \sum_{j=1}^n \alpha_j a_j \activation(\overline{p}_j) \deldel{p_i} \overline{p}_j
+		= \sum_{j=1}^n \alpha_j a_j \activation(\overline{p}_j)
 		\frac{\gamma_j}{(\sigma^2_\mathcal{B})_j + \epsilon} \underbrace{K_{ji}}_{=K^T_{ij}} \\
 		%
 		\implies
 		\grad{V(p)}
 		&= K^T \bigg( \alpha_j a_j \frac{\gamma_j}{(\sigma^2_\mathcal{B})_j + \epsilon}
-		\activation \lb \hat{p}_j \rb \bigg)_{j=1}^n
+		\activation \lb \overline{p}_j \rb \bigg)_{j=1}^n
 	\end{align*}
-	If we choose $\alpha_j = 1$ follows $\grad{V(p)} = \layertf(p)$ for variant 2.
-	If we choose $\alpha_j = \frac{(\sigma^2_\mathcal{B})_j + \epsilon}{\gamma_j}$ 
+	If we choose $\alpha_j = 1$, follows $\grad{V(p)} = \layertf(p)$ for variant 2.
+	If we choose $\alpha_j = \frac{(\sigma^2_\mathcal{B})_j + \epsilon}{\gamma_j}$,
 	follows $\grad{V(p)} = \layertf(p)$ for variant 1.
 	With \cref{gradient_corollary} follows that both normalized Gradient layer variants
 	$\mathcal{G}_{up}^\eta$ and $\mathcal{G}_{low}^\eta$ are symplectic.
@@ -1231,7 +1320,7 @@ are learnable parameters.
 The coefficients $a \in \mathbb{R}^d$ are learnable parameters.
 
 \begin{corollary}
-	Given an activation function $\sigma \in C^1$
+	Given an activation function $\sigma \in C^1(\R)$,
 	the normalized activation layers $\mathcal{N}^{\eta}_{up}$ and $\mathcal{N}^{\eta}_{low}$
 	(variant 1 and variant 2) are symplectic.
 \end{corollary}
@@ -1368,7 +1457,9 @@ and the $q$-staggered Störmer-Verlet scheme as
 \end{equation*}
 
 To conclude, the explicit Euler and Störmer-Verlet schemes can be expressed with
-the same unit triangular structure we use for SympNets. \todo{Recurrent networks?}
+the same unit triangular structure we use for SympNets. This means that a SympNet is able
+reproduce both schemes exactly or approximately, provided appropriate layer choices.
+\todo{Recurrent networks?}
 
 Symplecticity for the explicit Euler and Störmer-Verlet schemes follows directly 
 from \cref{gradient_corollary} and the fact that the composition of symplectic maps is again symplectic.
@@ -1391,7 +1482,7 @@ $(q,p) \in [-\frac{\pi}{2}, \frac{\pi}{2}] \times [-\sqrt{2}, \sqrt{2}]$
 		title={Training loss},
 		xlabel={Epoch},
 		ylabel={Loss},
-		restrict y to domain=0:1e-4,
+		restrict y to domain=0:0.2e-4,
 		legend style={draw=none},
 		legend entries={
 			LA-SympNet,
@@ -1574,7 +1665,7 @@ example in the form of CNNs etc.}
 
 Assumptions:
 \begin{itemize}
-	\item Original PDE has constant coefficients \todo{Or rather should not depend on $x$ itself?}
+	\item \todo{Original PDE has constant coefficients Or rather should not depend on $x$ itself?}
 	\item Equidistant grid points
 \end{itemize}
 
@@ -1582,18 +1673,14 @@ Assumptions:
 
 \subsubsection{Linear wave equation}
 
-\todo{The choice of basis for the symmetric convolution kernels is critical (at least for fast convergence)!}
+\todo{The choice of basis for the symmetric convolution kernels is critical (for fast convergence)!}
 
 \subsubsection{Sine-Gordon}
 
-\todo{Bias important if non-zero Dirichlet boundaries, but only at borders! // Padding modes}
+\todo{Padding modes}
 
 \todo{Activation layer with sin works well if $a \in \mathbb{R}$, i.e. activation function is applied
 isotropic.}
-
-\todo{Maybe compare different optimizers (SGD, Adam, AdamW, amsgrad, ...)}
-
-\todo{Activation layers: Differentiate between $a \in \mathbb{R}$ and $a \in \mathbb{R}^d$}
 
 %----------------------------------------------------------------------------------------
 %
@@ -1627,7 +1714,6 @@ isotropic.}
 \centering
 \begin{tabular}{|p{13cm}|}
 \hline\\
-	\todo{Change to bachelor thesis}
 	I hereby certify
 	\begin{enumerate}
 		\item that this thesis has been composed by me and is based on my own work, unless stated otherwise,
@@ -1636,7 +1722,7 @@ isotropic.}
 		\item that neither the thesis itself nor parts of this thesis have been published and
 		\item that all copies of this thesis, either digital or printed, coincide.
 	\end{enumerate}
-	Therewith, this declaration of authorship is in accordance with the examination regulations from 29th July 2013 of the master's program \emph{Simulation Technology} of the University of Stuttgart.\\\\
+	Therewith, this declaration of authorship is in accordance with the examination regulations from 22th July 2016 of the bachelor's program \emph{Simulation Technology} of the University of Stuttgart.\\\\
 \hline
 \end{tabular}
 \end{table}
