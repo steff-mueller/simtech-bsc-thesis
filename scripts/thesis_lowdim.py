@@ -13,15 +13,21 @@ latex_data_path = root_path.joinpath('latex/data')
 simple_pendulum_swing_rot_dir = data_path.joinpath('simple_pendulum_swing_rot')
 simple_pendulum_swing_rot_latex = latex_data_path.joinpath('simple_pendulum_swing_rot')
 
+class Architecture:
+    def __init__(self, name, extra_cmd=[]):
+        self.name = name
+        self.extra_cmd = extra_cmd
+
 architectures = [
-    'la-sympnet', 
-    'normalized-la-sympnet',
-    'normalized-la-sympnet-ignore-factor',
-    'g-sympnet', 
-    'normalized-g-sympnet',
-    'normalized-g-sympnet-ignore-factor'
+    Architecture('fnn'),
+    Architecture('la-sympnet'), 
+    Architecture('n1-la-sympnet'),
+    Architecture('n2-la-sympnet'),
+    Architecture('g-sympnet'), 
+    Architecture('n1-g-sympnet'),
+    Architecture('n2-g-sympnet')
 ]
-epochs = 10000
+epochs = 2000
 
 class Experiment:
     def __init__(self, name, configurations, cmd):
@@ -73,9 +79,9 @@ def run_experiments(args):
     for exp in experiments:
         for arch in architectures:
             execute(exp.cmd + [
-                '--architecture', arch,
-                '--output-dir', data_path.joinpath(exp.name, arch)
-            ])
+                '--architecture', arch.name,
+                '--output-dir', data_path.joinpath(exp.name, arch.name)
+            ] + arch.extra_cmd)
 
 def save_csv(dest, vec, header):
     if not dest.parent.exists():
@@ -98,31 +104,60 @@ def update_csv(args):
         curr_exp_dir = data_path.joinpath(exp.name)
         curr_destination_dir = latex_data_path.joinpath(exp.name)
 
+        for arch in architectures:
+            # Training loss
+            losses = np.load(curr_exp_dir.joinpath(arch.name, 'losses.npy'))
+            losses = np.stack([
+                np.arange(0, len(losses)),
+                losses
+            ], axis=1)
+            save_csv(curr_destination_dir
+                .joinpath(arch.name, 'loss.csv'), subsample(losses,10), header='epoch,loss')
+
+            # Test loss
+            losses = np.load(curr_exp_dir.joinpath(arch.name, 'test_losses.npy'))
+            losses = np.stack([
+                np.arange(0, len(losses)),
+                losses
+            ], axis=1)
+            save_csv(curr_destination_dir
+                .joinpath(arch.name, 'test_loss.csv'), subsample(losses,10), header='epoch,loss')
+
         for config in exp.configurations:
 
-            # Exact td x
-            exact_td_x = np.load(curr_exp_dir
-                .joinpath(architectures[0], config, 'exact_td_x.npy'))
-            save_phase_plot(curr_destination_dir
-                .joinpath('exact', config, 'phase_plot.csv'), exact_td_x)
+            td_x = np.load(curr_exp_dir
+                .joinpath(architectures[0].name, config, 'exact_td_x.npy'))
+            td_Ham = np.load(curr_exp_dir
+                .joinpath(architectures[0].name, config, 'exact_td_Ham.npy'))
+
+            save_phase_plot(
+                curr_destination_dir.joinpath('exact', config, 'phase_plot.csv'), 
+                td_x[:,1:]
+            )
+
+            save_csv(
+                curr_destination_dir.joinpath('exact', config, 'total_energy.csv'),
+                td_Ham,
+                't,E'
+            )
 
             for arch in architectures:
-                
-                # Predicted td x by architecture
-                td_x = np.load(curr_exp_dir
-                    .joinpath(arch, config, 'epoch{}_td_x.npy'.format(epochs)))
-                save_phase_plot(curr_destination_dir
-                    .joinpath(arch, config, 'phase_plot.csv'), td_x)
 
-                # Training loss
-                losses = np.load(curr_exp_dir
-                    .joinpath(arch, 'losses.npy'))
-                losses = np.stack([
-                    np.arange(0, len(losses)),
-                    losses
-                ], axis=1)
-                save_csv(curr_destination_dir
-                    .joinpath(arch, 'loss.csv'), subsample(losses,10), header='epoch,loss')
+                td_x = np.load(curr_exp_dir
+                    .joinpath(arch.name, config, 'epoch{}_td_x.npy'.format(epochs)))
+                td_Ham = np.load(curr_exp_dir
+                    .joinpath(arch.name, config, 'epoch{}_td_Ham.npy'.format(epochs)), allow_pickle=True)
+
+                save_phase_plot(
+                    curr_destination_dir.joinpath(arch.name, config, 'phase_plot.csv'), 
+                    td_x[:,1:]
+                )
+
+                save_csv(
+                    curr_destination_dir.joinpath(arch.name, config, 'total_energy.csv'),
+                    td_Ham,
+                    't,E'
+                )
 
 
 if __name__ == '__main__':

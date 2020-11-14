@@ -1372,7 +1372,7 @@ and the $q$-staggered variant of the Störmer-Verlet scheme is given by
 \end{align*}
 We refer to \citet[p.~189 and p.~190]{hairer2006} for details.
 
-If the Hamiltonian $H$ is separable, i.e. $H(q,p) = U(q) + T(p)$, the sympletic Euler and Störmer-Verlet
+If the Hamiltonian $H$ is separable, i.e. $H(q,p) = U(q) + V(p)$, the sympletic Euler and Störmer-Verlet
 schemes become explicit. Then given $\grad[p]{H} : \mathbb{R}^d \to \mathbb{R}^d$, $p \mapsto \grad[p]{H}(p)$ 
 and $\grad[q]{H} : \mathbb{R}^d \to \mathbb{R}^d$, $q \mapsto \grad[q]{H}(q)$,
 the left variant of the symplectic Euler scheme can be expressed as
@@ -1486,9 +1486,10 @@ $(q,p) \in [-\frac{\pi}{2}, \frac{\pi}{2}] \times [-\sqrt{2}, \sqrt{2}]$
 		title={Training loss},
 		xlabel={Epoch},
 		ylabel={Loss},
-		restrict y to domain=0:0.2e-4,
+		restrict y to domain=0:1e-4,
 		legend style={draw=none},
 		legend entries={
+			FNN,
 			LA-SympNet,
 			N1-LA-SympNet,
 			N2-LA-SympNet,
@@ -1499,16 +1500,20 @@ $(q,p) \in [-\frac{\pi}{2}, \frac{\pi}{2}] \times [-\sqrt{2}, \sqrt{2}]$
 	]
 
 	\addplot[
+		color=brown
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/fnn/loss.csv};
+
+	\addplot[
 		color=red
 	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/la-sympnet/loss.csv};
 
 	\addplot[
 		color=red, dashed
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/normalized-la-sympnet-ignore-factor/loss.csv};
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n1-la-sympnet/loss.csv};
 
 	\addplot[
 		color=red, densely dotted
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/normalized-la-sympnet/loss.csv};
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n2-la-sympnet/loss.csv};
 
 	\addplot[
 		color=blue
@@ -1516,11 +1521,161 @@ $(q,p) \in [-\frac{\pi}{2}, \frac{\pi}{2}] \times [-\sqrt{2}, \sqrt{2}]$
 
 	\addplot[
 		color=blue, dashed
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/normalized-g-sympnet-ignore-factor/loss.csv};
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n1-g-sympnet/loss.csv};
 
 	\addplot[
 		color=blue, densely dotted
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/normalized-g-sympnet/loss.csv};+
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n2-g-sympnet/loss.csv};
+		
+	\end{axis}
+\end{tikzpicture}
+
+\begin{tikzpicture}
+	\begin{axis}[
+		no markers, smooth,
+		title={Test loss},
+		xlabel={Epoch},
+		ylabel={Loss},
+		restrict y to domain=0:1e-4,
+		legend style={draw=none},
+		legend entries={
+			FNN,
+			LA-SympNet,
+			N1-LA-SympNet,
+			N2-LA-SympNet,
+			G-SympNet,
+			N1-G-SympNet,
+			N2-G-SympNet
+		}
+	]
+
+	\addplot[
+		color=brown
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/fnn/test_loss.csv};
+
+	\addplot[
+		color=red
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/la-sympnet/test_loss.csv};
+
+	\addplot[
+		color=red, dashed
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n1-la-sympnet/test_loss.csv};
+
+	\addplot[
+		color=red, densely dotted
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n2-la-sympnet/test_loss.csv};
+
+	\addplot[
+		color=blue
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/g-sympnet/test_loss.csv};
+
+	\addplot[
+		color=blue, dashed
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n1-g-sympnet/test_loss.csv};
+
+	\addplot[
+		color=blue, densely dotted
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n2-g-sympnet/test_loss.csv};
+		
+	\end{axis}
+\end{tikzpicture}
+
+\begin{tikzpicture}
+	\begin{axis}[
+		width = \linewidth,
+		title={Phase plot (swinging case)},
+		xlabel={q},
+		ylabel={p},
+		no markers, smooth
+	]
+
+	\addplot[
+		color=gray,thick
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/exact/swinging_case/phase_plot.csv};
+
+	\addplot[
+		color=red
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/la-sympnet/swinging_case/phase_plot.csv};
+
+	\addplot[
+		color=red,dashed,
+		select coords between index={0}{72}
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/n1-la-sympnet/swinging_case/phase_plot.csv};
+
+	\addplot[
+		color=red,densely dotted,
+		select coords between index={0}{72}
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/n2-la-sympnet/swinging_case/phase_plot.csv};
+
+	\addplot[
+		color=brown
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/fnn/swinging_case/phase_plot.csv};
+
+	\addplot[
+		color=blue
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/g-sympnet/swinging_case/phase_plot.csv};
+
+	\addplot[
+		color=blue,dashed,
+		select coords between index={0}{72}
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/n1-g-sympnet/swinging_case/phase_plot.csv};
+
+	%\addplot[
+	%	color=blue,densely dotted,
+	%	select coords between index={0}{72}
+	%] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/n2-g-sympnet/swinging_case/phase_plot.csv};
+		
+	\end{axis}
+\end{tikzpicture}
+
+\begin{tikzpicture}
+	\begin{axis}[
+		width = \linewidth,
+		height = \axisdefaultheight,
+		no markers, smooth,
+		title={Total energy},
+		xlabel={t},
+		ylabel={Total energy},
+		legend style={draw=none},
+		legend entries={
+			Störmer-Verlet,
+			FNN,
+			LA-SympNet,
+			N1-LA-SympNet,
+			N2-LA-SympNet,
+			G-SympNet,
+			N1-G-SympNet,
+			N2-G-SympNet
+		}
+	]
+
+	\addplot[
+		color=gray
+	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/exact/swinging_case/total_energy.csv};
+
+	\addplot[
+		color=brown
+	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/fnn/swinging_case/total_energy.csv};
+
+	\addplot[
+		color=red
+	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/la-sympnet/swinging_case/total_energy.csv};
+
+	\addplot[
+		color=orange
+	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/n1-la-sympnet/swinging_case/total_energy.csv};
+
+	\addplot[
+		color=violet
+	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/n2-la-sympnet/swinging_case/total_energy.csv};
+
+	\addplot[
+		color=blue
+	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/g-sympnet/swinging_case/total_energy.csv};
+
+	\addplot[
+		color=cyan
+	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/n1-g-sympnet/swinging_case/total_energy.csv};
 		
 	\end{axis}
 \end{tikzpicture}
@@ -1549,11 +1704,11 @@ $(q,p) \in [-20, 20] \times [0.5, 2.5]$
 
 	\addplot[
 		color=blue,dashed
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/normalized-g-sympnet-ignore-factor/loss.csv};
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n1-g-sympnet/loss.csv};
 
 	\addplot[
 		color=blue, densely dotted
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/normalized-g-sympnet/loss.csv};+
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n2-g-sympnet/loss.csv};+
 		
 	\end{axis}
 \end{tikzpicture}
@@ -1591,7 +1746,7 @@ $(q,p) \in [-20, 20] \times [-2.5, 2.5]$
 		color=green,
 		dashed,
 		select coords between index={0}{72}
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-g-sympnet/swinging_case/phase_plot.csv};
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/n1-g-sympnet/swinging_case/phase_plot.csv};
 		
 	\end{axis}
 \end{tikzpicture}
@@ -1617,7 +1772,7 @@ $(q,p) \in [-20, 20] \times [-2.5, 2.5]$
 		color=red,
 		densely dotted,
 		no markers
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-la-sympnet/rotating_case/phase_plot.csv};
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/n1-la-sympnet/rotating_case/phase_plot.csv};
 
 	\addplot[
 		color=blue,
@@ -1628,7 +1783,7 @@ $(q,p) \in [-20, 20] \times [-2.5, 2.5]$
 		color=blue,
 		densely dotted,
 		no markers
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-g-sympnet/rotating_case/phase_plot.csv};
+	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/n1-g-sympnet/rotating_case/phase_plot.csv};
 		
 	\end{axis}
 \end{tikzpicture}
@@ -1653,11 +1808,11 @@ $(q,p) \in [-20, 20] \times [-2.5, 2.5]$
 
 	\addplot[
 		color=blue, dashed
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-g-sympnet-ignore-factor/loss.csv};
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/n1-g-sympnet/loss.csv};
 
 	\addplot[
 		color=blue, densely dotted
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-g-sympnet/loss.csv};
+	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/n2-g-sympnet/loss.csv};
 		
 	\end{axis}
 \end{tikzpicture}

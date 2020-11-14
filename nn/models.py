@@ -25,7 +25,7 @@ def integrate(model, q0, p0, t_start, t_end, dt, device=None, custom_phase_space
     
     # replicate behavior of original models 
     # and thus interpret t_end as an open interval
-    while t_curr <= t_end - dt:
+    while t_curr < t_end - dt:
         x_curr = model.__call__(x_curr)
         t_curr += dt
 

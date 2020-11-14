@@ -18,11 +18,12 @@ from nn.nonlinearsymplectic import *
 from nn.symplecticloss import symplectic_mse_loss
 
 from utils.plot2d import *
-from utils.data import td_x_to_hamiltonian, time_data_list_to_numpy, save_json
+from utils.data import td_x_to_hamiltonian, save_json, td_to_numpy
 
 class SamplingParameters:
     def __init__(self, mu, qmin=-1, qmax=+1, pmin=-1, pmax=+1):
         self.n = 10000
+        self.n_test = 400
 
         self.qmin = qmin
         self.qmax = qmax
@@ -54,9 +55,9 @@ class Configuration:
 
         # save exact solution on disk
         np.save(os.path.join(experiment.output_dir, name, 'exact_td_x.npy'), 
-            self._td_x.all_data_to_numpy())
+            td_to_numpy(self._td_x))
         np.save(os.path.join(experiment.output_dir, name, 'exact_td_Ham.npy'), 
-            time_data_list_to_numpy(self._td_Ham))
+            td_to_numpy(self._td_Ham))
 
     def run(self, epoch):
         td_x_surrogate = integrate(self.experiment.surrogate_model, self.mu['q0'], self.mu['p0'], 
@@ -65,9 +66,9 @@ class Configuration:
 
         # save data on disk
         np.save(os.path.join(self.experiment.output_dir, self.name, 'epoch{}_td_x.npy'.format(epoch)), 
-            td_x_surrogate.all_data_to_numpy())
+            td_to_numpy(td_x_surrogate))
         np.save(os.path.join(self.experiment.output_dir, self.name, 'epoch{}_td_Ham.npy'.format(epoch)), 
-            time_data_list_to_numpy(td_Ham_surrogate))
+            td_to_numpy(td_Ham_surrogate))
 
         # plot results
         plt = plot_Ham_sys(self._td_x, td_x_surrogate)
@@ -119,34 +120,36 @@ class Experiment:
 
     def _get_training_data(self):
         params = self._sampling_params
+        n_total = params.n + params.n_test
 
         # do not change original dictionary
         mu = params.mu.copy()
 
         # generate random phase points in [-qmin,qmax]x[-pmin,pmax]
         rg = np.random.default_rng(seed=0)
-        q = rg.uniform(params.qmin, params.qmax, size=(params.n,1))
-        p = rg.uniform(params.pmin, params.pmax, size=(params.n,1))
-        X_train = np.hstack((q,p))
+        q = rg.uniform(params.qmin, params.qmax, size=(n_total,1))
+        p = rg.uniform(params.pmin, params.pmax, size=(n_total,1))
+        X = np.hstack((q,p))
 
-        def time_step(x_train):
+        def time_step(x):
             # TODO implement generic way to set initial values
-            mu['q0'] = x_train[0]
-            mu['p0'] = x_train[1]
+            mu['q0'] = x[0]
+            mu['p0'] = x[1]
 
             # compute single time step h
             td_x, td_Ham = model.solve(0, self.dt+self.dt, 
                 self.num_integrator, mu) # open time interval, therefore `dt+dt`
-            t, x = td_x[1]
-            return x.to_numpy()
+            t, y = td_x[1]
+            return y.to_numpy()
 
-        Y_train = np.apply_along_axis(time_step, 1, X_train)
+        Y = np.apply_along_axis(time_step, 1, X)
 
-        # convert numpy array to `torch.tensor`
-        X_train = torch.tensor(X_train, requires_grad=True, dtype=torch.float32)
-        Y_train = torch.tensor(Y_train, dtype=torch.float32)
+        X_train = torch.tensor(X[:params.n, :], requires_grad=True, dtype=torch.float32)
+        Y_train = torch.tensor(Y[:params.n, :], dtype=torch.float32)
+        X_test = torch.tensor(X[params.n:, :], dtype=torch.float32)
+        Y_test = torch.tensor(Y[params.n:, :], dtype=torch.float32)
 
-        return (X_train, Y_train)
+        return (X_train, Y_train, X_test, Y_test)
 
     def _run_configurations(self, epoch):
         for configuration in self._configurations:
@@ -170,7 +173,7 @@ class Experiment:
         self._configurations.append(Configuration(self, name, mu, t_start, t_end))
 
     def run(self):
-        x,y = self._get_training_data()
+        x,y,x_test,y_test = self._get_training_data()
 
         # save training data on disk
         np.save(os.path.join(self.output_dir, 'training_data_x.npy'), x.detach())
@@ -180,6 +183,7 @@ class Experiment:
         optimizer = torch.optim.Adam(surrogate_model.parameters(), lr=self.lr, amsgrad=True)
 
         losses = []
+        test_losses = []
         self.surrogate_model.train()
         for epoch in range(self.epochs):
             if (epoch % 100) == 0:
@@ -198,6 +202,12 @@ class Experiment:
 
                 self._log_loss(loss, x, y1, y, epoch)
                 losses.append(float(loss))
+
+                y1_test = self.surrogate_model(x_test)
+                test_loss = criterion(y1_test, y_test)
+                test_losses.append(float(test_loss))
+                self.writer.add_scalar("Loss/test", test_loss, epoch)
+
                 if self.log_intermediate and (epoch % 500) == 0:
                     self._run_configurations(epoch)
 
@@ -210,10 +220,27 @@ class Experiment:
 
         # save losses and trained model on disk
         np.save(os.path.join(self.output_dir, 'losses.npy'), losses)
+        np.save(os.path.join(self.output_dir, 'test_losses.npy'), test_losses)
         torch.save(self.surrogate_model.state_dict(), 
             os.path.join(self.output_dir, 'surrogate_model.state_dict'))
 
-def get_surrogate_model(architecture, dim):
+class ActivationModule(torch.nn.Module):
+    def __init__(self, activation_fn):
+        super(ActivationModule, self).__init__()
+        self.activation_fn = activation_fn
+
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        return self.activation_fn(input)
+
+def get_surrogate_model(architecture, dim, activation_fn):
+    if architecture == 'fnn':
+        return torch.nn.Sequential(
+            torch.nn.Linear(2, 50),
+            ActivationModule(activation_fn),
+            torch.nn.Linear(50, 50),
+            ActivationModule(activation_fn),
+            torch.nn.Linear(50, 2)
+        )
     if architecture == 'la-sympnet':
         return torch.nn.Sequential(
             LinearSymplectic(4, dim, bias=True),
@@ -228,8 +255,8 @@ def get_surrogate_model(architecture, dim):
             LowerNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn),
             LinearSymplectic(4, dim, bias=True)
         )
-    elif architecture == 'normalized-la-sympnet' or architecture == 'normalized-la-sympnet-ignore-factor':
-        ignore_factor = architecture == 'normalized-la-sympnet-ignore-factor'
+    elif architecture == 'n1-la-sympnet' or architecture == 'n2-la-sympnet':
+        ignore_factor = architecture == 'n1-la-sympnet'
         nonlinear_args = {'dim':dim, 'bias': False, 'activation_fn': activation_fn, 'ignore_factor': ignore_factor}
         return torch.nn.Sequential(
             LinearSymplectic(4, dim, bias=True),
@@ -251,8 +278,8 @@ def get_surrogate_model(architecture, dim):
             LowerGradientModule(dim, n=30, bias=False, activation_fn=activation_fn),
             UpperGradientModule(dim, n=30, bias=False, activation_fn=activation_fn)
         )
-    elif architecture == 'normalized-g-sympnet' or architecture == 'normalized-g-sympnet-ignore-factor':
-        ignore_factor = architecture == 'normalized-g-sympnet-ignore-factor'
+    elif architecture == 'n1-g-sympnet' or architecture == 'n2-g-sympnet':
+        ignore_factor = architecture == 'n1-g-sympnet'
         gradient_args = {'dim':dim, 'n':30, 'bias': False, 'activation_fn': activation_fn, 'ignore_factor': ignore_factor}
         return torch.nn.Sequential(
             NormalizedLowerGradientModule(**gradient_args),
@@ -271,6 +298,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', default=500, type=int)
     parser.add_argument('--dt', default=0.1, type=float)
     parser.add_argument('--training-size', '-n', default=40, type=int)
+    parser.add_argument('--test-size', default=400, type=int)
     parser.add_argument('--learning-rate', '-lr', default=1e-2, type=float)
     parser.add_argument(
         '--integrator',
@@ -279,12 +307,13 @@ if __name__ == '__main__':
         default='stoermer_verlet_q'
     )
     parser.add_argument('--architecture', choices=[
+        'fnn',
         'la-sympnet', 
-        'normalized-la-sympnet', 
-        'normalized-la-sympnet-ignore-factor',
+        'n1-la-sympnet', 
+        'n2-la-sympnet',
         'g-sympnet', 
-        'normalized-g-sympnet',
-        'normalized-g-sympnet-ignore-factor'
+        'n1-g-sympnet',
+        'n2-g-sympnet'
     ], default='la-sympnet')
     parser.add_argument('--activation', choices=['sigmoid', 'sin', 'relu', 'elu', 'snake'], default='sigmoid')
     parser.add_argument('--qmin', default=-np.pi/2, type=float)
@@ -305,7 +334,7 @@ if __name__ == '__main__':
     }
     activation_fn = activation_functions[args.activation]
     dim = 2
-    surrogate_model = get_surrogate_model(args.architecture, dim)
+    surrogate_model = get_surrogate_model(args.architecture, dim, activation_fn)
 
     if args.model == 'simple_pendulum':
         model = SimplePendulum()
@@ -315,6 +344,7 @@ if __name__ == '__main__':
             qmin=args.qmin, qmax=args.qmax,
             pmin=args.pmin, pmax=args.pmax)
         sampling_params.n = args.training_size
+        sampling_params.n_test = args.test_size
 
         expm = Experiment(args, model, surrogate_model, sampling_params)
 
@@ -336,6 +366,7 @@ if __name__ == '__main__':
             qmin=args.qmin, qmax=args.qmax,
             pmin=args.pmin, pmax=args.pmax)
         sampling_params.n = args.training_size
+        sampling_params.n_test = args.test_size
 
         expm = Experiment(args, model, surrogate_model, sampling_params)
 

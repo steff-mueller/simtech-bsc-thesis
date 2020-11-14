@@ -1,18 +1,26 @@
 from pathlib import Path
 import json
 import numpy as np
-from models.dyn_sys import TimeDataList
+from models.integrators.base import TimeDataList
 
 def td_x_to_hamiltonian(td_x_surrogate, model, mu):
     result = TimeDataList()
     for t,x in td_x_surrogate:
-        result._t.append(t)
-        result._data.append(model.Ham(x, mu))
+        result.append(t, model.Ham(x, mu))
 
     return result
 
-def time_data_list_to_numpy(td: TimeDataList):
-    return np.array((td._t, td._data)).transpose()
+
+def td_to_numpy(td: TimeDataList):  
+    t = np.array(td.all_t())
+    assert len(t.shape) == 1
+    data = td.all_data_to_numpy() if hasattr(td, 'all_data_to_numpy') else np.array(td.all_data())
+
+    if len(data.shape) == 1:
+        return np.stack((t,data), axis=1)
+    else:
+        return np.concatenate((t.reshape(-1,1),data), axis=1)
+    
 
 def save_json(filepath, data):
     path = Path(*filepath)

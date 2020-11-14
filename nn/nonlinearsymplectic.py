@@ -133,7 +133,7 @@ class NormalizedUpperGradientModule(_NormBase):
         with torch.no_grad():
             nn.init.uniform_(self.a, -0.01, 0.01)
             nn.init.constant_(self.b, 0)
-            nn.init.uniform_(self.K, -10, 10)
+            nn.init.uniform_(self.K, -0.01, 0.01)
 
     def _matrix_calc_top(self, x_top, x_bottom):
         pre_activation, factor = self._normalize(x_bottom.mm(self.K.t()) + self.b)
@@ -204,7 +204,7 @@ class NormalizedUpperConv1dGradientModule(_NormBase):
         with torch.no_grad():
             nn.init.uniform_(self.a, -0.01, 0.01)
             nn.init.uniform_(self.b, -0.01, 0.01)
-            nn.init.uniform_(self.K, -10, 10)
+            nn.init.uniform_(self.K, -0.01, 0.01)
 
     def _conv1d(self, x_half: torch.Tensor):
         x_half = x_half.reshape((-1, 1, self.dim_half))

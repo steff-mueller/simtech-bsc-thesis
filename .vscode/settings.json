@@ -21,7 +21,7 @@
             "command": "latexmk",
             "args": [
                 "-synctex=1",
-                "-shell-escape", "thesis",
+                "-shell-escape",
                 "-interaction=nonstopmode",
                 "-file-line-error",
                 "-pdf",
