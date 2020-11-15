@@ -241,6 +241,8 @@ def get_surrogate_model(architecture, dim, activation_fn):
             ActivationModule(activation_fn),
             torch.nn.Linear(50, 2)
         )
+    if architecture == 'l-sympnet':
+        return LinearSymplectic(9, dim, bias=True)
     if architecture == 'la-sympnet':
         return torch.nn.Sequential(
             LinearSymplectic(4, dim, bias=True),
@@ -308,6 +310,7 @@ if __name__ == '__main__':
     )
     parser.add_argument('--architecture', choices=[
         'fnn',
+        'l-sympnet',
         'la-sympnet', 
         'n1-la-sympnet', 
         'n2-la-sympnet',
@@ -315,7 +318,9 @@ if __name__ == '__main__':
         'n1-g-sympnet',
         'n2-g-sympnet'
     ], default='la-sympnet')
-    parser.add_argument('--activation', choices=['sigmoid', 'sin', 'relu', 'elu', 'snake'], default='sigmoid')
+    parser.add_argument('--activation', 
+        choices=['sigmoid', 'tanh', 'sin', 'relu', 'elu', 'snake'], 
+        default='sigmoid')
     parser.add_argument('--qmin', default=-np.pi/2, type=float)
     parser.add_argument('--qmax', default=np.pi/2, type=float)
     parser.add_argument('--pmin', default=-np.sqrt(2), type=float)
@@ -327,6 +332,7 @@ if __name__ == '__main__':
 
     activation_functions = {
         'sigmoid': torch.sigmoid,
+        'tanh': torch.tanh,
         'sin': torch.sin,
         'relu': torch.relu,
         'elu': torch.nn.ELU(),
