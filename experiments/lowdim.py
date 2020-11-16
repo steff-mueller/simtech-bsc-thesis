@@ -245,7 +245,7 @@ def get_la_sympnet(dim, depth, sub_layers, activation_fn):
             modules.append(UpperNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn))
     
     modules.append(LinearSymplectic(sub_layers, dim, bias=True))
-    return torch.Sequential(*modules)
+    return torch.nn.Sequential(*modules)
 
 def get_n_la_sympnet(dim, depth, sub_layers, activation_fn, ignore_factor):
     modules = []
@@ -258,11 +258,11 @@ def get_n_la_sympnet(dim, depth, sub_layers, activation_fn, ignore_factor):
             modules.append(NormalizedLowerNonlinearSymplectic(dim, bias=False, 
                 activation_fn=activation_fn, ignore_factor=ignore_factor))
         else:
-            modules.append(NoormalizedUpperNonlinearSymplectic(dim, bias=False, 
+            modules.append(NormalizedUpperNonlinearSymplectic(dim, bias=False, 
                 activation_fn=activation_fn, ignore_factor=ignore_factor))
     
     modules.append(LinearSymplectic(sub_layers, dim, bias=True))
-    return torch.Sequential(*modules)
+    return torch.nn.Sequential(*modules)
 
 def get_surrogate_model(architecture, dim, activation_fn):
     if architecture == 'fnn':
@@ -292,13 +292,13 @@ def get_surrogate_model(architecture, dim, activation_fn):
     elif architecture == 'la-sympnet':
         return get_la_sympnet(dim, 5, 4, activation_fn)
     elif architecture == 'large-la-sympnet':
-        return get_la_sympnet(dim, 20, 4, activation_fn)
+        return get_la_sympnet(dim, 20, 5, activation_fn)
     elif architecture == 'n1-la-sympnet' or architecture == 'n2-la-sympnet':
         ignore_factor = architecture == 'n1-la-sympnet'
         return get_n_la_sympnet(dim, 5, 4, activation_fn, ignore_factor)
     elif architecture == 'large-n1-la-sympnet' or architecture == 'large-n2-la-sympnet':
         ignore_factor = architecture == 'large-n1-la-sympnet'
-        return get_n_la_sympnet(dim, 20, 4, activation_fn, ignore_factor)
+        return get_n_la_sympnet(dim, 20, 5, activation_fn, ignore_factor)
     elif architecture == 'g-sympnet':
         return torch.nn.Sequential(
             LowerGradientModule(dim, n=30, bias=False, activation_fn=activation_fn),
