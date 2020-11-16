@@ -25,15 +25,25 @@ architectures = [
     Architecture('n1-g-sympnet'),
     Architecture('n2-g-sympnet')
 ]
-epochs = 100000
+
+large_architectures = [
+    Architecture('large-fnn'),
+    Architecture('large-la-sympnet'), 
+    Architecture('large-n1-la-sympnet'),
+    Architecture('large-n2-la-sympnet'),
+    Architecture('large-g-sympnet'), 
+    Architecture('large-n1-g-sympnet'),
+    Architecture('large-n2-g-sympnet')
+]
 
 class Experiment:
-    def __init__(self, name, configurations, cmd, activations, architectures):
+    def __init__(self, name, configurations, cmd, activations, architectures, epochs):
         self.name = name
         self.configurations = configurations
         self.cmd = cmd
         self.activations = activations
         self.architectures = architectures
+        self.epochs = epochs
 
 experiments = [
     Experiment('harmonic_oscillator', ['harmonic_oscillator'], [
@@ -43,9 +53,8 @@ experiments = [
         '--qmax', '2',
         '--pmin', '-2',
         '--pmax', '2',
-        '-n', '40',
-        '--epochs', '500'
-    ], activations=['sigmoid'], architectures=[Architecture('l-sympnet')]),
+        '-n', '40'
+    ], activations=['sigmoid'], architectures=[Architecture('l-sympnet')], epochs=500),
     Experiment('simple_pendulum_swing', ['swinging_case', 'rotating_case'], [
         'python', experiments_path.joinpath('lowdim.py'),
         '--model', 'simple_pendulum',
@@ -53,19 +62,8 @@ experiments = [
         '--qmax', str(np.pi/2),
         '--pmin', str(-np.sqrt(2)),
         '--pmax', str(np.sqrt(2)),
-        '-n', '40',
-        '--epochs', str(epochs)
-    ], activations=['sigmoid', 'tanh', 'elu'], architectures=architectures),
-    Experiment('simple_pendulum_rot', ['swinging_case', 'rotating_case'], [
-        'python', experiments_path.joinpath('lowdim.py'),
-        '--model', 'simple_pendulum',
-        '--qmin', '-20',
-        '--qmax', '20',
-        '--pmin', '0.5',
-        '--pmax', '2.5',
-        '-n', '400',
-        '--epochs', str(epochs)
-    ], activations=['sigmoid', 'tanh', 'elu'], architectures=architectures),
+        '-n', '40'
+    ], activations=['sigmoid', 'tanh', 'elu'], architectures=architectures, epochs=100000),
     Experiment('simple_pendulum_swing_rot', ['swinging_case', 'rotating_case'], [
         'python', experiments_path.joinpath('lowdim.py'),
         '--model', 'simple_pendulum',
@@ -73,9 +71,8 @@ experiments = [
         '--qmax', '20',
         '--pmin', '-2.5',
         '--pmax', '2.5',
-        '-n', '400',
-        '--epochs', str(epochs)
-    ], activations=['sigmoid', 'tanh', 'elu'], architectures=architectures)
+        '-n', '800'
+    ], activations=['sigmoid', 'tanh', 'elu'], architectures=large_architectures, epochs=300000)
 ]
 
 def execute(command):
@@ -92,7 +89,8 @@ def run_experiments(args):
                 execute(exp.cmd + [
                     '--architecture', arch.name,
                     '--activation', activation,
-                    '--output-dir', data_path.joinpath(exp.name, arch.name, activation)
+                    '--output-dir', data_path.joinpath(exp.name, arch.name, activation),
+                    '--epochs', str(exp.epochs)
                 ] + arch.extra_cmd)
 
 def save_csv(dest, vec, header):
@@ -172,12 +170,10 @@ def update_csv(args):
             for arch in exp.architectures:
                 for activation in exp.activations:
 
-                    exp_epochs = 500 if exp.name == 'harmonic_oscillator' else epochs
-
                     td_x = np.load(curr_exp_dir
-                        .joinpath(arch.name, activation, config, 'epoch{}_td_x.npy'.format(exp_epochs)))
+                        .joinpath(arch.name, activation, config, 'epoch{}_td_x.npy'.format(exp.epochs)))
                     td_Ham = np.load(curr_exp_dir
-                        .joinpath(arch.name, activation, config, 'epoch{}_td_Ham.npy'.format(exp_epochs)), allow_pickle=True)
+                        .joinpath(arch.name, activation, config, 'epoch{}_td_Ham.npy'.format(exp.epochs)), allow_pickle=True)
 
                     save_phase_plot(
                         curr_destination_dir.joinpath(arch.name, activation, config, 'phase_plot.csv'), 
