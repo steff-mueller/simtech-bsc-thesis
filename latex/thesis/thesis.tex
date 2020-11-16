@@ -22,9 +22,6 @@
 \usepackage{multirow}
 \usepackage{makecell}
 \usepackage{algpseudocode,algorithm}
-%%% pgfplots for plotting
-\usepackage{pgfplots}
-\pgfplotsset{compat=1.16}
 %%% Title page
 \usepackage{common/titlePageST}
 %%% Appendix in TOC
@@ -76,9 +73,18 @@
 %----------------------------------------------------------------------------------------
 %	pgfplots
 %----------------------------------------------------------------------------------------
+\usepackage{pgfplots,pgfplotstable}
+\pgfplotsset{compat=1.16}
+\usepgfplotslibrary{groupplots}
 \usepgfplotslibrary{external}
 \tikzexternalize
 \tikzsetexternalprefix{figures_cache/}
+
+\pgfplotsset{every axis/.append style={
+    ymajorgrids,
+    grid style={dashed,lightgray,semithick},
+   }
+}
 
 % Style to select only points from #1 to #2 (inclusive)
 \pgfplotsset{select coords between index/.style 2 args={
@@ -87,6 +93,7 @@
         \ifnum\coordindex>#2\def\pgfmathresult{}\fi
     }
 }}
+%----------------------------------------------------------------------------------------
 
 \makeatletter
 \newcommand{\theauthor}{Steffen Müller} %
@@ -293,6 +300,8 @@ we define the block operator as
 identity map $id$
 
 $\R^{\mathbb{Z}} := \{ f : \mathbb{Z} \to \mathbb{R} \}$
+
+$\N$ without zero, $\N_0$ with zero.
 
 Kronecker delta
 \begin{equation*}
@@ -746,7 +755,20 @@ $n=d$, $K=I_d$ and $c=0$.
 
 \todo{Define G-SympNet}
 
+\subsection{Approximation theorems}
+
 \todo{Briefly mention theoretical results from \citeauthor{Jin2020} (r-finite etc.)}
+
+\citeauthor{Jin2020} have shown \citeauthor{Jin2020} approximation theorems.
+
+\begin{definition}
+	Let $r \in \N_0$ be given. $\sigma$ is r-finite if $\sigma \in C^r(\R)$
+	and $0 < \int \abs{\sigma} d\lambda < \infty$. $\lambda$ is the Lebesgue measure on $\R$.
+\end{definition}
+
+\begin{definition}
+	Let $m,n \in \N, \, r \in \N_0$ be given, $U \subset \R^m$ is an open set.
+\end{definition}
 
 \section{Convolution and Normalization for SympNets}
 
@@ -1472,350 +1494,744 @@ from \cref{gradient_corollary} and the fact that the composition of symplectic m
 
 \subsection{Low-dimensional systems}
 
+Training data uniformly sampled from phase space.
+
+Time step $t=0.1$
+
 \subsubsection{Harmonic Oscillator}
 
-\subsubsection{Simple Pendulum}
+Given $q,p \in \R$, the Hamiltonian for the Harmonic Oscillator is given by
+\begin{equation*}
+	H(q,p) = \frac{p^2}{2m} + \frac{1}{2} kq^2
+\end{equation*}
+For the experiment, we choose $m=1, k=1$.
 
-Swinging domain
+The flow for the Harmonic Oscillator is linear. Because of ???, a SympNet consisting of nine alternating 
+upper and lower linear layers should be able to learn the flow for the Harmonic Oscillator.
+We verify this with a numerical experiment.
 
-$(q,p) \in [-\frac{\pi}{2}, \frac{\pi}{2}] \times [-\sqrt{2}, \sqrt{2}]$
+\todo{Show why flow is linear}
 
+\begin{figure}
+\centering
 \begin{tikzpicture}
 	\begin{axis}[
-		no markers, smooth,
-		title={Training loss},
-		xlabel={Epoch},
-		ylabel={Loss},
-		restrict y to domain=0:1e-4,
-		legend style={draw=none},
-		legend entries={
-			FNN,
-			LA-SympNet,
-			N1-LA-SympNet,
-			N2-LA-SympNet,
-			G-SympNet,
-			N1-G-SympNet,
-			N2-G-SympNet
-		}
-	]
-
-	\addplot[
-		color=brown
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/fnn/loss.csv};
-
-	\addplot[
-		color=red
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/la-sympnet/loss.csv};
-
-	\addplot[
-		color=red, dashed
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n1-la-sympnet/loss.csv};
-
-	\addplot[
-		color=red, densely dotted
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n2-la-sympnet/loss.csv};
-
-	\addplot[
-		color=blue
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/g-sympnet/loss.csv};
-
-	\addplot[
-		color=blue, dashed
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n1-g-sympnet/loss.csv};
-
-	\addplot[
-		color=blue, densely dotted
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n2-g-sympnet/loss.csv};
-		
-	\end{axis}
-\end{tikzpicture}
-
-\begin{tikzpicture}
-	\begin{axis}[
-		no markers, smooth,
+		ymode=log,
+		no markers,
 		title={Test loss},
 		xlabel={Epoch},
 		ylabel={Loss},
-		restrict y to domain=0:1e-4,
-		legend style={draw=none},
 		legend entries={
-			FNN,
-			LA-SympNet,
-			N1-LA-SympNet,
-			N2-LA-SympNet,
-			G-SympNet,
-			N1-G-SympNet,
-			N2-G-SympNet
+			Linear SympNet
 		}
 	]
-
-	\addplot[
-		color=brown
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/fnn/test_loss.csv};
-
-	\addplot[
-		color=red
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/la-sympnet/test_loss.csv};
-
-	\addplot[
-		color=red, dashed
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n1-la-sympnet/test_loss.csv};
-
-	\addplot[
-		color=red, densely dotted
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n2-la-sympnet/test_loss.csv};
-
-	\addplot[
-		color=blue
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/g-sympnet/test_loss.csv};
-
-	\addplot[
-		color=blue, dashed
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n1-g-sympnet/test_loss.csv};
-
-	\addplot[
-		color=blue, densely dotted
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n2-g-sympnet/test_loss.csv};
-		
-	\end{axis}
-\end{tikzpicture}
-
-\begin{tikzpicture}
-	\begin{axis}[
-		width = \linewidth,
-		title={Phase plot (swinging case)},
-		xlabel={q},
-		ylabel={p},
-		no markers, smooth
-	]
-
-	\addplot[
-		color=gray,thick
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/exact/swinging_case/phase_plot.csv};
-
-	\addplot[
-		color=red
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/la-sympnet/swinging_case/phase_plot.csv};
-
-	\addplot[
-		color=red,dashed,
-		select coords between index={0}{72}
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/n1-la-sympnet/swinging_case/phase_plot.csv};
-
-	\addplot[
-		color=red,densely dotted,
-		select coords between index={0}{72}
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/n2-la-sympnet/swinging_case/phase_plot.csv};
-
-	\addplot[
-		color=brown
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/fnn/swinging_case/phase_plot.csv};
-
-	\addplot[
-		color=blue
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/g-sympnet/swinging_case/phase_plot.csv};
-
-	\addplot[
-		color=blue,dashed,
-		select coords between index={0}{72}
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/n1-g-sympnet/swinging_case/phase_plot.csv};
-
-	%\addplot[
-	%	color=blue,densely dotted,
-	%	select coords between index={0}{72}
-	%] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/n2-g-sympnet/swinging_case/phase_plot.csv};
-		
-	\end{axis}
-\end{tikzpicture}
-
-\begin{tikzpicture}
-	\begin{axis}[
-		width = \linewidth,
-		height = \axisdefaultheight,
-		no markers, smooth,
-		title={Total energy},
-		xlabel={t},
-		ylabel={Total energy},
-		legend style={draw=none},
-		legend entries={
-			Störmer-Verlet,
-			FNN,
-			LA-SympNet,
-			N1-LA-SympNet,
-			N2-LA-SympNet,
-			G-SympNet,
-			N1-G-SympNet,
-			N2-G-SympNet
-		}
-	]
-
-	\addplot[
-		color=gray
-	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/exact/swinging_case/total_energy.csv};
-
-	\addplot[
-		color=brown
-	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/fnn/swinging_case/total_energy.csv};
-
-	\addplot[
-		color=red
-	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/la-sympnet/swinging_case/total_energy.csv};
 
 	\addplot[
 		color=orange
-	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/n1-la-sympnet/swinging_case/total_energy.csv};
-
-	\addplot[
-		color=violet
-	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/n2-la-sympnet/swinging_case/total_energy.csv};
-
-	\addplot[
-		color=blue
-	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/g-sympnet/swinging_case/total_energy.csv};
-
-	\addplot[
-		color=cyan
-	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/n1-g-sympnet/swinging_case/total_energy.csv};
+	] table[x=epoch,y=loss,col sep=comma] {../data/harmonic_oscillator/l-sympnet/sigmoid/test_loss.csv};
 		
 	\end{axis}
 \end{tikzpicture}
+\caption{Test loss for linear SympNet on Harmonic Oscillator.}\label{fig_harm_osc_loss}
+\end{figure}
+
+Indeed \cref{fig_harm_osc_loss} shows that the linear SympNet successfully 
+learns the flow for the Harmonic Oscillator.
+
+\subsubsection{Simple Pendulum}
+
+\begin{equation*}
+	H(q,p) = \frac{p^2}{2ml^2} + mgl (1-cos(q))
+\end{equation*}
+For the experiment, we choose $m=1, g=1, l=1$.
+
+Training data sampled from swinging domain
+$(q,p) \in [-\frac{\pi}{2}, \frac{\pi}{2}] \times [-\sqrt{2}, \sqrt{2}]$
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+	\begin{groupplot}[	
+		group style={
+			group size=2 by 3,
+			y descriptions at=edge left,
+			horizontal sep=0.1cm,
+			vertical sep=2.2cm,
+		},
+		xlabel=Epoch, ylabel=Loss,
+		width=\axisdefaultwidth, height=7cm,
+		no markers,
+		ymax=1e-1, ymin=5e-10, ymode=log,
+		legend style={nodes={scale=0.75, transform shape}},
+		legend entries={
+			FNN,
+			LA-SympNet,
+			N1-LA-SympNet,
+			N2-LA-SympNet,
+			G-SympNet,
+			N1-G-SympNet,
+			N2-G-SympNet
+		}
+	]
+		\nextgroupplot[title={Training loss (sigmoid activation)}]
+			\addplot[
+				color=brown
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/fnn/sigmoid/loss.csv};
+
+			\addplot[
+				color=red
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/la-sympnet/sigmoid/loss.csv};
+
+			\addplot[
+				color=red, dashed
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n1-la-sympnet/sigmoid/loss.csv};
+
+			\addplot[
+				color=red, densely dotted
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n2-la-sympnet/sigmoid/loss.csv};
+
+			\addplot[
+				color=blue
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/g-sympnet/sigmoid/loss.csv};
+
+			\addplot[
+				color=blue, dashed
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n1-g-sympnet/sigmoid/loss.csv};
+
+			\addplot[
+				color=blue, densely dotted
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n2-g-sympnet/sigmoid/loss.csv};
+
+		\nextgroupplot[title={Test loss (sigmoid activation)},]
+			\addplot[
+				color=brown
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/fnn/sigmoid/test_loss.csv};
+
+			\addplot[
+				color=red
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/la-sympnet/sigmoid/test_loss.csv};
+
+			\addplot[
+				color=red, dashed
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n1-la-sympnet/sigmoid/test_loss.csv};
+
+			\addplot[
+				color=red, densely dotted
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n2-la-sympnet/sigmoid/test_loss.csv};
+
+			\addplot[
+				color=blue
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/g-sympnet/sigmoid/test_loss.csv};
+
+			\addplot[
+				color=blue, dashed
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n1-g-sympnet/sigmoid/test_loss.csv};
+
+			\addplot[
+				color=blue, densely dotted
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n2-g-sympnet/sigmoid/test_loss.csv};
+
+		\nextgroupplot[title={Training loss (tanh activation)}]
+			\addplot[
+			color=brown
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/fnn/tanh/loss.csv};
+
+			\addplot[
+				color=red
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/la-sympnet/tanh/loss.csv};
+
+			\addplot[
+				color=red, dashed
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n1-la-sympnet/tanh/loss.csv};
+
+			\addplot[
+				color=red, densely dotted
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n2-la-sympnet/tanh/loss.csv};
+
+			\addplot[
+				color=blue
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/g-sympnet/tanh/loss.csv};
+
+			\addplot[
+				color=blue, dashed
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n1-g-sympnet/tanh/loss.csv};
+
+			\addplot[
+				color=blue, densely dotted
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n2-g-sympnet/tanh/loss.csv};
+
+		\nextgroupplot[title={Test loss (tanh activation)}]
+			\addplot[
+			color=brown
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/fnn/tanh/test_loss.csv};
+
+			\addplot[
+				color=red
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/la-sympnet/tanh/test_loss.csv};
+
+			\addplot[
+				color=red, dashed
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n1-la-sympnet/tanh/test_loss.csv};
+
+			\addplot[
+				color=red, densely dotted
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n2-la-sympnet/tanh/test_loss.csv};
+
+			\addplot[
+				color=blue
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/g-sympnet/tanh/test_loss.csv};
+
+			\addplot[
+				color=blue, dashed
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n1-g-sympnet/tanh/test_loss.csv};
+
+			\addplot[
+				color=blue, densely dotted
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n2-g-sympnet/tanh/test_loss.csv};
+
+		\nextgroupplot[title={Training loss (ELU activation)}]
+
+			\addplot[
+				color=brown
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/fnn/elu/loss.csv};
+		
+			\addplot[
+				color=red
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/la-sympnet/elu/loss.csv};
+		
+			\addplot[
+				color=red, dashed
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n1-la-sympnet/elu/loss.csv};
+		
+			\addplot[
+				color=red, densely dotted
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n2-la-sympnet/elu/loss.csv};
+		
+			\addplot[
+				color=blue
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/g-sympnet/elu/loss.csv};
+		
+			\addplot[
+				color=blue, dashed
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n1-g-sympnet/elu/loss.csv};
+		
+			\addplot[
+				color=blue, densely dotted
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n2-g-sympnet/elu/loss.csv};
+
+		\nextgroupplot[title={Test loss (ELU activation)}]
+			\addplot[
+				color=brown
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/fnn/elu/test_loss.csv};
+		
+			\addplot[
+				color=red
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/la-sympnet/elu/test_loss.csv};
+		
+			\addplot[
+				color=red, dashed
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n1-la-sympnet/elu/test_loss.csv};
+		
+			\addplot[
+				color=red, densely dotted
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n2-la-sympnet/elu/test_loss.csv};
+		
+			\addplot[
+				color=blue
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/g-sympnet/elu/test_loss.csv};
+		
+			\addplot[
+				color=blue, dashed
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n1-g-sympnet/elu/test_loss.csv};
+		
+			\addplot[
+				color=blue, densely dotted
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing/n2-g-sympnet/elu/test_loss.csv};
+		
+	\end{groupplot}
+\end{tikzpicture}
+\caption{Training loss and test loss for training data from simple pendulum, swinging domain. 
+(First row) sigmoid activation (Second row) tanh activation (Third row) ELU activation}
+\end{figure}
+
+% \pgfplotstabletypeset[col sep=comma,
+% 	 columns/architecture/.style={string type}
+%     ] {../data/simple_pendulum_swing/test_loss_summary.csv}
+
+% \begin{tikzpicture}
+% 	\begin{axis}[
+% 		width = \linewidth,
+% 		title={Phase plot (swinging case)},
+% 		xlabel={q},
+% 		ylabel={p},
+% 		no markers, smooth
+% 	]
+
+% 	\addplot[
+% 		color=gray,thick
+% 	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/exact/swinging_case/phase_plot.csv};
+
+% 	\addplot[
+% 		color=red
+% 	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/la-sympnet/swinging_case/phase_plot.csv};
+
+% 	\addplot[
+% 		color=red,dashed,
+% 		select coords between index={0}{72}
+% 	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/n1-la-sympnet/swinging_case/phase_plot.csv};
+
+% 	\addplot[
+% 		color=red,densely dotted,
+% 		select coords between index={0}{72}
+% 	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/n2-la-sympnet/swinging_case/phase_plot.csv};
+
+% 	\addplot[
+% 		color=brown
+% 	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/fnn/swinging_case/phase_plot.csv};
+
+% 	\addplot[
+% 		color=blue
+% 	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/g-sympnet/swinging_case/phase_plot.csv};
+
+% 	\addplot[
+% 		color=blue,dashed,
+% 		select coords between index={0}{72}
+% 	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/n1-g-sympnet/swinging_case/phase_plot.csv};
+
+% 	%\addplot[
+% 	%	color=blue,densely dotted,
+% 	%	select coords between index={0}{72}
+% 	%] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/n2-g-sympnet/swinging_case/phase_plot.csv};
+		
+% 	\end{axis}
+% \end{tikzpicture}
+
+% \begin{tikzpicture}
+% 	\begin{axis}[
+% 		width = \linewidth,
+% 		height = \axisdefaultheight,
+% 		no markers, smooth,
+% 		title={Total energy},
+% 		xlabel={t},
+% 		ylabel={Total energy},
+% 		legend style={draw=none},
+% 		legend entries={
+% 			Störmer-Verlet,
+% 			FNN,
+% 			LA-SympNet,
+% 			N1-LA-SympNet,
+% 			N2-LA-SympNet,
+% 			G-SympNet,
+% 			N1-G-SympNet,
+% 			N2-G-SympNet
+% 		}
+% 	]
+
+% 	\addplot[
+% 		color=gray
+% 	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/exact/swinging_case/total_energy.csv};
+
+% 	\addplot[
+% 		color=brown
+% 	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/fnn/swinging_case/total_energy.csv};
+
+% 	\addplot[
+% 		color=red
+% 	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/la-sympnet/swinging_case/total_energy.csv};
+
+% 	\addplot[
+% 		color=orange
+% 	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/n1-la-sympnet/swinging_case/total_energy.csv};
+
+% 	\addplot[
+% 		color=violet
+% 	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/n2-la-sympnet/swinging_case/total_energy.csv};
+
+% 	\addplot[
+% 		color=blue
+% 	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/g-sympnet/swinging_case/total_energy.csv};
+
+% 	\addplot[
+% 		color=cyan
+% 	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/n1-g-sympnet/swinging_case/total_energy.csv};
+		
+% 	\end{axis}
+% \end{tikzpicture}
 
 Rotating domain
 
 $(q,p) \in [-20, 20] \times [0.5, 2.5]$
 
+\begin{figure}
+\centering
 \begin{tikzpicture}
-	\begin{axis}[
-		no markers, smooth,
-		title={Training loss},
-		xlabel={Epoch},
-		ylabel={Loss},
-		restrict y to domain=0:2.4e-3,
-		legend entries={
-			G-SympNet,
-			N1-G-SympNet,
-			N2-G-Sympnet
-		}
+	\begin{groupplot}[
+		group style={
+			group size=3 by 1,
+			y descriptions at=edge left,
+			horizontal sep=0.1cm,
+			vertical sep=2.2cm,
+		},
+		xlabel=Epoch, ylabel={Test loss},
+		width=6.3cm, height=7cm,
+		no markers,
+		ymax=1e-1, ymin=5e-6, ymode=log
 	]
 
-	\addplot[
-		color=blue
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/g-sympnet/loss.csv};
+	\nextgroupplot[
+		title={Sigmoid},
+		legend entries={
+			FNN,
+			LA-SympNet,
+			N1-LA-SympNet,
+			N2-LA-SympNet,
+			G-SympNet,
+			N1-G-SympNet,
+			N2-G-SympNet
+		},
+		legend columns=4,
+		legend to name=grouplegend
+	]
+		\addplot[
+			color=brown
+		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/fnn/sigmoid/test_loss.csv};
 
-	\addplot[
-		color=blue,dashed
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n1-g-sympnet/loss.csv};
+		\addplot[
+			color=red
+		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/la-sympnet/sigmoid/test_loss.csv};
 
-	\addplot[
-		color=blue, densely dotted
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n2-g-sympnet/loss.csv};+
-		
-	\end{axis}
+		\addplot[
+			color=red, dashed
+		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n1-la-sympnet/sigmoid/test_loss.csv};
+
+		\addplot[
+			color=red, densely dotted
+		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n2-la-sympnet/sigmoid/test_loss.csv};
+
+		\addplot[
+			color=blue
+		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/g-sympnet/sigmoid/test_loss.csv};
+
+		\addplot[
+			color=blue, dashed
+		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n1-g-sympnet/sigmoid/test_loss.csv};
+
+		\addplot[
+			color=blue, densely dotted
+		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n2-g-sympnet/sigmoid/test_loss.csv};
+
+	\nextgroupplot[title={tanh}]
+		\addplot[
+			color=brown
+		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/fnn/tanh/test_loss.csv};
+
+		\addplot[
+			color=red
+		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/la-sympnet/tanh/test_loss.csv};
+
+		\addplot[
+			color=red, dashed
+		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n1-la-sympnet/tanh/test_loss.csv};
+
+		\addplot[
+			color=red, densely dotted
+		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n2-la-sympnet/tanh/test_loss.csv};
+
+		\addplot[
+			color=blue
+		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/g-sympnet/tanh/test_loss.csv};
+
+		\addplot[
+			color=blue, dashed
+		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n1-g-sympnet/tanh/test_loss.csv};
+
+		\addplot[
+			color=blue, densely dotted
+		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n2-g-sympnet/tanh/test_loss.csv};
+
+	\nextgroupplot[title={ELU}]
+		\addplot[
+			color=brown
+		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/fnn/elu/test_loss.csv};
+
+		\addplot[
+			color=red
+		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/la-sympnet/elu/test_loss.csv};
+
+		\addplot[
+			color=red, dashed
+		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n1-la-sympnet/elu/test_loss.csv};
+
+		\addplot[
+			color=red, densely dotted
+		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n2-la-sympnet/elu/test_loss.csv};
+
+		\addplot[
+			color=blue
+		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/g-sympnet/elu/test_loss.csv};
+
+		\addplot[
+			color=blue, dashed
+		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n1-g-sympnet/elu/test_loss.csv};
+
+		\addplot[
+			color=blue, densely dotted
+		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n2-g-sympnet/elu/test_loss.csv};
+			
+	\end{groupplot}
 \end{tikzpicture}
+\\[5pt]
+\ref{grouplegend}
+\caption{Simple pendulum, rotating domain.}
+\end{figure}
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+	\begin{groupplot}[
+		group style={
+			group size=2 by 1
+		}
+	]
+		
+	\nextgroupplot[
+		title={Phase plot (swinging)},
+		legend entries={
+			Exact,
+			FNN (tanh),
+			N2-LA-SympNet (sigmoid),
+			N2-G-SympNet (tanh)
+		},
+		legend columns=4,
+		legend to name=leg_ped_rot_phase
+	]
+		\addplot[
+			color=gray,thick
+		] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_rot/exact/swinging_case/phase_plot.csv};
+
+		\addplot[
+			color=brown
+		] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_rot/fnn/tanh/swinging_case/phase_plot.csv};
+
+		\addplot[
+			color=red,densely dotted,thick
+		] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_rot/n2-la-sympnet/sigmoid/swinging_case/phase_plot.csv};
+
+		\addplot[
+			color=blue,densely dotted,thick
+		] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_rot/n2-g-sympnet/tanh/swinging_case/phase_plot.csv};
+
+	\nextgroupplot[title={Phase plot (rotating)}]
+		\addplot[
+			color=gray,thick
+		] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_rot/exact/rotating_case/phase_plot.csv};
+
+		\addplot[
+			color=brown
+		] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_rot/fnn/tanh/swinging_case/phase_plot.csv};
+
+		\addplot[
+			color=red,densely dotted,thick
+		] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_rot/n2-la-sympnet/sigmoid/rotating_case/phase_plot.csv};
+
+		\addplot[
+			color=blue,densely dotted,thick
+		] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_rot/n2-g-sympnet/tanh/rotating_case/phase_plot.csv};
+
+	\end{groupplot}
+\end{tikzpicture}
+\\[5pt]
+\ref{leg_ped_rot_phase}
+\caption{Phase plots for simple pendulum. Training data uniformly sampled from rotating domain.}
+\end{figure}
 
 Swinging and rotating domain
 
 $(q,p) \in [-20, 20] \times [-2.5, 2.5]$
 
+\begin{figure}
+\centering
 \begin{tikzpicture}
-	\begin{axis}[
-		title={Phase plot (swinging case)},
-		xlabel={q},
-		ylabel={p},
-		no markers, smooth
+	\begin{groupplot}[
+		group style={
+			group size=3 by 1,
+			y descriptions at=edge left,
+			horizontal sep=0.1cm,
+			vertical sep=2.2cm,
+		},
+		xlabel=Epoch, ylabel={Test loss},
+		width=6.3cm, height=7cm,
+		no markers,
+		ymax=1e-1, ymin=5e-6, ymode=log
 	]
-
-	\addplot[
-		color=red
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/exact/swinging_case/phase_plot.csv};
-
-	%\addplot[
-	%	color=blue
-	%] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/la-sympnet/swinging_case/phase_plot.csv};
-
-	\addplot[
-		color=green
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/swinging_case/phase_plot.csv};
-
-	%\addplot[
-	%	color=blue,
-	%	dashed
-	%] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/normalized-la-sympnet/swinging_case/phase_plot.csv};
-
-	\addplot[
-		color=green,
-		dashed,
-		select coords between index={0}{72}
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/n1-g-sympnet/swinging_case/phase_plot.csv};
-		
-	\end{axis}
+	
+		\nextgroupplot[
+			title={Sigmoid},
+			legend entries={
+				FNN,
+				LA-SympNet,
+				N1-LA-SympNet,
+				N2-LA-SympNet,
+				G-SympNet,
+				N1-G-SympNet,
+				N2-G-SympNet
+			},
+			legend columns=4,
+			legend to name=grouplegend
+		]
+			\addplot[
+				color=brown
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/fnn/sigmoid/test_loss.csv};
+	
+			\addplot[
+				color=red
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/la-sympnet/sigmoid/test_loss.csv};
+	
+			\addplot[
+				color=red, dashed
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/n1-la-sympnet/sigmoid/test_loss.csv};
+	
+			\addplot[
+				color=red, densely dotted
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/n2-la-sympnet/sigmoid/test_loss.csv};
+	
+			\addplot[
+				color=blue
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/sigmoid/test_loss.csv};
+	
+			\addplot[
+				color=blue, dashed
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/n1-g-sympnet/sigmoid/test_loss.csv};
+	
+			\addplot[
+				color=blue, densely dotted
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/n2-g-sympnet/sigmoid/test_loss.csv};
+	
+		\nextgroupplot[title={tanh}]
+			\addplot[
+				color=brown
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/fnn/tanh/test_loss.csv};
+	
+			\addplot[
+				color=red
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/la-sympnet/tanh/test_loss.csv};
+	
+			\addplot[
+				color=red, dashed
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/n1-la-sympnet/tanh/test_loss.csv};
+	
+			\addplot[
+				color=red, densely dotted
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/n2-la-sympnet/tanh/test_loss.csv};
+	
+			\addplot[
+				color=blue
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/tanh/test_loss.csv};
+	
+			\addplot[
+				color=blue, dashed
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/n1-g-sympnet/tanh/test_loss.csv};
+	
+			\addplot[
+				color=blue, densely dotted
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/n2-g-sympnet/tanh/test_loss.csv};
+	
+		\nextgroupplot[title={ELU}]
+			\addplot[
+				color=brown
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/fnn/elu/test_loss.csv};
+	
+			\addplot[
+				color=red
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/la-sympnet/elu/test_loss.csv};
+	
+			\addplot[
+				color=red, dashed
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/n1-la-sympnet/elu/test_loss.csv};
+	
+			\addplot[
+				color=red, densely dotted
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/n2-la-sympnet/elu/test_loss.csv};
+	
+			\addplot[
+				color=blue
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/elu/test_loss.csv};
+	
+			\addplot[
+				color=blue, dashed
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/n1-g-sympnet/elu/test_loss.csv};
+	
+			\addplot[
+				color=blue, densely dotted
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/n2-g-sympnet/elu/test_loss.csv};
+				
+	\end{groupplot}
 \end{tikzpicture}
+\\[5pt]
+\ref{grouplegend}
+\caption{Simple pendulum, swinging and rotating domain.}
+\end{figure}
 
-\begin{tikzpicture}
-	\begin{axis}[
-		title={Phase plot (rotating case)},
-		xlabel={q},
-		ylabel={p},
-	]
-
-	\addplot[
-		color=gray,
-		no markers
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/exact/rotating_case/phase_plot.csv};
-
-	\addplot[
-		color=red,
-		no markers
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/la-sympnet/rotating_case/phase_plot.csv};
-
-	\addplot[
-		color=red,
-		densely dotted,
-		no markers
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/n1-la-sympnet/rotating_case/phase_plot.csv};
-
-	\addplot[
-		color=blue,
-		no markers
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/rotating_case/phase_plot.csv};
-
-	\addplot[
-		color=blue,
-		densely dotted,
-		no markers
-	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/n1-g-sympnet/rotating_case/phase_plot.csv};
-		
-	\end{axis}
-\end{tikzpicture}
-
-\begin{tikzpicture}
-	\begin{axis}[
-		no markers, smooth,
-		title={Training loss},
-		xlabel={Epoch},
-		ylabel={Loss},
-		restrict y to domain=0:3e-3,
-		legend entries={
-			G-SympNet,
-			N1-G-SympNet,
-			N2-G-Sympnet
-		}
-	]
-
-	\addplot[
-		color=blue
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/loss.csv};
-
-	\addplot[
-		color=blue, dashed
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/n1-g-sympnet/loss.csv};
-
-	\addplot[
-		color=blue, densely dotted
-	] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/n2-g-sympnet/loss.csv};
-		
-	\end{axis}
-\end{tikzpicture}
+\begin{figure}
+	\centering
+	\begin{tikzpicture}
+		\begin{groupplot}[
+			group style={
+				group size=2 by 1
+			},
+			xlabel=$q$, ylabel=$p$
+		]
+			
+		\nextgroupplot[
+			title={Phase plot (swinging)},
+			legend entries={
+				Exact,
+				FNN (tanh),
+				N1-LA-SympNet (tanh),
+				G-SympNet (tanh)
+			},
+			legend columns=4,
+			legend to name=leg_ped_swing_rot_phase
+		]
+			\addplot[
+				color=gray,thick
+			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/exact/swinging_case/phase_plot.csv};
+	
+			\addplot[
+				color=brown
+			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/fnn/tanh/swinging_case/phase_plot.csv};
+	
+			\addplot[
+				color=red,densely dotted,thick
+			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/n1-la-sympnet/tanh/swinging_case/phase_plot.csv};
+	
+			\addplot[
+				color=blue
+			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/tanh/swinging_case/phase_plot.csv};
+	
+		\nextgroupplot[title={Phase plot (rotating)}]
+			\addplot[
+				color=gray,thick
+			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/exact/rotating_case/phase_plot.csv};
+	
+			\addplot[
+				color=brown
+			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/fnn/tanh/swinging_case/phase_plot.csv};
+	
+			\addplot[
+				color=red,densely dotted,thick
+			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/n1-la-sympnet/tanh/rotating_case/phase_plot.csv};
+	
+			\addplot[
+				color=blue
+			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/tanh/rotating_case/phase_plot.csv};
+	
+		\end{groupplot}
+	\end{tikzpicture}
+	\\[5pt]
+	\ref{leg_ped_swing_rot_phase}
+	\caption{Simple pendulum, swinginig and rotating domain, phase plots.}
+\end{figure}
 
 \subsection{High-dimensional systems}
 

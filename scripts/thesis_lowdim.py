@@ -131,17 +131,19 @@ def update_csv(args):
             arch_summary = { 'architecture': arch.name }
 
             for activation in exp.activations:
+                n_subsample = 2 if exp.name == 'harmonic_oscillator' else 200
+
                 # Training loss
                 losses = np.load(curr_exp_dir.joinpath(arch.name, activation, 'losses.npy'))
                 losses = np.stack([np.arange(0, len(losses)), losses], axis=1)
                 save_csv(curr_destination_dir
-                    .joinpath(arch.name, 'loss.csv'), subsample(losses,10), header='epoch,loss')
+                    .joinpath(arch.name, activation, 'loss.csv'), subsample(losses,n_subsample), header='epoch,loss')
 
                 # Test loss
                 losses = np.load(curr_exp_dir.joinpath(arch.name, activation, 'test_losses.npy'))
                 losses = np.stack([np.arange(0, len(losses)), losses], axis=1)
                 save_csv(curr_destination_dir
-                    .joinpath(arch.name, 'test_loss.csv'), subsample(losses,10), header='epoch,loss')
+                    .joinpath(arch.name, activation, 'test_loss.csv'), subsample(losses,n_subsample), header='epoch,loss')
 
                 arch_summary['test_loss_{}'.format(activation)] = losses[-1,1]
             
@@ -170,10 +172,12 @@ def update_csv(args):
             for arch in exp.architectures:
                 for activation in exp.activations:
 
+                    exp_epochs = 500 if exp.name == 'harmonic_oscillator' else epochs
+
                     td_x = np.load(curr_exp_dir
-                        .joinpath(arch.name, activation, config, 'epoch{}_td_x.npy'.format(epochs)))
+                        .joinpath(arch.name, activation, config, 'epoch{}_td_x.npy'.format(exp_epochs)))
                     td_Ham = np.load(curr_exp_dir
-                        .joinpath(arch.name, activation, config, 'epoch{}_td_Ham.npy'.format(epochs)), allow_pickle=True)
+                        .joinpath(arch.name, activation, config, 'epoch{}_td_Ham.npy'.format(exp_epochs)), allow_pickle=True)
 
                     save_phase_plot(
                         curr_destination_dir.joinpath(arch.name, activation, config, 'phase_plot.csv'), 
