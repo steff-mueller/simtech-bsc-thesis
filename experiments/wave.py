@@ -1,4 +1,5 @@
 import argparse
+import os
 
 import numpy as np
 import torch
@@ -17,6 +18,7 @@ from nn.training_data import scale_training_data
 
 from utils.plot2d import plot_hamiltonian
 from utils.plot_wave import *
+from utils.data import td_x_to_hamiltonian, save_json, td_to_numpy
 
 class Dirichlet1dNumpyPhaseSpace(NumpyPhaseSpace):
     def __init__(self, dim, q_left=0, q_right=0, p_left=0, p_right=0):
@@ -36,17 +38,28 @@ class Dirichlet1dNumpyPhaseSpace(NumpyPhaseSpace):
 
         return super().new_vector(vec_q, vec_p)
 
+class ActivationModule(torch.nn.Module):
+    def __init__(self, activation_fn):
+        super(ActivationModule, self).__init__()
+        self.activation_fn = activation_fn
+
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        return self.activation_fn(input)
+
 class WaveExperiment:
     def __init__(self, args):
         self.epochs = args.epochs
         self.n_x = args.nx
         self.print_params = args.print_params
         self.dt = args.dt
+        self.T = args.time_total
+        self.T_training = args.time_training
         self.post_plot_transport = args.post_plot_transport
+        self.log_intermediate = args.log_intermediate
+        self.output_dir = args.output_dir
         self.dim = 2*self.n_x-4 # -4 because Dirichlet boundary values removed
         
-        self.writer = SummaryWriter(comment='wave')
-        # TODO add parameters logging
+        self.writer = SummaryWriter(log_dir=os.path.join(self.output_dir, 'tensorboard'),comment='wave')
 
         self.l = args.domain_length
         self._init_model(args.model)
@@ -61,11 +74,26 @@ class WaveExperiment:
         if args.init_stormer_verlet:
             self._init_with_stormer_verlet(args.model)
         else:
-            self._init_surrogate_model(args.architecture)
+            self._init_surrogate_model(args.architecture, args.activation)
 
-    def _init_surrogate_model(self, architecture):
-        kernel_basis = FDSymmetricKernelBasis(kernel_size = 3)
-        if architecture == 'linear':
+        # save args on disk
+        save_json((self.output_dir, 'args.json'), vars(args))
+        save_json((self.output_dir, 'stats.json'), {
+            'learnable_parameters': sum(p.numel() for p in self.surrogate_model.parameters() if p.requires_grad)
+        })
+
+    def _init_surrogate_model(self, architecture, activation):
+        activation_functions = {
+            'sigmoid': torch.sigmoid,
+            'tanh': torch.tanh,
+            'elu': torch.nn.ELU(),
+        }
+        activation_fn = activation_functions[args.activation]
+
+        if architecture == 'linear_canonical' or architecture  == 'linear_fd':
+            kernel_basis = (FDSymmetricKernelBasis(kernel_size = 3) if architecture == 'linear_fd'
+                else CanonicalSymmetricKernelBasis(kernel_size=3))
+            
             self.surrogate_model = torch.nn.Sequential(
                 UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
                 LowerSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
@@ -77,50 +105,82 @@ class WaveExperiment:
                 LowerSymplecticConv1d(self.dim, kernel_basis=kernel_basis)
             )
         elif architecture == 'nonlinear':
+            kernel_basis = FDSymmetricKernelBasis(kernel_size = 3)
             self.surrogate_model = torch.nn.Sequential(
                 UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 UpperNonlinearSymplectic(self.dim, activation_fn=torch.sin, scalar_weight=True),
 
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 LowerNonlinearSymplectic(self.dim, activation_fn=torch.sin, scalar_weight=True),
 
                 UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 UpperNonlinearSymplectic(self.dim, activation_fn=torch.sin, scalar_weight=True),
 
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 LowerNonlinearSymplectic(self.dim, activation_fn=torch.sin, scalar_weight=True)
             )
         elif architecture == 'gradient':
+            kernel_basis = FDSymmetricKernelBasis(kernel_size = 3)
+            gradient_args = {'dim': self.dim, 'bias': False, 'n': 100, 'activation_fn': activation_fn}
             self.surrogate_model = torch.nn.Sequential(
                 UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                NormalizedUpperConv1dGradientModule(self.dim, bias=False, n=50),
+                UpperConv1dGradientModule(**gradient_args),
 
                 LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                NormalizedLowerConv1dGradientModule(self.dim, bias=False, n=100),
+                LowerConv1dGradientModule(**gradient_args),
 
                 UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
+                UpperConv1dGradientModule(**gradient_args),
+
+                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
+                LowerConv1dGradientModule(**gradient_args)
+            )
+        elif architecture == 'n1-gradient' or architecture == 'n2-gradient':
+            kernel_basis = FDSymmetricKernelBasis(kernel_size = 3)
+            ignore_factor = architecture == 'n1-gradient'
+            gradient_args = {'dim': self.dim, 'bias': False, 'n': 100, 'activation_fn': activation_fn,
+                'ignore_factor': ignore_factor}
+            
+            self.surrogate_model = torch.nn.Sequential(
                 UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
+                NormalizedUpperConv1dGradientModule(**gradient_args),
+
+                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
+                NormalizedLowerConv1dGradientModule(**gradient_args),
+
                 UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                NormalizedUpperConv1dGradientModule(self.dim, bias=False, n=50)
+                NormalizedUpperConv1dGradientModule(**gradient_args),
+
+                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
+                NormalizedLowerConv1dGradientModule(**gradient_args)
+            )
+        elif architecture == 'cnn':
+            conv1d_args = {'in_channels': 1, 'out_channels': 1, 'kernel_size': 3, 
+                'padding': 1, 'padding_mode': 'replicate', 'bias': False}
+
+            upscale_args = {'in_channels': 1, 'out_channels': 1, 
+                'kernel_size': 100, 'stride': 100, 'bias': False}
+
+            self.surrogate_model = torch.nn.Sequential(
+                torch.nn.Conv1d(**conv1d_args),
+                torch.nn.ConvTranspose1d(**upscale_args),
+                ActivationModule(activation_fn=activation_fn),
+                torch.nn.Conv1d(**upscale_args),
+
+                torch.nn.Conv1d(**conv1d_args),
+                torch.nn.ConvTranspose1d(**upscale_args),
+                ActivationModule(activation_fn=activation_fn),
+                torch.nn.Conv1d(**upscale_args),
+
+                torch.nn.Conv1d(**conv1d_args),
+                torch.nn.ConvTranspose1d(**upscale_args),
+                ActivationModule(activation_fn=activation_fn),
+                torch.nn.Conv1d(**upscale_args),
+
+                torch.nn.Conv1d(**conv1d_args),
+                torch.nn.ConvTranspose1d(**upscale_args),
+                ActivationModule(activation_fn=activation_fn),
+                torch.nn.Conv1d(**upscale_args)
             )
 
 
@@ -190,8 +250,13 @@ class WaveExperiment:
 
     def _compute_solution(self): 
         # compute solution for all t in [0, T]
-        self.T = 10
         self.td_x, self.td_Ham = self.model.solve(0, self.T, self.num_integrator, self.mu)
+
+        # save exact solution on disk
+        np.save(os.path.join(self.output_dir, 'exact_td_x.npy'), 
+            td_to_numpy(self.td_x))
+        np.save(os.path.join(self.output_dir, 'exact_td_Ham.npy'), 
+            td_to_numpy(self.td_Ham))
 
     def _get_training_data(self):
         assert hasattr(self, 'td_x'), 'Call _compute_solution() before calling _get_training_data()'
@@ -200,8 +265,7 @@ class WaveExperiment:
         # delete Dirichlet boundary values from training data
         data = np.delete(data, [0, self.n_x-1, self.n_x, 2*self.n_x-1], axis=1)
 
-        T_training = 0.1
-        n_training = int(T_training / self.dt)
+        n_training = int(self.T_training / self.dt)
         x = data[0:n_training,:]
         y = data[1:n_training+1,:] # shift by 1
         x = torch.tensor(x, requires_grad=True, dtype=torch.float32)
@@ -226,9 +290,16 @@ class WaveExperiment:
         x0 = this_model.initial_value(this_mu)
         td_x_surrogate = integrate(self.surrogate_model, x0.vec_q[1:-1], x0.vec_p[1:-1], 
             0, self.T, self.dt, custom_phase_space=self.surrogate_phase_space)
+        td_Ham_surrogate = td_x_to_hamiltonian(td_x_surrogate, self.model, this_mu)
+
+        # save data on disk
+        np.save(os.path.join(self.output_dir, 'epoch{}_td_x.npy'.format(epoch)), 
+            td_to_numpy(td_x_surrogate))
+        np.save(os.path.join(self.output_dir, 'epoch{}_td_Ham.npy'.format(epoch)), 
+            td_to_numpy(td_Ham_surrogate))
 
         # Plot Hamiltonian
-        ham_plt = plot_hamiltonian(this_td_Ham, td_x_surrogate, this_model, this_mu)
+        ham_plt = plot_hamiltonian(this_td_Ham, td_Ham_surrogate)
         self.writer.add_figure(prefix + '/Hamiltonian', ham_plt, epoch) 
 
         # Plot q and p for left, middle and right knot
@@ -259,8 +330,10 @@ class WaveExperiment:
         x, y, x_test, y_test = self._get_training_data()
 
         criterion = torch.nn.MSELoss()
-        optimizer = torch.optim.AdamW(self.surrogate_model.parameters(), lr=1e-4, eps=1e-6, weight_decay=1e-1)
+        optimizer = torch.optim.AdamW(self.surrogate_model.parameters(), lr=1e-4, eps=1e-6, amsgrad=True)
 
+        losses = []
+        test_losses = []
         self.surrogate_model.train()
         for epoch in range(self.epochs):  
             y1 = self.surrogate_model(x)
@@ -269,19 +342,22 @@ class WaveExperiment:
             loss.backward()
             optimizer.step()
 
+            losses.append(float(loss))
             self.writer.add_scalar("Loss/train", loss, epoch)
+
             self.surrogate_model.train(mode=False)  
 
             with torch.no_grad():
-                if (epoch % 100) == 0:
-                    y1_test = self.surrogate_model(x_test)
-                    test_loss = criterion(y1_test, y_test)
-                    self.writer.add_scalar('Loss/test', test_loss, epoch)
+                y1_test = self.surrogate_model(x_test)
+                test_loss = criterion(y1_test, y_test)
+                test_losses.append(float(test_loss))
+                self.writer.add_scalar('Loss/test', test_loss, epoch)
 
+                if (epoch % 100) == 0:
                     print('training step: {}/{}, training loss: {}, test loss: {}'
                         .format(epoch, self.epochs, float(loss), float(test_loss)))
                       
-                if (epoch % 500) == 0: self._plot(epoch)
+                if self.log_intermediate and (epoch % 500 == 0): self._plot(epoch)
             
             self.surrogate_model.train()
 
@@ -301,13 +377,35 @@ class WaveExperiment:
                 if param.requires_grad:
                     print(name, param.data)
 
+        # save losses and trained model on disk
+        np.save(os.path.join(self.output_dir, 'losses.npy'), losses)
+        np.save(os.path.join(self.output_dir, 'test_losses.npy'), test_losses)
+        torch.save(self.surrogate_model.state_dict(), 
+            os.path.join(self.output_dir, 'surrogate_model.state_dict'))
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run experiments.')
+    parser.add_argument('--output-dir', default='.')
     parser.add_argument('--epochs', default=500, type=int)
-    parser.add_argument('--architecture', choices=['linear', 'nonlinear', 'gradient'], default='linear',
+    parser.add_argument('--architecture', choices=
+        [
+            'linear_canonical', 
+            'linear_fd', 
+            'nonlinear', 
+            'gradient',
+            'n1-gradient',
+            'n2-gradient',
+            'cnn'
+        ], 
+        default='linear',
         help='The architecture to use for the neural network.')
+    parser.add_argument('--activation', 
+        choices=['sigmoid', 'tanh', 'elu'], 
+        default='sigmoid')
     parser.add_argument('--model', choices=['standing_wave', 'transport', 'sine_gordon'], default='standing_wave')
     parser.add_argument('--dt', default=.1, type=float)
+    parser.add_argument('--time-total', default=10.0, type=float)
+    parser.add_argument('--time-training', default=0.1, type=float)
     parser.add_argument(
         '--integrator',
         help='Choose integrator.',
@@ -321,6 +419,7 @@ if __name__ == '__main__':
         help='Plot transport problem after training.')
     parser.add_argument('--init-stormer-verlet', default=False, nargs='?', const=True, type=bool, 
         help='Initialize weights with Stormer-Verlet integration scheme.')
+    parser.add_argument('--log-intermediate', default=False, nargs='?', const=True, type=bool)
     args = parser.parse_args()
 
     expm = WaveExperiment(args)
