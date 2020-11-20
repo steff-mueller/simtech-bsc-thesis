@@ -262,6 +262,7 @@ if __name__ == '__main__':
     subparsers = parser.add_subparsers()
 
     parser_run = subparsers.add_parser('run-experiments')
+    parser_run.add_argument('--parallel', default=2, type=int)
     parser_run.set_defaults(func=lambda args: asyncio.run(run_experiments(args)))
 
     parser_run = subparsers.add_parser('update-csv')
