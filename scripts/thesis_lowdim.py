@@ -1,7 +1,7 @@
 import argparse
 import pathlib
-import subprocess
-import sys
+import asyncio
+import io
 import shutil
 import numpy as np
 import csv
@@ -75,23 +75,63 @@ experiments = [
     ], activations=['sigmoid', 'tanh', 'elu'], architectures=large_architectures, epochs=300000)
 ]
 
-def execute(command):
-    subprocess.run(command, check=True, stdout=sys.stdout, stderr=subprocess.STDOUT)
+async def forward_stream(source: asyncio.StreamReader, dest: io.TextIOWrapper):
+    while True:
+        buffer = await source.read(10)
+        if buffer:
+            dest.write(buffer)
+            dest.flush()
+        else:
+            break
 
-def run_experiments(args):
+async def execute(cmd, log_file):
+    path = pathlib.Path(log_file)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    with io.open(log_file, 'wb') as log_writer:
+        print('Executing ', cmd)
+        proc = await asyncio.create_subprocess_exec(*cmd, 
+            stdout=asyncio.subprocess.PIPE, 
+            stderr=asyncio.subprocess.PIPE)
+
+        await forward_stream(proc.stdout, log_writer)
+
+        _, stderr = await proc.communicate()
+        if stderr:
+            print('Error while executing', cmd)
+            print(stderr)
+            log_writer.write(stderr)
+        else:
+            print('Finished executing', cmd)
+
+
+async def safe_execute(cmd, log_file, sem: asyncio.Semaphore):
+    async with sem:
+        return await execute(cmd, log_file)
+
+async def run_experiments(args):
     # Clean up
     if data_path.exists():
         shutil.rmtree(data_path)
 
+    sem = asyncio.BoundedSemaphore(args.parallel)
+
+    tasks = []
     for exp in experiments:
         for arch in exp.architectures:
             for activation in exp.activations:
-                execute(exp.cmd + [
+                cmd = exp.cmd + [
                     '--architecture', arch.name,
                     '--activation', activation,
                     '--output-dir', data_path.joinpath(exp.name, arch.name, activation),
                     '--epochs', str(exp.epochs)
-                ] + arch.extra_cmd)
+                ] + arch.extra_cmd
+                log_file = data_path.joinpath(exp.name, arch.name, activation, 'run.log')
+
+                task = asyncio.create_task(safe_execute(cmd, log_file, sem))
+                tasks.append(task)
+
+    await asyncio.gather(*tasks)
 
 def save_csv(dest, vec, header):
     if not dest.parent.exists():
@@ -192,7 +232,7 @@ if __name__ == '__main__':
     subparsers = parser.add_subparsers()
 
     parser_run = subparsers.add_parser('run-experiments')
-    parser_run.set_defaults(func=run_experiments)
+    parser_run.set_defaults(func=lambda args: asyncio.run(run_experiments(args)))
 
     parser_run = subparsers.add_parser('update-csv')
     parser_run.set_defaults(func=update_csv)
