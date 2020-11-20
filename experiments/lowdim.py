@@ -275,30 +275,26 @@ def get_surrogate_model(architecture, dim, activation_fn):
         )
     elif architecture == 'large-fnn':
         return torch.nn.Sequential(
-            torch.nn.Linear(2, 50),
+            torch.nn.Linear(2, 70),
             ActivationModule(activation_fn),
-            torch.nn.Linear(50, 50),
+            torch.nn.Linear(70, 70),
             ActivationModule(activation_fn),
-            torch.nn.Linear(50, 50),
+            torch.nn.Linear(70, 70),
             ActivationModule(activation_fn),
-            torch.nn.Linear(50, 50),
-            ActivationModule(activation_fn),
-            torch.nn.Linear(50, 50),
-            ActivationModule(activation_fn),
-            torch.nn.Linear(50, 2)
+            torch.nn.Linear(70, 2)
         )
     elif architecture == 'l-sympnet':
         return LinearSymplectic(9, dim, bias=True)
     elif architecture == 'la-sympnet':
         return get_la_sympnet(dim, 5, 4, activation_fn)
     elif architecture == 'large-la-sympnet':
-        return get_la_sympnet(dim, 20, 5, activation_fn)
+        return get_la_sympnet(dim, 40, 9, activation_fn)
     elif architecture == 'n1-la-sympnet' or architecture == 'n2-la-sympnet':
         ignore_factor = architecture == 'n1-la-sympnet'
         return get_n_la_sympnet(dim, 5, 4, activation_fn, ignore_factor)
     elif architecture == 'large-n1-la-sympnet' or architecture == 'large-n2-la-sympnet':
         ignore_factor = architecture == 'large-n1-la-sympnet'
-        return get_n_la_sympnet(dim, 20, 5, activation_fn, ignore_factor)
+        return get_n_la_sympnet(dim, 40, 9, activation_fn, ignore_factor)
     elif architecture == 'g-sympnet':
         return torch.nn.Sequential(
             LowerGradientModule(dim, n=30, bias=False, activation_fn=activation_fn),

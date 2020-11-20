@@ -46,33 +46,63 @@ class Experiment:
         self.epochs = epochs
 
 experiments = [
-    Experiment('harmonic_oscillator', ['harmonic_oscillator'], [
-        'python', experiments_path.joinpath('lowdim.py'),
-        '--model', 'harmonic_oscillator',
-        '--qmin', '-2',
-        '--qmax', '2',
-        '--pmin', '-2',
-        '--pmax', '2',
-        '-n', '40'
-    ], activations=['sigmoid'], architectures=[Architecture('l-sympnet')], epochs=500),
-    Experiment('simple_pendulum_swing', ['swinging_case', 'rotating_case'], [
-        'python', experiments_path.joinpath('lowdim.py'),
-        '--model', 'simple_pendulum',
-        '--qmin', str(-np.pi/2),
-        '--qmax', str(np.pi/2),
-        '--pmin', str(-np.sqrt(2)),
-        '--pmax', str(np.sqrt(2)),
-        '-n', '40'
-    ], activations=['sigmoid', 'tanh', 'elu'], architectures=architectures, epochs=100000),
-    Experiment('simple_pendulum_swing_rot', ['swinging_case', 'rotating_case'], [
-        'python', experiments_path.joinpath('lowdim.py'),
-        '--model', 'simple_pendulum',
-        '--qmin', '-20',
-        '--qmax', '20',
-        '--pmin', '-2.5',
-        '--pmax', '2.5',
-        '-n', '800'
-    ], activations=['sigmoid', 'tanh', 'elu'], architectures=large_architectures, epochs=300000)
+    Experiment('harmonic_oscillator', ['harmonic_oscillator'],
+        [
+            'python', experiments_path.joinpath('lowdim.py'),
+            '--model', 'harmonic_oscillator',
+            '--qmin', '-2',
+            '--qmax', '2',
+            '--pmin', '-2',
+            '--pmax', '2',
+            '-n', '40'
+        ], 
+        activations=['sigmoid'], 
+        architectures=[Architecture('l-sympnet')], 
+        epochs=500
+    ),
+    Experiment('simple_pendulum_swing', ['swinging_case', 'rotating_case'], 
+        [
+            'python', experiments_path.joinpath('lowdim.py'),
+            '--model', 'simple_pendulum',
+            '--qmin', str(-np.pi/2),
+            '--qmax', str(np.pi/2),
+            '--pmin', str(-np.sqrt(2)),
+            '--pmax', str(np.sqrt(2)),
+            '-n', '40'
+        ], 
+        activations=['sigmoid', 'tanh', 'elu'], 
+        architectures=architectures, 
+        epochs=100000
+    ),
+    Experiment('simple_pendulum_swing_rot', ['swinging_case', 'rotating_case'], 
+        [
+            'python', experiments_path.joinpath('lowdim.py'),
+            '--model', 'simple_pendulum',
+            '--qmin', '-20',
+            '--qmax', '20',
+            '--pmin', '-2.5',
+            '--pmax', '2.5',
+            '-n', '400'
+        ], 
+        activations=['sigmoid', 'tanh', 'elu'], 
+        architectures=large_architectures, 
+        epochs=300000
+    ),
+    Experiment('simple_pendulum_swing_rot_fast_lr', ['swinging_case', 'rotating_case'], 
+        [
+            'python', experiments_path.joinpath('lowdim.py'),
+            '--model', 'simple_pendulum',
+            '--qmin', '-20',
+            '--qmax', '20',
+            '--pmin', '-2.5',
+            '--pmax', '2.5',
+            '-n', '400',
+            '-lr', str(1e0)
+        ], 
+        activations=['sigmoid', 'tanh', 'elu'], 
+        architectures=large_architectures, 
+        epochs=300000
+    )
 ]
 
 async def forward_stream(source: asyncio.StreamReader, dest: io.TextIOWrapper):
