@@ -52,6 +52,7 @@ class WaveExperiment:
         self.n_x = args.nx
         self.print_params = args.print_params
         self.dt = args.dt
+        self.lr = args.learning_rate
         self.T = args.time_total
         self.T_training = args.time_training
         self.post_plot_transport = args.post_plot_transport
@@ -95,10 +96,6 @@ class WaveExperiment:
                 else CanonicalSymmetricKernelBasis(kernel_size=3))
             
             self.surrogate_model = torch.nn.Sequential(
-                UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
                 UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
                 LowerSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
                 UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
@@ -330,7 +327,7 @@ class WaveExperiment:
         x, y, x_test, y_test = self._get_training_data()
 
         criterion = torch.nn.MSELoss()
-        optimizer = torch.optim.AdamW(self.surrogate_model.parameters(), lr=1e-4, eps=1e-6, amsgrad=True)
+        optimizer = torch.optim.Adam(self.surrogate_model.parameters(), lr=self.lr, eps=1e-6, amsgrad=True)
 
         losses = []
         test_losses = []
@@ -406,6 +403,7 @@ if __name__ == '__main__':
     parser.add_argument('--dt', default=.1, type=float)
     parser.add_argument('--time-total', default=10.0, type=float)
     parser.add_argument('--time-training', default=0.1, type=float)
+    parser.add_argument('--learning-rate', '-lr', default=1e-4, type=float)
     parser.add_argument(
         '--integrator',
         help='Choose integrator.',

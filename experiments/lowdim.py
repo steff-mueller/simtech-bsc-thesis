@@ -185,10 +185,7 @@ class Experiment:
         losses = []
         test_losses = []
         self.surrogate_model.train()
-        for epoch in range(self.epochs):
-            if (epoch % 100) == 0:
-                print('training step: %d/%d' % (epoch, self.epochs))
-    
+        for epoch in range(self.epochs):    
             y1 = self.surrogate_model(x)
             loss = criterion(y1, y)        
             optimizer.zero_grad()
@@ -207,6 +204,10 @@ class Experiment:
                 test_loss = criterion(y1_test, y_test)
                 test_losses.append(float(test_loss))
                 self.writer.add_scalar("Loss/test", test_loss, epoch)
+
+                if (epoch % 100) == 0:
+                    print('training step: {}/{}, training loss: {}, test loss: {}'
+                        .format(epoch, self.epochs, float(loss), float(test_loss)))
 
                 if self.log_intermediate and (epoch % 500) == 0:
                     self._run_configurations(epoch)

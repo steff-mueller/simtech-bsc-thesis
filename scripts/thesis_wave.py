@@ -30,8 +30,12 @@ experiments = [
         [
             'python', experiments_path.joinpath('wave.py'),
             '--model', 'transport',
+            '--dt', '0.01',
             '-l', '1',
-            '--nx', '100'
+            '--nx', '100',
+            '--time-total', '10',
+            '--time-training', '1',
+            '-lr', str(1e-1)
         ],
         activations=['sigmoid'],
         architectures=[Architecture('linear_canonical'), Architecture('linear_fd')], 
