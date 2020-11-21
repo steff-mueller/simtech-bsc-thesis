@@ -311,6 +311,10 @@ Kronecker delta
 	\end{cases}
 \end{equation*}
 
+\begin{equation*}
+	\norm{f}_{C^r(W,\R^n)} := ...
+\end{equation*}
+
 
 %----------------------------------------------------------------------------------------
 %
@@ -405,9 +409,9 @@ In this section we recapitulate the architecture of SympNets (Symplectic Network
 proposed by \citeauthor{Jin2020} in \cite{Jin2020}. We proof
 symplecticity for all layer types.
 
-Let us briefly introduce neural network terminology we will use.
-
-\todo{Finish this introduction of neural networks terminology}
+First, let us briefly introduce neural network terminology we will use.
+We refer to \cite{Goodfellow2016} for a comprehensive look on neural
+network concepts.
 
 \begin{definition}
 	(Layer)
@@ -435,41 +439,60 @@ In our special case we will always have $n_1 = n_2 = 2d$.
 	layer parameters with $\Theta = (\theta_1^T, \dots, \theta_{n_L}^T)^T$.
 \end{definition}
 
-For a given loss function $L$, the neural network tries to minimize the loss 
-function $L$ by learning locally optimal parameters $\Theta$.
-
-\todo{Training data}
+We use neural networks in the context of supervised learning. 
+In supervised learning, we want to learn a function based on some training data
 $\mathcal{T} = \{(x_1, y_1) \dots, (x_{n_{\text{train}}},y_{n_{\text{train}}}) \}
-\subset \R^{n_x} \times \R^{n_y}$
+\subset \R^{n_x} \times \R^{n_y}$. Here, $x_i$ refers to input
+and $y_i$ refers to the expected output.
 
-\todo{$x_i$ refers to input, $y_i$ refers to the expected output (supervised learning)}
+If the training data $\mathcal{T}$ does not fit into memory,
+we split the training data into disjoint subsets
+$\{ \mathcal{B}_i \}_{i=1}^{n_{\text{b}}}$ with
+$\mathcal{T} = \mathcal{B}_1 \cup \cdots \mathcal{B}_{n_{\text{b}}}$.
+We call every $\mathcal{B}_i$ a mini-batch.
 
-\todo{Mini batch}
-$\mathcal{B} = \{(x_{i_1}, y_{i_1}), \dots, (x_{i_2},y_{i_2}) \} \subset \mathcal{T}$
-
+For a given loss function $L$, the neural network tries to minimize the loss 
+function $L$ by learning locally optimal parameters $\Theta_{\text{min}}$.
+Typically, the loss function $L$ is expressed as
 \begin{equation*}
-	L(\mathcal{B}; \Theta) = \sum_{(x_i,y_i) \in \mathcal{B}} l(\Phi(x_i; \Theta), y_i)
+	L(\mathcal{B}; \Theta) = \sum_{(x_i,y_i) \in \mathcal{B}} l(\Phi(x_i; \Theta), y_i),
 \end{equation*}
+where $l : \R^{n_y} \times \R^{n_y} \to \R$ gives the loss for an 
+individual training sample and $\mathcal{B}$ refers to a mini-batch
+or to the whole training data $\mathcal{T}$.
 
-\todo{$l$ can be some norm}
+The neural network trains a local optimum $\Theta_{\text{min}}$ via
+an iterative algorithm from the gradient descent family. For example, given
+initial parameters $\Theta_0$, the standard gradient descent algorithm is defined as
 \begin{equation*}
-	l(x,y) = \norm{x-y}
+	\Theta_{i+1} = \Theta_i - \gamma \grad[\Theta]{L(\mathcal{T};\Theta_{i})}
 \end{equation*}
-
-\todo{Gradient descent}
+Here, $\gamma \in \R$ denotes the learning rate.
+If the training data $\mathcal{T}$ is split into multiple mini-batches 
+$\{ \mathcal{B}_i \}_{i=1}^{n_{\text{b}}}$, every gradient-descent step
+is executed with a different mini-batch $\mathcal{B}_i$, i.e.
 \begin{equation*}
-	\grad[\Theta]{L(\mathcal{B};\Theta)}
+	\Theta_{i+1} = \Theta_i - \gamma \grad[\Theta]{L(
+		\mathcal{B}_{((i \textrm{ mod } n_{\text{b}}) + 1)};
+		\Theta_{i})}
 \end{equation*}
+In this case, the algorithm is called stochastic gradient descent, because it estimates
+the gradient of the whole training data based on smaller mini-batches.
 
-\todo{Forward pass, backward pass, automatic differentiation. 
-Apply chain rule on computational graph to compute gradient.}
+The algorithm for computing the gradient is called backpropagation, which
+is a special case of reverse-mode automatic differentation.
+Basically, the backpropagatin algorithm first computes the loss value 
+in a so-called forward pass
+and keeps the intermediate values in a computational graph.
+Afterwards, in the so-called backward pass, the chain rule is applied programmatically
+on the computational graph to compute the gradient, while reusing the intermediate values
+from the forward pass.
 
 \todo{Add illustration}
 
-\todo{Training}
-
 \subsection{General architecture}
 
+Let us recapitulate the general architecture of SympNets.
 We use that the composition of symplectic maps is again symplectic. So we impose that every
 layer of the neural network must be symplectic, which leads to the overall neural network
 to be symplectic.
@@ -495,16 +518,47 @@ to be symplectic.
 		\end{pmatrix} + b \quad \text{(lower unit triangular layer)}
 	\end{equation*}
 	If we do not explicitly specify the bias parameter $b$, we assume
-	that $b$ is a non-learnable constant with value $b=0$.
+	that $b$ is a non-learnable constant with value $b=0$. The layer transform
+	also depends on parameters $\theta \in \R^{n_\theta}$, i.e.
+	$\layertf(p) = \layertf(p;\theta)$, 
+	but we suppress the dependency on the parameters for shorter notation.
 \end{definition}
 
-This structure was initially proposed by \citeauthor{Deco1995} in \cite{Deco1995} 
-\todo{Have a deeper look at \cite{Deco1995}} for volume-conserving neural networks.
-\todo{Relation to Residual Networks / ResNet}
-
 A SympNet only consists of unit triangular layers. In order that the unit triangular layers 
-$\mathcal{L}_{\text{up}}$ or $\mathcal{L}_{\text{low}}$ are symplectic,
-we have to put additional requirements on the layer transform $\layertf$.
+$\phi_{\text{up}}$ or $\phi_{\text{low}}$ are symplectic,
+we have to put additional requirements on the layer transform $\layertf$, see
+\cref{jacobi_symmetric} later in this section.
+
+This structure is a special version
+of the structure proposed by \citeauthor{Deco1995} in \cite{Deco1995} 
+for volume-conserving neural networks. Both SympNets and the volume-conserving neural
+networks proposed by \citeauthor{Deco1995} are so-called residual neural networks:
+
+\begin{definition}
+	(Residual neural network)
+	A neural network is called a residual neural network
+	if it can be expressed as a composition of residual blocks
+	\begin{equation*}
+		R(x; \theta) = R(x) = \mathcal{F}(x; \theta) + x
+	\end{equation*}
+	with input $x \in \R^{n_1}$ and parameters $\theta \in \R^{n_\theta}$. 
+	The map $\mathcal{F}$ represents the residual mapping.
+	In other words, the neural network $\Phi$ then can be expressed as
+	\begin{equation*}
+		\Phi(x) = (R_n \circ \cdots \circ R_1)(x)
+	\end{equation*}
+	with residual blocks $R_1, \dots, R_n$.
+\end{definition}
+
+The term "residual neural network" was firstly introduced by \citeauthor{resnet2016} in
+\cite{resnet2016}. A SympNet is indeed a residual neural network, because a
+unit triangular layer itself forms a residual block:
+\begin{equation*}
+	\phi_\up \qpvec = \lb \begin{pmatrix}
+		T(p) \\
+		0
+	\end{pmatrix} + b \rb + \qpvec
+\end{equation*}
 
 \begin{lemma}\label{jacobi_symmetric}
 	An upper or lower unit triangular layer $\phi_{\text{up}}$ or $\phi_{\text{low}}$
@@ -755,20 +809,38 @@ $n=d$, $K=I_d$ and $c=0$.
 
 \todo{Define G-SympNet}
 
-\subsection{Approximation theorems}
-
-\todo{Briefly mention theoretical results from \citeauthor{Jin2020} (r-finite etc.)}
+\section{Univeral approximation theorems}
 
 \citeauthor{Jin2020} have shown \citeauthor{Jin2020} approximation theorems.
 
 \begin{definition}
-	Let $r \in \N_0$ be given. $\sigma$ is r-finite if $\sigma \in C^r(\R)$
-	and $0 < \int \abs{\sigma} d\lambda < \infty$. $\lambda$ is the Lebesgue measure on $\R$.
+	($r$-finite)
+	Let $r \in \N_0$ be given. The function $\sigma$ is r-finite if $\sigma \in C^r(\R)$
+	and $0 < \int \abs{\dd{x} \sigma} d\lambda < \infty$. $\lambda$ is the Lebesgue measure on $\R$.
 \end{definition}
 
 \begin{definition}
-	Let $m,n \in \N, \, r \in \N_0$ be given, $U \subset \R^m$ is an open set.
+	($r$-uniformly dense on compacta)
+	Let $m,n \in \N, \, r \in \N_0$ be given, $U \subset \R^m$ an open set,
+	and $S_1 \subset C^r(U,\R^n)$. Then we say $S_2$ is $r$-uniformly dense
+	on compacta in $S_1$ if $S_2 \subset S_1$ and for all $f \in S_1$, compact
+	$W \subset U$ and every $\epsilon > 0$, there exists $g \in S_2$ such that
+	$\norm{f-g}_{C^r(W,\R^n)} < \epsilon$.
 \end{definition}
+
+\begin{theorem}
+	(Approximation theorem for LA-SympNets)
+\end{theorem}
+
+\begin{theorem}
+	(Approximation theorem for G-SympNets)
+\end{theorem}
+
+The approximation theorems do not give any information
+about the size of the SympNet, or how long it would take to learn a SympNet.
+\todo{They simply states that there exists}
+
+\todo{sigmoid, tanh and elu are r-finite}
 
 \section{Convolution and Normalization for SympNets}
 
@@ -1106,7 +1178,6 @@ originate from Pascal's triangle.
 	\quad (j=-m, \dots, m)
 \end{equation*}
 
-\todo{Move this to Appendix?}
 The symmetry of the kernel basis vectors $b_i^{FD}$ follows with the definition of the binomial coefficient.
 \begin{align*}
 	\binom{2(i-1)}{j+i-1} &= \frac{2(i-1)!}{(j+i-1)!(2(i-1)-(j+i-1))!} \\
@@ -1485,12 +1556,17 @@ and the $q$-staggered Störmer-Verlet scheme as
 To conclude, the explicit Euler and Störmer-Verlet schemes can be expressed with
 the same unit triangular structure we use for SympNets. This means that a SympNet is able
 reproduce both schemes exactly or approximately, provided appropriate layer choices.
-\todo{Recurrent networks?}
 
 Symplecticity for the explicit Euler and Störmer-Verlet schemes follows directly 
 from \cref{gradient_corollary} and the fact that the composition of symplectic maps is again symplectic.
 
 \section{Numerical experiments}
+
+\todo{Describe loss we use}
+
+\todo{Describe FNN}
+
+\todo{Initialization}
 
 \subsection{Low-dimensional systems}
 
@@ -1754,295 +1830,110 @@ $(q,p) \in [-\frac{\pi}{2}, \frac{\pi}{2}] \times [-\sqrt{2}, \sqrt{2}]$
 (First row) sigmoid activation (Second row) tanh activation (Third row) ELU activation}
 \end{figure}
 
-% \pgfplotstabletypeset[col sep=comma,
-% 	 columns/architecture/.style={string type}
-%     ] {../data/simple_pendulum_swing/test_loss_summary.csv}
-
-% \begin{tikzpicture}
-% 	\begin{axis}[
-% 		width = \linewidth,
-% 		title={Phase plot (swinging case)},
-% 		xlabel={q},
-% 		ylabel={p},
-% 		no markers, smooth
-% 	]
-
-% 	\addplot[
-% 		color=gray,thick
-% 	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/exact/swinging_case/phase_plot.csv};
-
-% 	\addplot[
-% 		color=red
-% 	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/la-sympnet/swinging_case/phase_plot.csv};
-
-% 	\addplot[
-% 		color=red,dashed,
-% 		select coords between index={0}{72}
-% 	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/n1-la-sympnet/swinging_case/phase_plot.csv};
-
-% 	\addplot[
-% 		color=red,densely dotted,
-% 		select coords between index={0}{72}
-% 	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/n2-la-sympnet/swinging_case/phase_plot.csv};
-
-% 	\addplot[
-% 		color=brown
-% 	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/fnn/swinging_case/phase_plot.csv};
-
-% 	\addplot[
-% 		color=blue
-% 	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/g-sympnet/swinging_case/phase_plot.csv};
-
-% 	\addplot[
-% 		color=blue,dashed,
-% 		select coords between index={0}{72}
-% 	] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/n1-g-sympnet/swinging_case/phase_plot.csv};
-
-% 	%\addplot[
-% 	%	color=blue,densely dotted,
-% 	%	select coords between index={0}{72}
-% 	%] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/n2-g-sympnet/swinging_case/phase_plot.csv};
-		
-% 	\end{axis}
-% \end{tikzpicture}
-
-% \begin{tikzpicture}
-% 	\begin{axis}[
-% 		width = \linewidth,
-% 		height = \axisdefaultheight,
-% 		no markers, smooth,
-% 		title={Total energy},
-% 		xlabel={t},
-% 		ylabel={Total energy},
-% 		legend style={draw=none},
-% 		legend entries={
-% 			Störmer-Verlet,
-% 			FNN,
-% 			LA-SympNet,
-% 			N1-LA-SympNet,
-% 			N2-LA-SympNet,
-% 			G-SympNet,
-% 			N1-G-SympNet,
-% 			N2-G-SympNet
-% 		}
-% 	]
-
-% 	\addplot[
-% 		color=gray
-% 	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/exact/swinging_case/total_energy.csv};
-
-% 	\addplot[
-% 		color=brown
-% 	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/fnn/swinging_case/total_energy.csv};
-
-% 	\addplot[
-% 		color=red
-% 	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/la-sympnet/swinging_case/total_energy.csv};
-
-% 	\addplot[
-% 		color=orange
-% 	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/n1-la-sympnet/swinging_case/total_energy.csv};
-
-% 	\addplot[
-% 		color=violet
-% 	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/n2-la-sympnet/swinging_case/total_energy.csv};
-
-% 	\addplot[
-% 		color=blue
-% 	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/g-sympnet/swinging_case/total_energy.csv};
-
-% 	\addplot[
-% 		color=cyan
-% 	] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/n1-g-sympnet/swinging_case/total_energy.csv};
-		
-% 	\end{axis}
-% \end{tikzpicture}
-
-Rotating domain
-
-$(q,p) \in [-20, 20] \times [0.5, 2.5]$
-
 \begin{figure}
-\centering
-\begin{tikzpicture}
-	\begin{groupplot}[
-		group style={
-			group size=3 by 1,
-			y descriptions at=edge left,
-			horizontal sep=0.1cm,
-			vertical sep=2.2cm,
-		},
-		xlabel=Epoch, ylabel={Test loss},
-		width=6.3cm, height=7cm,
-		no markers,
-		ymax=1e-1, ymin=5e-6, ymode=log
-	]
-
-	\nextgroupplot[
-		title={Sigmoid},
-		legend entries={
-			FNN,
-			LA-SympNet,
-			N1-LA-SympNet,
-			N2-LA-SympNet,
-			G-SympNet,
-			N1-G-SympNet,
-			N2-G-SympNet
-		},
-		legend columns=4,
-		legend to name=grouplegend
-	]
-		\addplot[
-			color=brown
-		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/fnn/sigmoid/test_loss.csv};
-
-		\addplot[
-			color=red
-		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/la-sympnet/sigmoid/test_loss.csv};
-
-		\addplot[
-			color=red, dashed
-		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n1-la-sympnet/sigmoid/test_loss.csv};
-
-		\addplot[
-			color=red, densely dotted
-		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n2-la-sympnet/sigmoid/test_loss.csv};
-
-		\addplot[
-			color=blue
-		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/g-sympnet/sigmoid/test_loss.csv};
-
-		\addplot[
-			color=blue, dashed
-		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n1-g-sympnet/sigmoid/test_loss.csv};
-
-		\addplot[
-			color=blue, densely dotted
-		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n2-g-sympnet/sigmoid/test_loss.csv};
-
-	\nextgroupplot[title={tanh}]
-		\addplot[
-			color=brown
-		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/fnn/tanh/test_loss.csv};
-
-		\addplot[
-			color=red
-		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/la-sympnet/tanh/test_loss.csv};
-
-		\addplot[
-			color=red, dashed
-		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n1-la-sympnet/tanh/test_loss.csv};
-
-		\addplot[
-			color=red, densely dotted
-		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n2-la-sympnet/tanh/test_loss.csv};
-
-		\addplot[
-			color=blue
-		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/g-sympnet/tanh/test_loss.csv};
-
-		\addplot[
-			color=blue, dashed
-		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n1-g-sympnet/tanh/test_loss.csv};
-
-		\addplot[
-			color=blue, densely dotted
-		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n2-g-sympnet/tanh/test_loss.csv};
-
-	\nextgroupplot[title={ELU}]
-		\addplot[
-			color=brown
-		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/fnn/elu/test_loss.csv};
-
-		\addplot[
-			color=red
-		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/la-sympnet/elu/test_loss.csv};
-
-		\addplot[
-			color=red, dashed
-		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n1-la-sympnet/elu/test_loss.csv};
-
-		\addplot[
-			color=red, densely dotted
-		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n2-la-sympnet/elu/test_loss.csv};
-
-		\addplot[
-			color=blue
-		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/g-sympnet/elu/test_loss.csv};
-
-		\addplot[
-			color=blue, dashed
-		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n1-g-sympnet/elu/test_loss.csv};
-
-		\addplot[
-			color=blue, densely dotted
-		] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_rot/n2-g-sympnet/elu/test_loss.csv};
+	\centering
+	\begin{tikzpicture}
+		\begin{groupplot}[
+			group style={
+				group size=2 by 1
+			},
+			xlabel=$q$, ylabel=$p$,
+			xmajorgrids
+		]
 			
-	\end{groupplot}
-\end{tikzpicture}
-\\[5pt]
-\ref{grouplegend}
-\caption{Simple pendulum, rotating domain.}
+		\nextgroupplot[
+			title={Phase plot for $q_0 = \frac{\pi}{2},\, p_0 = 0$},
+			legend entries={
+				Exact,
+				FNN (tanh),
+				N2-LA-SympNet (sigmoid),
+				N2-G-SympNet (tanh)
+			},
+			legend columns=4,
+			legend to name=leg_ped_swing_phase
+		]
+			\addplot[
+				color=gray,thick
+			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/exact/swinging_case/phase_plot.csv};
+	
+			\addplot[
+				color=brown
+			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/fnn/tanh/swinging_case/phase_plot.csv};
+	
+			\addplot[
+				color=red,densely dotted
+			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/n2-la-sympnet/sigmoid/swinging_case/phase_plot.csv};
+	
+			\addplot[
+				color=blue,densely dotted, opacity=0.5
+			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/n2-g-sympnet/tanh/swinging_case/phase_plot.csv};
+	
+		\nextgroupplot[title={Phase plot for $q_0 = \pi,\, p_0=1$}]
+			\addplot[
+				color=gray,thick
+			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/exact/rotating_case/phase_plot.csv};
+	
+			\addplot[
+				color=brown
+			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/fnn/tanh/swinging_case/phase_plot.csv};
+
+			\addplot[
+				color=red,densely dotted
+			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/n2-la-sympnet/sigmoid/swinging_case/phase_plot.csv};
+	
+			\addplot[
+				color=blue,densely dotted
+			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing/n2-g-sympnet/tanh/rotating_case/phase_plot.csv};
+	
+		\end{groupplot}
+	\end{tikzpicture}
+	\\[5pt]
+	\ref{leg_ped_swing_phase}
+	\caption{Phase plots for simple pendulum. Training data uniformly sampled from swinging domain.}
 \end{figure}
 
 \begin{figure}
-\centering
-\begin{tikzpicture}
-	\begin{groupplot}[
-		group style={
-			group size=2 by 1
-		}
-	]
-		
-	\nextgroupplot[
-		title={Phase plot (swinging)},
-		legend entries={
-			Exact,
-			FNN (tanh),
-			N2-LA-SympNet (sigmoid),
-			N2-G-SympNet (tanh)
-		},
-		legend columns=4,
-		legend to name=leg_ped_rot_phase
-	]
+	\centering
+	\begin{tikzpicture}
+		\begin{axis}[
+			width = \linewidth,
+			height = \axisdefaultheight,
+			no markers,
+			title={Total energy},
+			xlabel={t},
+			ylabel={Total energy},
+			% legend style={draw=none},
+			% legend entries={
+			% 	Störmer-Verlet,
+			% 	FNN,
+			% 	LA-SympNet,
+			% 	N1-LA-SympNet,
+			% 	N2-LA-SympNet,
+			% 	G-SympNet,
+			% 	N1-G-SympNet,
+			% 	N2-G-SympNet
+			% }
+		]
+
 		\addplot[
-			color=gray,thick
-		] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_rot/exact/swinging_case/phase_plot.csv};
+			color=gray
+		] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/exact/swinging_case/total_energy.csv};
 
 		\addplot[
 			color=brown
-		] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_rot/fnn/tanh/swinging_case/phase_plot.csv};
+		] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/fnn/tanh/swinging_case/total_energy.csv};
 
 		\addplot[
-			color=red,densely dotted,thick
-		] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_rot/n2-la-sympnet/sigmoid/swinging_case/phase_plot.csv};
+			color=violet
+		] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/n2-la-sympnet/sigmoid/swinging_case/total_energy.csv};
 
 		\addplot[
-			color=blue,densely dotted,thick
-		] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_rot/n2-g-sympnet/tanh/swinging_case/phase_plot.csv};
-
-	\nextgroupplot[title={Phase plot (rotating)}]
-		\addplot[
-			color=gray,thick
-		] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_rot/exact/rotating_case/phase_plot.csv};
-
-		\addplot[
-			color=brown
-		] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_rot/fnn/tanh/swinging_case/phase_plot.csv};
-
-		\addplot[
-			color=red,densely dotted,thick
-		] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_rot/n2-la-sympnet/sigmoid/rotating_case/phase_plot.csv};
-
-		\addplot[
-			color=blue,densely dotted,thick
-		] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_rot/n2-g-sympnet/tanh/rotating_case/phase_plot.csv};
-
-	\end{groupplot}
-\end{tikzpicture}
-\\[5pt]
-\ref{leg_ped_rot_phase}
-\caption{Phase plots for simple pendulum. Training data uniformly sampled from rotating domain.}
+			color=blue,densely dotted
+		] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing/n2-g-sympnet/tanh/swinging_case/total_energy.csv};
+			
+		\end{axis}
+	\end{tikzpicture}
+	\caption{Total energy over time for $q_0 = \frac{\pi}{2},\, p_0 = 0$}
 \end{figure}
 
 Swinging and rotating domain
@@ -2179,7 +2070,8 @@ $(q,p) \in [-20, 20] \times [-2.5, 2.5]$
 			group style={
 				group size=2 by 1
 			},
-			xlabel=$q$, ylabel=$p$
+			xlabel=$q$, ylabel=$p$,
+			xmajorgrids
 		]
 			
 		\nextgroupplot[
@@ -2202,7 +2094,7 @@ $(q,p) \in [-20, 20] \times [-2.5, 2.5]$
 			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/fnn/tanh/swinging_case/phase_plot.csv};
 	
 			\addplot[
-				color=red,densely dotted,thick
+				color=red,dashed
 			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/n1-la-sympnet/tanh/swinging_case/phase_plot.csv};
 	
 			\addplot[
@@ -2219,7 +2111,7 @@ $(q,p) \in [-20, 20] \times [-2.5, 2.5]$
 			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/fnn/tanh/swinging_case/phase_plot.csv};
 	
 			\addplot[
-				color=red,densely dotted,thick
+				color=red,dashed
 			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/n1-la-sympnet/tanh/rotating_case/phase_plot.csv};
 	
 			\addplot[
@@ -2268,6 +2160,8 @@ isotropic.}
 \subsection{Summary and conclusion}
 
 \subsection{Outlook}
+
+\todo{Recurrent networks}
 
 %----------------------------------------------------------------------------------------
 %
