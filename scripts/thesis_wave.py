@@ -47,7 +47,9 @@ experiments = [
             '--model', 'transport',
             '--dt', '0.01',
             '-l', '50',
-            '--nx', '4000'
+            '--nx', '4000',
+            '--time-total', '10',
+            '--time-training', '1'
         ], 
         activations=['sigmoid'], 
         architectures=[
@@ -61,7 +63,9 @@ experiments = [
             '--model', 'transport',
             '--dt', '0.01',
             '-l', '50',
-            '--nx', '4000'
+            '--nx', '4000',
+            '--time-total', '10',
+            '--time-training', '1'
         ], 
         activations=['sigmoid', 'tanh', 'elu'], 
         architectures=[
@@ -70,7 +74,7 @@ experiments = [
             Architecture('n2-gradient'),
             Architecture('cnn')
         ], 
-        epochs=100000
+        epochs=2000
     )
 ]
 
