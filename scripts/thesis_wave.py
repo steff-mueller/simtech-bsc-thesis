@@ -38,18 +38,22 @@ experiments = [
             '-lr', str(1e-1)
         ],
         activations=['sigmoid'],
-        architectures=[Architecture('linear_canonical'), Architecture('linear_fd')], 
+        architectures=[
+            Architecture('linear_canonical'),
+            Architecture('linear_fd'),
+            Architecture('linear_cnn')
+        ], 
         epochs=2000
     ),
     Experiment('sine_gordon_sin',
         [
             'python', experiments_path.joinpath('wave.py'),
-            '--model', 'transport',
+            '--model', 'sine_gordon',
             '--dt', '0.01',
             '-l', '50',
             '--nx', '4000',
             '--time-total', '10',
-            '--time-training', '1'
+            '--time-training', '0.1'
         ], 
         activations=['sigmoid'], 
         architectures=[
@@ -60,12 +64,12 @@ experiments = [
     Experiment('sine_gordon', 
         [
             'python', experiments_path.joinpath('wave.py'),
-            '--model', 'transport',
+            '--model', 'sine_gordon',
             '--dt', '0.01',
             '-l', '50',
             '--nx', '4000',
             '--time-total', '10',
-            '--time-training', '1'
+            '--time-training', '0.1'
         ], 
         activations=['sigmoid', 'tanh', 'elu'], 
         architectures=[
@@ -74,7 +78,7 @@ experiments = [
             Architecture('n2-gradient'),
             Architecture('cnn')
         ], 
-        epochs=2000
+        epochs=100000
     )
 ]
 

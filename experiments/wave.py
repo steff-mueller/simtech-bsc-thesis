@@ -101,6 +101,16 @@ class WaveExperiment:
                 UpperSymplecticConv1d(self.dim, kernel_basis=kernel_basis),
                 LowerSymplecticConv1d(self.dim, kernel_basis=kernel_basis)
             )
+        if architecture == 'linear_cnn':
+            conv1d_args = {'in_channels': 1, 'out_channels': 1, 'kernel_size': 3, 
+                'padding': 1, 'bias': False}
+
+            self.surrogate_model = torch.nn.Sequential(
+                torch.nn.Conv1d(**conv1d_args),
+                torch.nn.Conv1d(**conv1d_args),
+                torch.nn.Conv1d(**conv1d_args),
+                torch.nn.Conv1d(**conv1d_args),
+            )
         elif architecture == 'nonlinear':
             kernel_basis = FDSymmetricKernelBasis(kernel_size = 3)
             self.surrogate_model = torch.nn.Sequential(
@@ -436,6 +446,7 @@ if __name__ == '__main__':
         [
             'linear_canonical', 
             'linear_fd', 
+            'linear_cnn',
             'nonlinear', 
             'gradient',
             'n1-gradient',
