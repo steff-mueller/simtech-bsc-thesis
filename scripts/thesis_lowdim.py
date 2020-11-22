@@ -188,6 +188,13 @@ def subsample(vec: np.ndarray, every_nth: int):
     vec_sample[-1,:] = vec[-1,:] # return last
     return vec_sample
 
+subsample_conf = {
+    'harmonic_oscillator': 2,
+    'simple_pendulum_swing': 200,
+    'simple_pendulum_swing_rot': 600,
+    'simple_pendulum_swing_rot_fast_lr': 600
+}
+
 def update_csv(args):
     for exp in experiments:
         curr_exp_dir = data_path.joinpath(exp.name)
@@ -196,10 +203,10 @@ def update_csv(args):
         test_loss_summary = []
         for arch in exp.architectures:
 
-            arch_summary = { 'architecture': arch.name }
+            arch_summary = { 'architecture': arch.name.upper().replace('SYMPNET', 'SympNet').replace('LARGE-', '') }
 
             for activation in exp.activations:
-                n_subsample = 2 if exp.name == 'harmonic_oscillator' else 200
+                n_subsample = subsample_conf[exp.name]
 
                 # Training loss
                 losses = np.load(curr_exp_dir.joinpath(arch.name, activation, 'losses.npy'))
@@ -237,6 +244,12 @@ def update_csv(args):
                 't,E'
             )
 
+            save_csv(
+                curr_destination_dir.joinpath('exact', config, 'q.csv'),
+                td_x[:,:2],
+                't,q'
+            )
+
             for arch in exp.architectures:
                 for activation in exp.activations:
 
@@ -254,6 +267,12 @@ def update_csv(args):
                         curr_destination_dir.joinpath(arch.name, activation, config, 'total_energy.csv'),
                         td_Ham,
                         't,E'
+                    )
+
+                    save_csv(
+                        curr_destination_dir.joinpath(arch.name, activation, config, 'q.csv'),
+                        td_x[:,:2],
+                        't,q'
                     )
 
 
