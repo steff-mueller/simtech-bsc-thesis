@@ -46,6 +46,14 @@ class ActivationModule(torch.nn.Module):
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         return self.activation_fn(input)
 
+class UnsqueezeModule(torch.nn.Module):
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        return input.unsqueeze(1)
+
+class SqueezeModule(torch.nn.Module):
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        return input.squeeze(1)
+
 class WaveExperiment:
     def __init__(self, args):
         self.epochs = args.epochs
@@ -106,10 +114,12 @@ class WaveExperiment:
                 'padding': 1, 'bias': False}
 
             self.surrogate_model = torch.nn.Sequential(
+                UnsqueezeModule(),
                 torch.nn.Conv1d(**conv1d_args),
                 torch.nn.Conv1d(**conv1d_args),
                 torch.nn.Conv1d(**conv1d_args),
                 torch.nn.Conv1d(**conv1d_args),
+                SqueezeModule()
             )
         elif architecture == 'nonlinear':
             kernel_basis = FDSymmetricKernelBasis(kernel_size = 3)
@@ -205,6 +215,7 @@ class WaveExperiment:
                 'kernel_size': 100, 'stride': 100, 'bias': False}
 
             self.surrogate_model = torch.nn.Sequential(
+                UnsqueezeModule(),
                 torch.nn.Conv1d(**conv1d_args),
                 torch.nn.Conv1d(**conv1d_args),
                 torch.nn.Conv1d(**conv1d_args),
@@ -235,7 +246,8 @@ class WaveExperiment:
                 torch.nn.Conv1d(**conv1d_args),
                 torch.nn.ConvTranspose1d(**upscale_args),
                 ActivationModule(activation_fn=activation_fn),
-                torch.nn.Conv1d(**upscale_args)
+                torch.nn.Conv1d(**upscale_args),
+                SqueezeModule()
             )
 
 
