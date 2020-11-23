@@ -2416,11 +2416,65 @@ Assumptions:
 
 \todo{Explain why we need assumptions.}
 
+The one-dimensional semi-linear wave equation with constant speed $c \in \R$, nonlinear term 
+$g : \R \to \R$ and domain length $l \in \R$
+\begin{equation*}
+	\frac{\partial^2}{\partial t^2} u(t,x) = 
+	c^2 \frac{\partial^2}{\partial x^2} u(t,x) - g(u(t,x)) 
+	\quad \forall x \in \lsb -\frac{l}{2},\frac{l}{2} \rsb, 
+	\, t \in I \subset \R
+\end{equation*}
+\todo{double-check domain}
+with initial conditions
+\begin{align*}
+	u(t_0,x) &= u_0(x) \\
+	\deldelt u(t_0,x) &= w_0(x) \quad \forall x \in \lsb -\frac{l}{2},\frac{l}{2} \rsb
+\end{align*}
+and Dirichlet boundary conditions
+\begin{equation*}
+	u(t,-l/2) = u_{\text{left}}, \, u(t,l/2) = u_{\text{right}} \quad \forall t \in I \subset \R
+\end{equation*}
+can be transformed into a Hamiltonian ODE system upon discretization with finite differences
+(see \cite{2006ham_pde} and \cite{peng2016} for details). 
+Here, $u(x,t) \in \R$ denotes the unknown time-dependent displacement field on the interval $[-l/2, l/2]$.
+
+Given a equally-spaced grid $\{ x_i \}_{n=0}^{n+1} \subset \R$, $x_0 = -l/2$, $x_{n+1} = l/2$,
+with grid width $\Delta x$,
+initial values $y_0 = (q_0^T, p_0^T)^T \in \R^{2n}$, $q_0 = \lb u_0(x_i) \rb_{i=1}^n \in \R^n$, 
+$p_0 = \lb w_0(x_i) \rb_{i=1}^n \in \R^n$,
+the resulting Hamiltonian system is given by
+\begin{align*}
+	\dot{y}(t) &= \frac{J_{2n}}{\Delta x} \grad{H}(y(t)) \quad \text{for } t \in I \subset \mathbb{R} \\
+	y(t_0) &= y_0
+\end{align*}
+with Hamiltonian
+\begin{equation*}
+	H(q,p) = \sum_{i=1}^n \Delta x \lb 
+	\frac{1}{2} p_i^2 + \frac{c^2 (q_{i+1} - q_i)^2}{4 \Delta x^2} 
+	+ \frac{c^2 (q_i - q_{i-1})^2}{4 \Delta x^2} + G(q_i)
+	\rb
+	\quad (q,p \in \R^n)
+\end{equation*}
+where $G'(u) = \int_0^u g(v) dv$, $q_0 := u_{\text{left}}$ and $q_{n+1} := u_{\text{right}}$.
+The generalized coordinates $q_i(t)$ then refer to $u(t,x_i)$ and 
+the conjugate momenta $p_i(t)$ then refer to $\deldelt u(t,x_i)$.
+
 \subsubsection{Linear wave equation}
+
+$G(u) = g(u) =0$, $u_{\text{left}} = u_{\text{right}} = 0$
 
 \todo{The choice of basis for the symmetric convolution kernels is critical (for fast convergence)!}
 
 \subsubsection{Sine-Gordon}
+
+nonlinear wave equation with $G(u) = 1 - cos(u)$, $g(u) = sin(u)$ and $c=1$.
+
+initial values
+\begin{align*}
+	u_0(x) &= 4 arctan \lsb exp \lb \frac{x-x_0}{\sqrt{1-v^2}} \rb \rsb \\
+	w_0(x) &= \dd{x} u_0(x)
+\end{align*}
+boundary conditions $u_{\text{left}} = 0, \, u_{\text{right}} = 2\pi$.
 
 \todo{Padding modes}
 
