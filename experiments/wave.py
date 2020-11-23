@@ -125,26 +125,14 @@ class WaveExperiment:
             kernel_basis = FDSymmetricKernelBasis(kernel_size = 3)
             self.surrogate_model = torch.nn.Sequential(
                 UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 UpperNonlinearSymplectic(self.dim, activation_fn=torch.sin, scalar_weight=True),
 
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 LowerNonlinearSymplectic(self.dim, activation_fn=torch.sin, scalar_weight=True),
 
                 UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 UpperNonlinearSymplectic(self.dim, activation_fn=torch.sin, scalar_weight=True),
 
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 LowerNonlinearSymplectic(self.dim, activation_fn=torch.sin, scalar_weight=True)
             )
@@ -153,26 +141,14 @@ class WaveExperiment:
             gradient_args = {'dim': self.dim, 'bias': False, 'n': 100, 'activation_fn': activation_fn}
             self.surrogate_model = torch.nn.Sequential(
                 UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 UpperConv1dGradientModule(**gradient_args),
 
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 LowerConv1dGradientModule(**gradient_args),
 
                 UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 UpperConv1dGradientModule(**gradient_args),
 
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 LowerConv1dGradientModule(**gradient_args)
             )
@@ -184,26 +160,14 @@ class WaveExperiment:
             
             self.surrogate_model = torch.nn.Sequential(
                 UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 NormalizedUpperConv1dGradientModule(**gradient_args),
 
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 NormalizedLowerConv1dGradientModule(**gradient_args),
 
                 UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 NormalizedUpperConv1dGradientModule(**gradient_args),
 
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
-                UpperSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 LowerSymplecticConv1d(self.dim, padding_mode='replicate', kernel_basis=kernel_basis),
                 NormalizedLowerConv1dGradientModule(**gradient_args)
             )
@@ -216,33 +180,20 @@ class WaveExperiment:
 
             self.surrogate_model = torch.nn.Sequential(
                 UnsqueezeModule(),
-                torch.nn.Conv1d(**conv1d_args),
-                torch.nn.Conv1d(**conv1d_args),
-                torch.nn.Conv1d(**conv1d_args),
+                torch.nn.ConvTranspose1d(**upscale_args),
+                ActivationModule(activation_fn=activation_fn),
+                torch.nn.Conv1d(**upscale_args),
+
                 torch.nn.Conv1d(**conv1d_args),
                 torch.nn.ConvTranspose1d(**upscale_args),
                 ActivationModule(activation_fn=activation_fn),
                 torch.nn.Conv1d(**upscale_args),
 
                 torch.nn.Conv1d(**conv1d_args),
-                torch.nn.Conv1d(**conv1d_args),
-                torch.nn.Conv1d(**conv1d_args),
-                torch.nn.Conv1d(**conv1d_args),
                 torch.nn.ConvTranspose1d(**upscale_args),
                 ActivationModule(activation_fn=activation_fn),
                 torch.nn.Conv1d(**upscale_args),
 
-                torch.nn.Conv1d(**conv1d_args),
-                torch.nn.Conv1d(**conv1d_args),
-                torch.nn.Conv1d(**conv1d_args),
-                torch.nn.Conv1d(**conv1d_args),
-                torch.nn.ConvTranspose1d(**upscale_args),
-                ActivationModule(activation_fn=activation_fn),
-                torch.nn.Conv1d(**upscale_args),
-
-                torch.nn.Conv1d(**conv1d_args),
-                torch.nn.Conv1d(**conv1d_args),
-                torch.nn.Conv1d(**conv1d_args),
                 torch.nn.Conv1d(**conv1d_args),
                 torch.nn.ConvTranspose1d(**upscale_args),
                 ActivationModule(activation_fn=activation_fn),

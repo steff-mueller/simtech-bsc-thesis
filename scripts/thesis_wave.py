@@ -51,9 +51,10 @@ experiments = [
             '--model', 'sine_gordon',
             '--dt', '0.01',
             '-l', '50',
-            '--nx', '4000',
+            '--nx', '2000',
             '--time-total', '10',
-            '--time-training', '0.1'
+            '--time-training', '1',
+            '-lr', str(1e-2)
         ], 
         activations=['sigmoid'], 
         architectures=[
@@ -67,9 +68,11 @@ experiments = [
             '--model', 'sine_gordon',
             '--dt', '0.01',
             '-l', '50',
-            '--nx', '4000',
+            '--nx', '2000',
             '--time-total', '10',
-            '--time-training', '0.1'
+            '--time-training', '1',
+            '-lr', str(1e-2),
+            '--log-intermediate'
         ], 
         activations=['sigmoid', 'tanh', 'elu'], 
         architectures=[
@@ -78,7 +81,7 @@ experiments = [
             Architecture('n2-gradient'),
             Architecture('cnn')
         ], 
-        epochs=100000
+        epochs=2000
     )
 ]
 
