@@ -2438,7 +2438,7 @@ can be transformed into a Hamiltonian ODE system upon discretization with finite
 (see \cite{2006ham_pde} and \cite{peng2016} for details). 
 Here, $u(x,t) \in \R$ denotes the unknown time-dependent displacement field on the interval $[-l/2, l/2]$.
 
-Given a equally-spaced grid $\{ x_i \}_{n=0}^{n+1} \subset \R$, $x_0 = -l/2$, $x_{n+1} = l/2$,
+Given an equally-spaced grid $\{ x_i \}_{n=0}^{n+1} \subset \R$, $x_0 = -l/2$, $x_{n+1} = l/2$,
 with grid width $\Delta x$,
 initial values $y_0 = (q_0^T, p_0^T)^T \in \R^{2n}$, $q_0 = \lb u_0(x_i) \rb_{i=1}^n \in \R^n$, 
 $p_0 = \lb w_0(x_i) \rb_{i=1}^n \in \R^n$,
@@ -2461,7 +2461,85 @@ the conjugate momenta $p_i(t)$ then refer to $\deldelt u(t,x_i)$.
 
 \subsubsection{Linear wave equation}
 
+Transport problem
+
 $G(u) = g(u) =0$, $u_{\text{left}} = u_{\text{right}} = 0$
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+	\begin{axis}[
+		ymode=log,
+		no markers,
+		title={Test loss (Linear wave equation)},
+		xlabel={Epoch}, xmin=0, xmax=500,
+		ylabel={Test loss},
+		legend style={nodes={scale=0.75, transform shape}},
+		legend entries={
+			CNN,
+			CNN-SympNet (canonical basis),
+			CNN-SympNet (FD basis)
+		}
+	]
+
+	\addplot[
+		color=green
+	] table[x=epoch,y=loss,col sep=comma] {../data-wave/transport/linear_cnn/sigmoid/test_loss.csv};
+
+	\addplot[
+		color=blue
+	] table[x=epoch,y=loss,col sep=comma] {../data-wave/transport/linear_canonical/sigmoid/test_loss.csv};
+
+	\addplot[
+		color=magenta
+	] table[x=epoch,y=loss,col sep=comma] {../data-wave/transport/linear_fd/sigmoid/test_loss.csv};
+		
+	\end{axis}
+\end{tikzpicture}
+\caption{\todo{todo}}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\begin{tikzpicture}
+		\begin{axis}[
+			no markers,
+			width=0.7*\linewidth, height=\axisdefaultheight,
+			title={$q(t=9,x)$ (Linear wave equation)},
+			xlabel={$x$}, xmin=-0.5, xmax=0.5,
+			ylabel={$q(t=9,x)$}, ymin=-0.3, ymax=0.1, restrict y to domain=-2:2,
+			legend style={
+				nodes={scale=0.75, transform shape},
+				legend pos=outer north east
+			},
+			legend entries={
+				CNN,
+				C-SympNet (canonical basis),
+				C-SympNet (FD basis),
+				Exact,
+			}
+		]	
+	
+		\addplot[
+			color=green
+		] table[x=x,y=q,col sep=comma] {../data-wave/transport/linear_cnn/sigmoid/q_t9.csv};
+	
+		\addplot[
+			color=blue
+		] table[x=x,y=q,col sep=comma] {../data-wave/transport/linear_canonical/sigmoid/q_t9.csv};
+	
+		\addplot[
+			color=magenta
+		] table[x=x,y=q,col sep=comma] {../data-wave/transport/linear_fd/sigmoid/q_t9.csv};
+
+		\addplot[
+			color=darkgray
+		] table[x=x,y=q,col sep=comma] {../data-wave/transport/exact/q_t9.csv};
+			
+		\end{axis}
+	\end{tikzpicture}
+	\caption{\todo{todo}}
+	\end{figure}
 
 \todo{The choice of basis for the symmetric convolution kernels is critical (for fast convergence)!}
 
