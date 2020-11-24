@@ -184,7 +184,26 @@ def print_q_over_domain(td_x: np.ndarray, t: float, exp: Experiment, dest: str):
     d = int((x_t.shape[1] - 1)/2)
     coord = np.linspace(-exp.l/2, exp.l/2, exp.n_x)
     q = x_t[0,1:d+1]
-    save_csv(dest, np.stack((coord,q), axis=1), 'x,q')
+
+    q_with_coords = np.stack((coord,q), axis=1)
+
+    if d > 100:
+        q_with_coords = subsample(q_with_coords, 5)
+
+    save_csv(dest, q_with_coords, 'x,q')
+
+
+labels = {
+    'cnn': 'CNN',
+    'gradient': 'CG-SympNet',
+    'n1-gradient': 'N1-CG-SympNet',
+    'n2-gradient': 'N2-CG-SympNet'
+}
+def get_label(arch: str):
+    if arch in labels:
+        return labels[arch]
+    else:
+        return arch
 
 
 def update_csv(args):
@@ -195,9 +214,14 @@ def update_csv(args):
         td_x = np.load(curr_exp_dir
             .joinpath(exp.architectures[0].name, exp.activations[0], 'exact_td_x.npy'))
         
+        print_q_over_domain(td_x, 3.0, exp, curr_destination_dir.joinpath('exact', 'q_t3.csv'))
         print_q_over_domain(td_x, 9.0, exp, curr_destination_dir.joinpath('exact', 'q_t9.csv'))
 
+        test_loss_summary = []
         for arch in exp.architectures:
+
+            arch_summary = { 'architecture': get_label(arch.name) }
+
             for activation in exp.activations:
                 # Training loss
                 losses = np.load(curr_exp_dir.joinpath(arch.name, activation, 'losses.npy'))
@@ -211,10 +235,17 @@ def update_csv(args):
                 save_csv(curr_destination_dir
                     .joinpath(arch.name, activation, 'test_loss.csv'), subsample(losses,5), header='epoch,loss')
 
+                arch_summary['test_loss_{}'.format(activation)] = losses[-1,1]
+
                 td_x = np.load(curr_exp_dir
                     .joinpath(arch.name, activation, 'epoch{}_td_x.npy'.format(exp.epochs)))
 
+                print_q_over_domain(td_x, 3.0, exp, curr_destination_dir.joinpath(arch.name, activation, 'q_t3.csv'))
                 print_q_over_domain(td_x, 9.0, exp, curr_destination_dir.joinpath(arch.name, activation, 'q_t9.csv'))
+
+            test_loss_summary.append(arch_summary)
+
+        save_dict_as_csv(curr_destination_dir.joinpath('test_loss_summary.csv'), test_loss_summary)
 
 
 if __name__ == '__main__':

@@ -2201,7 +2201,7 @@ and tanh activation, see \cref{fig_pend_exp2_loss}.
 \end{tikzpicture}
 \\[5pt]
 \ref{grouplegend}
-\caption{Training and test loss for simple pendulum with training and test data from $\mathcal{D}_{\text{swing+rotate}}$.
+\caption{Test loss for simple pendulum with training and test data from $\mathcal{D}_{\text{swing+rotate}}$.
 (First row) Learning rate $\gamma = 0.01$. (Second row) Faster learning rate $\gamma = 1.0$.
 Architectures not included in individual plots have either larger losses than $1 \cdot 10^{-2}$ or diverged with NaN.
 Note that normalization does not improve prediction performance in this case. However, normalization
@@ -2477,8 +2477,8 @@ $G(u) = g(u) =0$, $u_{\text{left}} = u_{\text{right}} = 0$
 		legend style={nodes={scale=0.75, transform shape}},
 		legend entries={
 			CNN,
-			CNN-SympNet (canonical basis),
-			CNN-SympNet (FD basis)
+			C-SympNet (canonical basis),
+			C-SympNet (FD basis)
 		}
 	]
 
@@ -2505,18 +2505,19 @@ $G(u) = g(u) =0$, $u_{\text{left}} = u_{\text{right}} = 0$
 		\begin{axis}[
 			no markers,
 			width=0.7*\linewidth, height=\axisdefaultheight,
-			title={$q(t=9,x)$ (Linear wave equation)},
+			title={Displacement $q(t=9,x)$ (Linear wave equation)},
 			xlabel={$x$}, xmin=-0.5, xmax=0.5,
-			ylabel={$q(t=9,x)$}, ymin=-0.3, ymax=0.1, restrict y to domain=-2:2,
+			ylabel={$q(t=9,x)$}, ymin=-0.3, ymax=0.2, restrict y to domain=-2:2,
 			legend style={
 				nodes={scale=0.75, transform shape},
-				legend pos=outer north east
+				legend cell align=left,
+				%legend pos=outer north east
 			},
 			legend entries={
 				CNN,
 				C-SympNet (canonical basis),
 				C-SympNet (FD basis),
-				Exact,
+				Störmer-Verlet,
 			}
 		]	
 	
@@ -2539,7 +2540,7 @@ $G(u) = g(u) =0$, $u_{\text{left}} = u_{\text{right}} = 0$
 		\end{axis}
 	\end{tikzpicture}
 	\caption{\todo{todo}}
-	\end{figure}
+\end{figure}
 
 \todo{The choice of basis for the symmetric convolution kernels is critical (for fast convergence)!}
 
@@ -2558,6 +2559,221 @@ boundary conditions $u_{\text{left}} = 0, \, u_{\text{right}} = 2\pi$.
 
 \todo{Activation layer with sin works well if $a \in \mathbb{R}$, i.e. activation function is applied
 isotropic.}
+
+\begin{figure}
+	\centering
+	\begin{tikzpicture}
+		\begin{groupplot}[	
+			group style={
+				group size=2 by 3,
+				y descriptions at=edge left,
+				horizontal sep=0.7cm,
+				vertical sep=2.2cm,
+			},
+			xlabel=Epoch, ylabel=Loss,
+			width=0.95*\axisdefaultwidth, height=7cm,
+			no markers,
+			ymax=1e-1, ymin=5e-10, ymode=log,
+			xmin=0, xmax=2000,
+			legend style={nodes={scale=0.75, transform shape}},
+			legend entries={
+				CNN,
+				CG-SympNet,
+				N1-CG-SympNet,
+				N2-CG-SympNet
+			}
+		]
+			\nextgroupplot[title={Training loss (sigmoid activation)}]
+				\addplot[
+					color=green
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/cnn/sigmoid/loss.csv};
+	
+				\addplot[
+					color=red
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/gradient/sigmoid/loss.csv};
+
+				\addplot[
+					color=blue
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/n1-gradient/sigmoid/loss.csv};
+
+				\addplot[
+					color=olive
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/n2-gradient/sigmoid/loss.csv};
+	
+	
+			\nextgroupplot[title={Test loss (sigmoid activation)},]
+				\addplot[
+					color=green
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/cnn/sigmoid/test_loss.csv};
+
+				\addplot[
+					color=red
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/gradient/sigmoid/test_loss.csv};
+
+				\addplot[
+					color=blue
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/n1-gradient/sigmoid/test_loss.csv};
+
+				\addplot[
+					color=olive
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/n2-gradient/sigmoid/test_loss.csv};
+	
+			\nextgroupplot[title={Training loss (tanh activation)}]
+				\addplot[
+					color=green
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/cnn/tanh/loss.csv};
+
+				\addplot[
+					color=red
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/gradient/tanh/loss.csv};
+
+				\addplot[
+					color=blue
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/n1-gradient/tanh/loss.csv};
+
+				\addplot[
+					color=olive
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/n2-gradient/tanh/loss.csv};
+	
+			\nextgroupplot[title={Test loss (tanh activation)}]
+				\addplot[
+					color=green
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/cnn/tanh/test_loss.csv};
+
+				\addplot[
+					color=red
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/gradient/tanh/test_loss.csv};
+
+				\addplot[
+					color=blue
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/n1-gradient/tanh/test_loss.csv};
+
+				\addplot[
+					color=olive
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/n2-gradient/tanh/test_loss.csv};
+	
+			\nextgroupplot[title={Training loss (ELU activation)}]
+				\addplot[
+					color=green
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/cnn/elu/loss.csv};
+
+				\addplot[
+					color=red
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/gradient/elu/loss.csv};
+
+				\addplot[
+					color=blue
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/n1-gradient/elu/loss.csv};
+
+				\addplot[
+					color=olive
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/n2-gradient/elu/loss.csv};
+	
+			\nextgroupplot[title={Test loss (ELU activation)}]
+				\addplot[
+					color=green
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/cnn/elu/test_loss.csv};
+
+				\addplot[
+					color=red
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/gradient/elu/test_loss.csv};
+
+				\addplot[
+					color=blue
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/n1-gradient/elu/test_loss.csv};
+
+				\addplot[
+					color=olive
+				] table[x=epoch,y=loss,col sep=comma] {../data-wave/sine_gordon/n2-gradient/elu/test_loss.csv};
+			
+		\end{groupplot}
+	\end{tikzpicture}
+	\caption{\todo{...}}
+\end{figure}
+
+\begin{table}
+	\centering
+	\pgfplotstabletypeset[
+		every head row/.style={
+			before row={
+				\toprule & \multicolumn{3}{c}{Test loss}\\
+			},
+			after row=\midrule
+		},
+		col sep=comma,
+		columns/architecture/.style={string type, column name={Architecture}},
+		columns/test_loss_sigmoid/.style={column name={Sigmoid}},
+		columns/test_loss_tanh/.style={column name={Tanh}},
+		columns/test_loss_elu/.style={column name={ELU}}
+	] {../data-wave/sine_gordon/test_loss_summary.csv}
+
+	\caption{\todo{...}}
+\end{table}
+
+\begin{figure}
+	\centering
+	\begin{tikzpicture}
+		\begin{groupplot}[
+			group style={
+				group size=1 by 2,
+				vertical sep=2.2cm,
+			},
+			no markers,
+			width=0.9*\linewidth, height=\axisdefaultheight,
+			title={Displacement $q(t=9,x)$ (Sine Gordon1)},
+			xlabel={$x$}, xmin=-25, xmax=25,
+			ymin=-1, ymax=10, restrict y to domain=-5:10,
+			legend style={
+				nodes={scale=0.75, transform shape},
+				legend cell align=left,
+				%legend pos=outer north east
+			},
+			legend entries={
+				CNN,
+				CG-SympNet (tanh),
+				CG-SympNet (ELU),
+				Störmer-Verlet,
+			}
+		]
+
+		\nextgroupplot[title={Displacement $q(t=3,x)$ (Sine Gordon)}, ylabel={$q(t=3,x)$}]
+			\addplot[
+				color=green
+			] table[x=x,y=q,col sep=comma] {../data-wave/sine_gordon/cnn/elu/q_t3.csv};
+		
+			\addplot[
+				color=red
+			] table[x=x,y=q,col sep=comma] {../data-wave/sine_gordon/gradient/tanh/q_t3.csv};
+		
+			\addplot[
+				color=blue
+			] table[x=x,y=q,col sep=comma] {../data-wave/sine_gordon/n1-gradient/elu/q_t3.csv};
+
+			\addplot[
+				color=darkgray
+			] table[x=x,y=q,col sep=comma] {../data-wave/sine_gordon/exact/q_t3.csv};
+		
+		\nextgroupplot[title={Displacement $q(t=9,x)$ (Sine Gordon)}, ylabel={$q(t=9,x)$}]
+			\addplot[
+				color=green
+			] table[x=x,y=q,col sep=comma] {../data-wave/sine_gordon/cnn/elu/q_t9.csv};
+		
+			\addplot[
+				color=red
+			] table[x=x,y=q,col sep=comma] {../data-wave/sine_gordon/gradient/tanh/q_t9.csv};
+		
+			\addplot[
+				color=blue
+			] table[x=x,y=q,col sep=comma] {../data-wave/sine_gordon/n1-gradient/elu/q_t9.csv};
+
+			\addplot[
+				color=darkgray
+			] table[x=x,y=q,col sep=comma] {../data-wave/sine_gordon/exact/q_t9.csv};
+			
+		\end{groupplot}
+	\end{tikzpicture}
+	\caption{\todo{todo}}
+\end{figure}
 
 %----------------------------------------------------------------------------------------
 %
