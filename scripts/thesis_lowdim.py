@@ -33,7 +33,11 @@ large_architectures = [
     Architecture('large-n2-la-sympnet'),
     Architecture('large-g-sympnet'), 
     Architecture('large-n1-g-sympnet'),
-    Architecture('large-n2-g-sympnet')
+    Architecture('large-n2-g-sympnet'),
+    #
+    Architecture('g-sympnet'),
+    Architecture('n1-g-sympnet'),
+    Architecture('n2-g-sympnet')
 ]
 
 class Experiment:
