@@ -194,7 +194,7 @@ def print_q_over_domain(td_x: np.ndarray, t: float, exp: Experiment, dest: str):
 
 
 labels = {
-    'cnn': 'CNN',
+    'cnn': 'LARGE-CNN',
     'gradient': 'CG-SympNet',
     'n1-gradient': 'N1-CG-SympNet',
     'n2-gradient': 'N2-CG-SympNet'

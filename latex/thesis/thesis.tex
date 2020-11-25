@@ -357,7 +357,7 @@ Kronecker delta
 	The function $H: \mathbb{R}^{2d} \to \mathbb{R}$ is called the Hamiltonian 
 	or the total energy. $q = q(t) \in \mathbb{R}^d$ are called generalized coordinates
 	and $p=p(t) \in \mathbb{R}^d$ are called conjugate momenta. 
-	The phase space $\mathbb{R}^{2d}$ has even dimension for Hamiltonian systems.
+	The phase space $\mathcal{V} = \mathbb{R}^{2d}$ has even dimension for Hamiltonian systems.
 \end{definition}
 
 Note that the Hamiltonian $H$ is a first integral, i.e. the total energy is preserved, because
@@ -498,8 +498,6 @@ and keeps the intermediate values in a computational graph.
 Afterwards, in the so-called backward pass, the chain rule is applied programmatically
 on the computational graph to compute the gradient, while reusing the intermediate values
 from the forward pass.
-
-\todo{Add illustration}
 
 \subsection{General architecture}
 
@@ -777,8 +775,6 @@ The coefficients $a \in \mathbb{R}^d$ are learnable parameters.
 	Symplecticity follows with \cref{gradient_corollary}.
 \end{proof}
 
-\todo{Define LA-SympNet}
-
 \subsection{Gradient layers}
 
 \begin{definition}
@@ -819,8 +815,6 @@ In practice, we choose $n >> d$ for large expressivity.
 
 Note that activation layers are a subset of gradient layers. We can see this by choosing
 $n=d$, $K=I_d$ and $c=0$.
-
-\todo{Define G-SympNet}
 
 \section{Univeral approximation theorems}
 
@@ -1368,11 +1362,9 @@ We add normalization to gradient layers.
 $K \in \mathbb{R}^{n \times d}$ and $a,c, \gamma, \beta \in \mathbb{R}^n$
 are learnable parameters.
 
-\todo{Add special note for convolution gradient layers, respect convolution when normalizing.}
-
 \todo{Discuss variant 1 vs. variant 2 (numerical experiments)}
 
-\todo{Maybe add illustration for normalized gradient layer}
+\todo{Add special note for convolution gradient layers, respect convolution when normalizing.}
 
 \begin{corollary}\label{cor_norm_gradient_layers_symp}
 	Given an activation function $\sigma \in C^1(\R)$,
@@ -1404,8 +1396,6 @@ are learnable parameters.
 	With \cref{gradient_corollary} follows that both normalized Gradient layer variants
 	$\mathcal{G}_{up}^\eta$ and $\mathcal{G}_{low}^\eta$ are symplectic.
 \end{proof}
-
-\todo{Introduce N1-G-SympNet and N2-G-SympNet}
 
 \subsubsection{Normalized activation layers}
 
@@ -1448,8 +1438,6 @@ The coefficients $a \in \mathbb{R}^d$ are learnable parameters.
 	We have already shown that both normalized gradient layer variants are symplectic in
 	\cref{cor_norm_gradient_layers_symp}.
 \end{proof}
-
-\todo{Introduce N1-LA-SympNet and N2-LA-SympNet}
 
 \section{Relation to geometric integrators}
 
@@ -1583,22 +1571,47 @@ from \cref{gradient_corollary} and the fact that the composition of symplectic m
 
 \section{Numerical experiments}
 
-\todo{MSE loss}
+In this section, we compare the performance of different SympNet architectures.
+Additionially, we compare SympNets to network architectures which do not intrinsically
+conserve the symplectic property.
+
+In all our experiments, we use the mean-square error (MSE) loss defined by
 \begin{equation*}
 	L(\mathcal{B}, \Theta) = \sum_{(x_i, y_i) \in \mathcal{B}} \norm{\Phi(x_i; \Theta) - y_i}^2_2
+	,
 \end{equation*}
+where $\mathcal{B}$ refers to a mini-batch and $\Theta$ refers to the neural network parameters.
+We work with very small training data. Thus, we do not split the training data into mini-batches.
+We initialize all bias parameters with $0$. All other parameters are initialized randomly from
+the normal distribution with mean $0$ and standard deviation $0.01$.
+For training, we use the AMSgrad variant of the Adam optimizer \cite{amsgrad2018}.
+The standard Adam optimizer led to large loss spikes at later epochs and often
+failed to converge to stable parameter values. This phenomenon
+was greatly reduced by switching to the AMSgrad variant. The Adam alogrithm (and the AMSgrad variant)
+computes individual adaptive learning rates for different parameters, based on a baseline
+learning rate hyperparameter $\gamma \in \R$.
 
-\todo{We work with small training data. Thus, we do not split the training data into mini-batches.}
-
-\todo{Initialization: Biases are initialized with $0$, all other parameters are initialized randomly from
-normal distribution with mean $0$ and standard deviation $0.01$.}
-
-\todo{Adam optimizer, AMSgrad variant}
+In all our experiments the training and test data are subsets of $\mathcal{V} \times \mathcal{V}$,
+where $\mathcal{V} = \R^{2d}$ denotes the phase space of the Hamiltonian system. In particular,
+given some phase space samples $x_1, \dots, x_n \in \mathcal{V}$, we generate data samples 
+$\mathcal{T} \subset \mathcal{V} \times \mathcal{V}$
+with the $q$-staggered Störmer-Verlet integrator $\phi^{\text{h}}_{t,H}$
+for a fixed time $t \in \R$ and the respective Hamiltonian $H$:
+\begin{equation*}
+	\mathcal{T} = \{ (x_i, \phi^{\text{h}}_{t,H}(x_i)) \}_{i=1}^{n_{\text{train}}}
+\end{equation*}
+The data samples $\mathcal{T}$ are split into a training data set $\mathcal{T}_{\text{train}}$
+and $\mathcal{T}_{\text{test}}$, i.e. $\mathcal{T}_{\text{train}} \cup \mathcal{T}_{\text{test}} = \mathcal{T}$
+and $\mathcal{T}_{\text{train}} \cap \mathcal{T}_{\text{test}} = \emptyset$. 
+We denote the size of the training data set with $n_{\text{train}} \in \N$ and the size of
+the test data set with $n_{\text{test}} \in \N$.
+The training data
+$\mathcal{T}_{\text{train}}$ and test data $\mathcal{T}_{\text{test}}$ are used to 
+calculate the training and test loss.
 
 \subsection{Low-dimensional systems}
 
-\todo{Low dimensional systems with $d = 1$.}
-
+In this section, we deal with low-dimensional Hamiltonian systems with $d=1$.
 The neural network architectures used in the experiments with low-dimensional systems
 are listed in \cref{table_low_dim_arch}.
 \begin{table}
@@ -1607,6 +1620,7 @@ are listed in \cref{table_low_dim_arch}.
 		\toprule Architecture & Layers & Parameters \\
 		\midrule L-SympNet & Nine alternating upper and lower linear layers,
 		with bias in last layer, see \cref{def_linear_layer}.
+		Initially proposed by \citeauthor{Jin2020} in \cite{Jin2020}.
 		& $11$ \\
 		%
 		FNN & 
@@ -1616,6 +1630,7 @@ are listed in \cref{table_low_dim_arch}.
 		& $2802$ \\
 		%
 		LA-SympNet & LA-SympNet with depth $5$ and $4$ sublayers, see \cref{def_la_sympnet}.
+		Initially proposed by \citeauthor{Jin2020} in \cite{Jin2020}.
 		& $41$ \\
 		%
 		N1-LA-SympNet & 
@@ -1628,7 +1643,8 @@ are listed in \cref{table_low_dim_arch}.
 		see \cref{def_norm_activation_layer_2}) instead of activation layers.
 		& $51$ \\
 		%
-		G-SympNet & G-SympNet with depth $4$ and width $30$, see \cref{def_g_sympnet}. 
+		G-SympNet & G-SympNet with depth $4$ and width $30$, see \cref{def_g_sympnet}.
+		Initially proposed by \citeauthor{Jin2020} in \cite{Jin2020}.
 		& $360$ \\
 		%
 		N1-G-SympNet & 
@@ -1648,6 +1664,7 @@ are listed in \cref{table_low_dim_arch}.
 		& $10292$ \\
 		%
 		LARGE-LA-SympNet & LA-SympNet with depth $40$ and $9$ sublayers, see \cref{def_la_sympnet}.
+		Initially proposed by \citeauthor{Jin2020} in \cite{Jin2020}.
 		& $491$ \\
 		%
 		LARGE-N1-LA-SympNet & 
@@ -1662,25 +1679,14 @@ are listed in \cref{table_low_dim_arch}.
 	\end{tabular}
 	\caption{
 	Table of all neural network architectures for the
-	low-dimensional experiments. The activation function used inside the activation layers
+	low-dimensional experiments. The activation function used inside the activation
 	and gradient layers is either sigmoid, tanh or ELU and is explicitly stated.
 	}\label{table_low_dim_arch}
 \end{table}
 
-\todo{Flow with fixed time $t = 0.1$}
-
-In this section, the training data is always uniformly sampled from a compact set in phase space.
-Let $\mathcal{D} \subset R^2$ denote a compact set. We uniformly choose $n_{\text{train}} \in \N$ samples
-$x_1, \dots x_{\text{train}} \in \mathcal{D}$.
-Based on these samples, we generate the training data $\mathcal{T}$ 
-with the $q$-staggered Störmer-Verlet integrator $\phi^{\text{h}}_{t,H}$
-for fixed time $t = 0.01$ and the respective Hamiltonian $H$:
-\begin{equation*}
-	\mathcal{T} = \{ (x_i, \phi^{\text{h}}_{t,H}(x_i)) \}_{i=1}^{n_{\text{train}}}
-\end{equation*}
-In addition to the training data $\mathcal{T}$, we generate test data $\mathcal{V}$
-to compute the test loss. The test data is generated with the same procedure as the training
-data $\mathcal{T}$. We denote the number of samples in $\mathcal{V}$ with $n_{\text{test}} \in \N$.
+For all low-dimensional experiments, the training and test data are generated
+with the fixed time $t = 0.1$
+from phase space samples uniformly sampled from a compact set $\mathcal{D} \subset \R^2$.
 
 \subsubsection{Harmonic Oscillator}
 
@@ -1690,7 +1696,9 @@ For $q,p \in \R$, the Hamiltonian for the Harmonic Oscillator is given by
 \end{equation*}
 For the experiment, we choose $m=1$ and $k=1$.
 
-The flow for the Harmonic Oscillator is linear. \todo{Show why flow is linear}
+The flow for the Harmonic Oscillator is linear, because the resulting ODE
+is linear. Thus, the ODE can be solved via the variation of constants formula,
+which results in a linear flow.
 As we have mentioned,
 \citeauthor{jin2020unit} have shown in \cite{jin2020unit} that $\mathcal{L}^{9}_{up}$
 can parametrize every symplectic linear map.
@@ -1709,7 +1717,7 @@ learns the flow for the Harmonic Oscillator with a very low test loss.
 		xlabel={Epoch}, xmin=0, xmax=500,
 		ylabel={Test loss},
 		legend entries={
-			Linear SympNet
+			L-SympNet
 		}
 	]
 
@@ -1719,9 +1727,10 @@ learns the flow for the Harmonic Oscillator with a very low test loss.
 		
 	\end{axis}
 \end{tikzpicture}
-\caption{Test loss for Harmonic Oscillator ($500$ epochs). The linear SympNet consists out of nine alternating upper and 
-lower linear layers. The training data is generated from $n_{\text{train}}=40$ samples from $\mathcal{D} = [-2,2] \times [-2,2]$.
-The test data is generated from $n_{\text{test}}=400$ samples from $\mathcal{D} = [-2,2] \times [-2,2]$.
+\caption{Test loss for Harmonic Oscillator ($500$ epochs). The L-SympNet consists out of nine alternating upper and 
+lower linear layers. The training and test data are generated from random phase space samples in 
+$\mathcal{D} = [-2,2] \times [-2,2]$. The training data size is $n_{\text{train}} = 40$
+and the test data size is $n_{\text{test}}=400$.
 The learning rate is set to $\gamma = 0.01$.}\label{fig_harm_osc_loss}
 \end{figure}
 
@@ -1731,21 +1740,29 @@ For $q,p \in \R$, the Hamiltonian for the Simple Pendulum is given by
 \begin{equation*}
 	H(q,p) = \frac{p^2}{2ml^2} + mgl (1-cos(q))
 \end{equation*}
-For the experiment, we choose $m=1, g=1$ and $l=1$. We conduct two different experiments with different
-training and test data originating from different $\mathcal{D}$:
+For the experiment, we choose $m=1, g=1$ and $l=1$. The flow of the Simple Pendulum is nonlinear.
+Therefore, the flow cannot be represented by linear models, which makes the Simple Pendulum
+a good experiment to look into. The generalized coordinate $q$ denotes the angle of the pendulum.
+
+We conduct two different experiments with different
+phase space samples originating from two different sets $\mathcal{D}$:
 \begin{align*}
 	\mathcal{D}_{\text{swing}} &= [-\frac{\pi}{2}, \frac{\pi}{2}] \times [-\sqrt{2}, \sqrt{2}]
 	\quad (\text{swinging}) \\
 	\mathcal{D}_{\text{swing+rotate}} &= [-20, 20] \times [-2.5, 2.5]
 	\quad (\text{swinging and rotating})
 \end{align*}
-We sample $n_{\text{train}} = 40$ training samples and $n_{\text{test}} = 400$ test samples in all 
-simple pendulum experiments. The test data is sampled from the same compact set as the training data.
+Physically, for $(q,p) \in \mathcal{D}_{\text{swing}}$ only swinging is possible,
+because $\abs{q} \leq \pi/2$ for all $t$ and too low momentum $p$.
+We choose $n_{\text{train}} = 40$ and $n_{\text{test}} = 400$ for all experiments involving
+the Simple Pendulum. The test data is sampled from the same compact set $\mathcal{D}$ as the training data.
 
 \cref{fig_pend_exp1_loss} and \cref{{table_pend_exp1_loss}} show the training and test loss for the different architectures
-and activation functions with training and test data from $\mathcal{D}_{\text{swing}}$ and learning rate $\gamma = 0.01$.
+and activation functions with training and test data generated from $\mathcal{D}_{\text{swing}}$ and learning rate $\gamma = 0.01$.
 Note that incorporating normalization results in better training and test losses, and may also stabilize
-the learning process. The SympNets do not tend to overfit, in contrast to the fully-connected network (FNN).
+the learning process. The SympNets do not tend to overfit.
+In contrast, the fully-connected networks (FNN) tend to overfit, because they have a high test loss (right column) 
+compared to the training loss (left column).
 \cref{fig_pend_exp1_phase_plots} and \cref{fig_pend_exp1_time} show phase plots, the total energy over time
 and the predicted position over time for the two best-performing architectures and the FNN.
 Note that no architecture is able to successfully predict the phase flow for a initial value outside the training data,
@@ -1953,7 +1970,8 @@ i.e. $(q_0, p_0) \notin \mathcal{D}_{\text{swing}}$.
 		
 	\end{groupplot}
 \end{tikzpicture}
-\caption{Training and test loss for simple pendulum with training and test data from $\mathcal{D}_{\text{swing}}$.
+\caption{Training and test loss for simple pendulum with training and test data 
+generated from $\mathcal{D}_{\text{swing}}$.
 (First row) sigmoid activation (Second row) tanh activation (Third row) ELU activation.
 Normalization leads to improved performance.}\label{fig_pend_exp1_loss}
 \end{figure}
@@ -1974,8 +1992,9 @@ Normalization leads to improved performance.}\label{fig_pend_exp1_loss}
 		columns/test_loss_elu/.style={column name={ELU}}
 	] {../data/simple_pendulum_swing/test_loss_summary.csv}
 
-	\caption{Test losses for simple pendulum after $10^5$ epochs. 
-	Training and test data sampled from $\mathcal{D}_{\text{swing}}$.}\label{table_pend_exp1_loss}
+	\caption{Test losses for Simple Pendulum 
+	with training and test data generated from $\mathcal{D}_{\text{swing}}$ after $10^5$ epochs. 
+	}\label{table_pend_exp1_loss}
 \end{table}
 
 \begin{figure}
@@ -2039,7 +2058,7 @@ Normalization leads to improved performance.}\label{fig_pend_exp1_loss}
 	\end{tikzpicture}
 	\\[5pt]
 	\ref{leg_ped_swing_phase}
-	\caption{Phase plots for simple pendulum. Training and test data uniformly sampled from $\mathcal{D}_{\text{swing}}$.
+	\caption{Phase plots for simple pendulum. Training and test data generated from $\mathcal{D}_{\text{swing}}$.
 	(Left) The phase plots of the SympNets and the exact solution are indistinguishable.
 	(Right) The neural networks fails to generalize for a $(q_0, p_0) \notin \mathcal{D}_{\text{swing}}$.}
 	\label{fig_pend_exp1_phase_plots}
@@ -2102,34 +2121,48 @@ Normalization leads to improved performance.}\label{fig_pend_exp1_loss}
 		\end{groupplot}
 	\end{tikzpicture}
 	\caption{Total energy and position over time for simple pendulum for $q_0 = \frac{\pi}{2},\, p_0 = 0$.
-	Training and test data uniformly sampled from $\mathcal{D}_{\text{swing}}$.
+	Training and test data generated from $\mathcal{D}_{\text{swing}}$.
 	The total energy is maintained with the SympNets, in contrast to the FNN.
 	The prediction of the position over long time is better with SympNets than with the FNN.}
 	\label{fig_pend_exp1_time}
 \end{figure}
 
 \cref{fig_pend_exp2_loss} shows the test losses if the training and test data
-is sampled from $\mathcal{D}_{\text{swing+rotate}}$ instead.
-\todo{we have also increased the number of layers --> describe hyperparameters!}
+is generated from $\mathcal{D}_{\text{swing+rotate}}$ instead.
 We perform the experiment with learning rate $\gamma = 0.01$ and faster learning rate $\gamma = 1.0$.
-\cref{table_pend_exp2_loss} shows the final test loss for $\gamma = 0.01$.
-\cref{table_pend_exp2_loss_fast_lr} shows the final test loss for $\gamma = 1.0$.
-In this case, normalization does not lead to an improvement of prediction performance.
-However, normalization allows for faster learning rates.
-Still, the faster learning rate does not lead to a better test loss
-after the same amount of epochs in this case.
-The LA-SympNets, with and without normalization, fail to learn the flow.
+\cref{table_pend_exp2_loss} shows the final test loss for the first learning rate $\gamma = 0.01$.
+\cref{table_pend_exp2_loss_fast_lr} shows the final test loss for the faster learning rate $\gamma = 1.0$.
+
+The LARGE-LA-SympNet and the normalized variants LARGE-N1-LA-SympNet and LARGE-N2-LA-SympNet completely fail to learn the
+flow if the training data is generated from $\mathcal{D}_{\text{swing+rotate}}$, 
+although their depth has been increased such that they have the same amount of parameters 
+as the G-SympNets (see \cref{table_low_dim_arch}).
+
+For training and test data generated from $\mathcal{D}_{\text{swing+rotate}}$, 
+normalization does not lead to a significant change in prediction performance, compared to
+what we observed with $\mathcal{D}_{\text{swing}}$. For $\mathcal{D}_{\text{swing+rotate}}$,
+the G-SympNet with sigmoid activation performs best overall
+(see left plot in first row of \cref{fig_pend_exp2_loss}). Still, normalization slightly improves the
+performance for the tanh and ELU activation (see 
+mid and right plot in first row of \cref{fig_pend_exp2_loss}).
+Furthermore, normalization shows more robustness with respect to faster learning rates
+(see second row in \cref{fig_pend_exp2_loss}). The G-SympNet without normalization fails to converge
+for the faster learning rate $\gamma = 1.0$, in contrast to the N1-G-SympNet and N2-G-SympNet.
 
 The generalized coordinate $q$ is an angular coordinate for the simple pendulum. This is the reason why 
 $\lim_{t \to \infty} q(t) = \infty$
-in the rotating case. This circumstance makes learning the neural network hard for the rotating case, especially if the
-goal is to have a good prediction over a long time. This issue needs further investigation.
-See \cref{sec_outlook} for ideas how this issue could be tackled.
+in the rotating case. This circumstance makes learning the neural network hard, especially if the
+goal is to have a good prediction over a long time. 
+Furthermore, intuitively, the large values of $q$ could mask the swinging case, where $\abs{q} \leq \pi/2$.
+This might be an explanation for why normalization does not lead to a 
+similar performance improvement for $\mathcal{D}_{\text{swing+rotate}}$
+as with $\mathcal{D}_{\text{swing}}$. This issue needs further investigation.
+We comment this issue in the Outlook (\cref{sec_outlook}).
 
-In general, the first variants of the normalization layers (N1) before better or equal
-to the second variants of the normalization layers (N2). The only case where the N2 normalization
-layers perform better is with training data from $\mathcal{D}_{\text{swing+rotate}}$ 
-and tanh activation, see \cref{fig_pend_exp2_loss}.
+For almost all experiments, the first variants of the normalization layers (N1) perform better or equally good
+to the second variants of the normalization layers (N2). There are only two cases where the N2 normalization variant
+has a slightly better final test loss than the N1 normalization variant 
+(see \cref{fig_pend_exp2_loss}, right plot in first row and mid plot in second row).
 
 \begin{figure}
 \centering
@@ -2281,9 +2314,8 @@ and tanh activation, see \cref{fig_pend_exp2_loss}.
 \ref{grouplegend}
 \caption{Test loss for simple pendulum with training and test data from $\mathcal{D}_{\text{swing+rotate}}$.
 (First row) Learning rate $\gamma = 0.01$. (Second row) Faster learning rate $\gamma = 1.0$.
-Architectures not included in individual plots have either larger losses than $1 \cdot 10^{-2}$ or diverged with NaN.
-Note that normalization does not improve prediction performance in this case. However, normalization
-allows faster learning rates.}\label{fig_pend_exp2_loss}
+Test losses bigger than $10^{-2}$ and architectures that diverged during training are not displayed.
+}\label{fig_pend_exp2_loss}
 \end{figure}
 
 \begin{table}
@@ -2302,8 +2334,8 @@ allows faster learning rates.}\label{fig_pend_exp2_loss}
 		columns/test_loss_elu/.style={column name={ELU}}
 	] {../data/simple_pendulum_swing_rot/test_loss_summary.csv}
 
-	\caption{Test losses for simple pendulum after $3 \cdot 10^5$ epochs.
-	Training and test data sampled from $\mathcal{D}_{\text{swing+rotate}}$.}
+	\caption{Test losses for Simple Pendulum with training and test data
+	generated from $\mathcal{D}_{\text{swing+rotate}}$ after $3 \cdot 10^5$ epochs.}
 	\label{table_pend_exp2_loss}
 \end{table}
 
@@ -2324,8 +2356,8 @@ allows faster learning rates.}\label{fig_pend_exp2_loss}
 	] {../data/simple_pendulum_swing_rot_fast_lr/test_loss_summary.csv}
 
 	\caption{Test losses for simple pendulum after $3 \cdot 10^5$ epochs
-	with faster learning rate $\gamma = 1.0$.
-	Training and test data sampled from $\mathcal{D}_{\text{swing+rotate}}$.
+	with training and test data generated from $\mathcal{D}_{\text{swing+rotate}}$
+	and faster learning rate $\gamma = 1.0$.
 	NaN means that the test loss diverged. Only G-SympNets with normalization
 	are able to handle the faster learning rate.}
 	\label{table_pend_exp2_loss_fast_lr}
@@ -2507,8 +2539,9 @@ are listed in \cref{table_high_dim_arch}.
 		and $1$-dimensional convolution layer with kernel size $100$ and stride $100$. 
 		& $809$ \\
 		%
-		CG-SympNet & A SympNet consisting out of four consecutive blocks of
-		the following layers: upper (or lower) $1$-dimensional symplectic convolution layer with
+		CG-SympNet & 
+		A SympNet consisting out of four consecutive blocks of
+		the following two layers: upper (or lower) $1$-dimensional symplectic convolution layer with
 		kernel size $3$ and symmetric padding (see \cref{def_conv_layer}) 
 		followed by a upper (or lower) convolution gradient layer
 		with kernel size $100$ and stride $100$ (see \cref{sec_conv_gradient_layer}). 
@@ -2567,8 +2600,8 @@ Here, $u(x,t) \in \R$ denotes the unknown time-dependent displacement field on t
 
 Given an equally-spaced grid $\{ x_i \}_{n=0}^{n+1} \subset \R$, $x_0 = -l/2$, $x_{n+1} = l/2$,
 with grid width $\Delta x$,
-initial values $y_0 = (q_0^T, p_0^T)^T \in \R^{2n}$, $q_0 = \lb u_0(x_i) \rb_{i=1}^n \in \R^n$, 
-$p_0 = \lb w_0(x_i) \rb_{i=1}^n \in \R^n$,
+initial values $y_0 = (\bar{q}_0^T, \bar{p}_0^T)^T \in \R^{2n}$, $\bar{q}_0 = \lb u_0(x_i) \rb_{i=1}^n \in \R^n$, 
+$\bar{p}_0 = \lb w_0(x_i) \rb_{i=1}^n \in \R^n$,
 the resulting Hamiltonian system is given by
 \begin{align*}
 	\dot{y}(t) &= \frac{J_{2n}}{\Delta x} \grad{H}(y(t)) \quad \text{for } t \in I \subset \mathbb{R} \\
@@ -2592,6 +2625,20 @@ Transport problem
 
 $G(u) = g(u) =0$, $u_{\text{left}} = u_{\text{right}} = 0$
 
+$c=1$
+
+initial values bump function
+\begin{align*}
+	u_0(x) &= \begin{cases}
+	\frac{1}{2} \lb 
+	exp \lb - \lb \frac{6x}{w} \rb^2 \rb - exp \lb - \lb \frac{6w/2}{w} \rb^2 \rb 
+	\rb & : \abs{x} \leq w \\
+	0 & \text{else}
+	\end{cases} \\
+	w_0(x) &= 0
+\end{align*}
+with $w = l/4$.
+
 \begin{figure}
 \centering
 \begin{tikzpicture}
@@ -2602,6 +2649,7 @@ $G(u) = g(u) =0$, $u_{\text{left}} = u_{\text{right}} = 0$
 		xlabel={Epoch}, xmin=0, xmax=500,
 		ylabel={Test loss},
 		legend style={nodes={scale=0.75, transform shape}},
+		legend cell align=left,
 		legend entries={
 			CNN,
 			C-SympNet (canonical basis),
@@ -2673,14 +2721,21 @@ $G(u) = g(u) =0$, $u_{\text{left}} = u_{\text{right}} = 0$
 
 \subsubsection{Sine-Gordon}
 
-nonlinear wave equation with $G(u) = 1 - cos(u)$, $g(u) = sin(u)$ and $c=1$.
+The Sine-Gordon equation is a 
+semi-linear wave equation with $G(u) = 1 - cos(u)$, $g(u) = sin(u)$ and $c=1$.
 
-initial values
+One can show that the Sine-Gordon equation has the solution
+\begin{equation*}
+	u_{\text{sol}}(t,x) = 4 arctan \lsb exp \lb \frac{x-x_0-vt}{\sqrt{1-v^2}} \rb \rsb 
+	.
+\end{equation*}
+
+For our experiment, we set the initial values
 \begin{align*}
-	u_0(x) &= 4 arctan \lsb exp \lb \frac{x-x_0}{\sqrt{1-v^2}} \rb \rsb \\
-	w_0(x) &= \dd{x} u_0(x)
+	u_0(x) &= u_{\text{sol}}(0,x) \\
+	w_0(x) &= \deldelt u_{\text{sol}}(0,x)
 \end{align*}
-boundary conditions $u_{\text{left}} = 0, \, u_{\text{right}} = 2\pi$.
+with $v=0.2$ and the boundary conditions $u_{\text{left}} = 0, \, u_{\text{right}} = 2\pi$.
 
 \todo{Padding modes}
 
@@ -2701,7 +2756,7 @@ boundary conditions $u_{\text{left}} = 0, \, u_{\text{right}} = 2\pi$.
 			xmin=0, xmax=2000,
 			legend style={nodes={scale=0.75, transform shape}},
 			legend entries={
-				CNN,
+				LARGE-CNN,
 				CG-SympNet,
 				N1-CG-SympNet,
 				N2-CG-SympNet
@@ -2853,7 +2908,7 @@ boundary conditions $u_{\text{left}} = 0, \, u_{\text{right}} = 2\pi$.
 				%legend pos=outer north east
 			},
 			legend entries={
-				CNN,
+				LARGE-CNN,
 				CG-SympNet (tanh),
 				CG-SympNet (ELU),
 				Störmer-Verlet,
@@ -2909,6 +2964,16 @@ boundary conditions $u_{\text{left}} = 0, \, u_{\text{right}} = 2\pi$.
 \section{R\'esum\'e}
 \subsection{Summary and conclusion}
 
+\todo{normalization improves performance in a lot of cases}
+
+\todo{normalization leads to better stability}
+
+\todo{small training data}
+
+\todo{preserve total energy}
+
+\todo{better long-time prediction performance}
+
 \subsection{Outlook}\label{sec_outlook}
 
 \todo{Simple pendulum, rotating case}
@@ -2926,9 +2991,7 @@ boundary conditions $u_{\text{left}} = 0, \, u_{\text{right}} = 2\pi$.
 \newpage
 \begin{appendices}
 \addtocontents{toc}{\protect\setcounter{tocdepth}{1}}
-\section{First Appendix Section}
 
-\newpage~\newpage
 \section{Declaration of authorship}
 
 \vspace{3cm}
