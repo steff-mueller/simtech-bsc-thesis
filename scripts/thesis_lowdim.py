@@ -31,9 +31,9 @@ large_architectures = [
     Architecture('large-la-sympnet'), 
     Architecture('large-n1-la-sympnet'),
     Architecture('large-n2-la-sympnet'),
-    Architecture('large-g-sympnet'), 
-    Architecture('large-n1-g-sympnet'),
-    Architecture('large-n2-g-sympnet'),
+    # Architecture('large-g-sympnet'), 
+    # Architecture('large-n1-g-sympnet'),
+    # Architecture('large-n2-g-sympnet'),
     #
     Architecture('g-sympnet'),
     Architecture('n1-g-sympnet'),
@@ -207,7 +207,7 @@ def update_csv(args):
         test_loss_summary = []
         for arch in exp.architectures:
 
-            arch_summary = { 'architecture': arch.name.upper().replace('SYMPNET', 'SympNet').replace('LARGE-', '') }
+            arch_summary = { 'architecture': arch.name.upper().replace('SYMPNET', 'SympNet') }
 
             for activation in exp.activations:
                 n_subsample = subsample_conf[exp.name]

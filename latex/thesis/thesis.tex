@@ -430,7 +430,7 @@ network concepts.
 	$\phi : \R^{n_1} \to \R^{n_2},\, x \mapsto \mathcal{L}(x;\theta) = \mathcal{L}(x)$.
 \end{definition}
 
-A common layer is the so called fully-connected layer
+A common layer is the so-called (fully-connected) linear layer
 $\phi(x) = Wx +b$ with parameters $W \in \R^{n_2 \times n_1},\, b \in \R^{n_2}$,
 i.e. $\theta = (vec(W)^T, b^T)^T \in \R^{n_2 n_1 + n_2}$.
 
@@ -629,11 +629,12 @@ The next corollary is useful to construct symplectic unit triangular layers.
 
 \subsection{Linear layers}
 
-\begin{definition}
+\begin{definition}\label{def_linear_layer}
 	(Linear layers)
 	Given a symmetric matrix $S \in \R^{d \times d}$ and bias $b \in \R^{2d}$,
 	we call the upper and lower unit triangular layers
-	with layer transform $\layertf(p) = Sp$ the (symplectic) linear layers $\ell_\up$ and $\ell_\low$.
+	with layer transform $\layertf(p) = Sp$ the (symplectic) upper and lower 
+	linear layers $\ell_\up$ and $\ell_\low$.
 \end{definition}
 
 The linear layers can be expressed with matrix-vector multiplication, for example
@@ -747,6 +748,7 @@ because this reduces to a single upper or lower linear layer:
 \subsection{Activation layers}
 
 \begin{definition}
+	(Activation layers)
 	Given an activation function $\activation : \R \to \R$ and coefficients $a \in \mathbb{R}^d$, 
 	we call the upper and lower unit triangular layers and layer transform
 	\begin{equation*}
@@ -757,7 +759,7 @@ because this reduces to a single upper or lower linear layer:
 The coefficients $a \in \mathbb{R}^d$ are learnable parameters.
 
 \begin{corollary}
-	Given an activation function $\activation \in \mathbb{C}^1(\R)$
+	Given an activation function $\activation \in C^1(\R)$,
 	the activation layers $\mathcal{N}_{up}$ and $\mathcal{N}_{low}$ are symplectic.
 \end{corollary}
 \begin{proof}
@@ -838,6 +840,14 @@ We repeat the statements here and refer to \cite{Jin2020} for proofs.
 	on compacta in $S_1$ if $S_2 \subset S_1$ and for all $f \in S_1$, compact
 	$W \subset U$ and every $\epsilon > 0$, there exists $g \in S_2$ such that
 	$\norm{f-g}_{C^r(W,\R^n)} < \epsilon$.
+\end{definition}
+
+\begin{definition}\label{def_la_sympnet}
+	(LA-SympNet)
+\end{definition}
+
+\begin{definition}\label{def_g_sympnet}
+	(G-SympNet)
 \end{definition}
 
 \begin{theorem}
@@ -1042,7 +1052,7 @@ because
 
 Let us now define symplectic convolution layers by combining padding and valid 
 cross-convolution.
-\begin{definition}
+\begin{definition}\label{def_conv_layer}
 	(Convolution layers)
 	Given a symmetric kernel $k \in \mathbb{R}^{2m+1}$, padding
 	$\chi_{\text{pad},m} = c_{\text{pad},m}$ or $\chi_{\text{pad},m} = s_{\text{pad},m}$,
@@ -1050,7 +1060,7 @@ cross-convolution.
 	\begin{equation*}
 		\layertf(p) := *_{\text{v}}(k,\chi_{\text{pad},m}(p))
 	\end{equation*}
-	the convolution layers $\mathcal{C}_{up}$ and $\mathcal{C}_{low}$.
+	the (symplectic) convolution layers $\mathcal{C}_{up}$ and $\mathcal{C}_{low}$.
 \end{definition}
 The symmetric kernel $k \in \mathbb{R}^{2m+1}$ is a learnable parameter.
 If $\chi_{\text{pad},m} = c_{\text{pad},m}$, the padding values $l,r \in \R^m$ can either
@@ -1216,7 +1226,7 @@ the space $\{ k \in \mathbb{R}^{2m+1} : k \text{ is a symmetric kernel} \}$.
 In our numerical experiments, it turns out that
 parametrization plays an important role how well a neural network learns.
 
-\subsection{Convolution Gradient Layers}
+\subsection{Convolution Gradient Layers}\label{sec_conv_gradient_layer}
 
 For a fixed kernel $k$, valid cross-correlation is a linear map regarding the second argument. 
 Therefore there exists a representation matrix $A_{k}$ with 
@@ -1326,7 +1336,7 @@ case for our numerical experiments, as we work with very small training data set
 
 We add normalization to gradient layers.
 
-\begin{definition}
+\begin{definition}\label{def_norm_gradient_layers_1}
 	(Normalized gradient layers - Variant 1)
 	Given width $n \in \N$, $K \in \mathbb{R}^{n \times d}$, $a,c \in \mathbb{R}^n$ and
 	an activation function $\activation : \R \to \R$,
@@ -1340,7 +1350,7 @@ We add normalization to gradient layers.
 	$\mathcal{G}_\up^{\eta}$ and $\mathcal{G}_\low^{\eta}$ (variant 1).
 \end{definition}
 
-\begin{definition}
+\begin{definition}\label{def_norm_gradient_layers_2}
 	(Normalized gradient layers - Variant 2)
 	Given width $n \in \N$, $K \in \mathbb{R}^{n \times d}$, $a,c \in \mathbb{R}^n$ and
 	an activation function $\activation : \R \to \R$,
@@ -1399,7 +1409,7 @@ are learnable parameters.
 
 \subsubsection{Normalized activation layers}
 
-\begin{definition}
+\begin{definition}\label{def_norm_activation_layer_1}
 	(Normalized activation layers - Variant 1)
 	Given an activation function $\activation : \R \to \R$ and coefficients $a \in \mathbb{R}^d$, 
 	we call the upper and lower unit triangular layers with bias $b=0$ and layer transform
@@ -1411,7 +1421,7 @@ are learnable parameters.
 	(variant 1).
 \end{definition}
 
-\begin{definition}
+\begin{definition}\label{def_norm_activation_layer_2}
 	(Normalized activation layers - Variant 2)
 	Given an activation function $\activation : \R \to \R$ and coefficients $a \in \mathbb{R}^d$, 
 	we call the upper and lower unit triangular layers with bias $b=0$ and layer transform
@@ -1587,7 +1597,77 @@ normal distribution with mean $0$ and standard deviation $0.01$.}
 
 \subsection{Low-dimensional systems}
 
-\todo{Low dimensional systems with $d = 1$. Flow with fixed time $t = 0.1$}
+\todo{Low dimensional systems with $d = 1$.}
+
+The neural network architectures used in the experiments with low-dimensional systems
+are listed in \cref{table_low_dim_arch}.
+\begin{table}
+	\centering
+	\begin{tabular}{lp{8cm}c}
+		\toprule Architecture & Layers & Parameters \\
+		\midrule L-SympNet & Nine alternating upper and lower linear layers,
+		with bias in last layer, see \cref{def_linear_layer}.
+		& $11$ \\
+		%
+		FNN & 
+		A fully-connected network with overall input and output dimension $2$. The network has one hidden
+		(fully-connected) linear layers with input and output dimension $50$.
+		Nonlinear activation layers are placed between all linear layers.
+		& $2802$ \\
+		%
+		LA-SympNet & LA-SympNet with depth $5$ and $4$ sublayers, see \cref{def_la_sympnet}.
+		& $41$ \\
+		%
+		N1-LA-SympNet & 
+		Same as LA-SympNet, but with normalized activation layers (variant 1, 
+		see \cref{def_norm_activation_layer_1}) instead of activation layers.
+		& $51$ \\
+		%
+		N2-LA-SympNet & 
+		Same as LA-SympNet, but with normalized activation layers (variant 2, 
+		see \cref{def_norm_activation_layer_2}) instead of activation layers.
+		& $51$ \\
+		%
+		G-SympNet & G-SympNet with depth $4$ and width $30$, see \cref{def_g_sympnet}. 
+		& $360$ \\
+		%
+		N1-G-SympNet & 
+		Same as G-SympNet, but with normalized Gradient layers 
+		(variant 1, see \cref{def_norm_gradient_layers_1}) instead of Gradient layers.
+		& $600$ \\
+		%
+		N2-G-SympNet & 
+		Same as G-SympNet, but with normalized Gradient layers 
+		(variant 2, see \cref{def_norm_gradient_layers_2}) instead of Gradient layers. 
+		& $600$ \\
+		%
+		LARGE-FNN &
+		A fully-connected network with overall input and output dimension $2$. The network has two hidden
+		(fully-connected) linear layers with input and output dimension $70$.
+		Nonlinear activation layers are placed between all linear layers.
+		& $10292$ \\
+		%
+		LARGE-LA-SympNet & LA-SympNet with depth $40$ and $9$ sublayers, see \cref{def_la_sympnet}.
+		& $491$ \\
+		%
+		LARGE-N1-LA-SympNet & 
+		Same as LARGE-LA-SympNet, but with normalized activation layers (variant 1, 
+		see \cref{def_norm_activation_layer_1}) instead of activation layers.
+		& $571$ \\
+		%
+		LARGE-N2-LA-SympNet & 
+		Same as LARGE-LA-SympNet, but with normalized activation layers (variant 2, 
+		see \cref{def_norm_activation_layer_2}) instead of activation layers.
+		& $571$ \\ \bottomrule
+	\end{tabular}
+	\caption{
+	Table of all neural network architectures for the
+	low-dimensional experiments. The activation function used inside the activation layers
+	and gradient layers is either sigmoid, tanh or ELU and is explicitly stated.
+	}\label{table_low_dim_arch}
+\end{table}
+
+\todo{Flow with fixed time $t = 0.1$}
 
 In this section, the training data is always uniformly sampled from a compact set in phase space.
 Let $\mathcal{D} \subset R^2$ denote a compact set. We uniformly choose $n_{\text{train}} \in \N$ samples
@@ -1601,8 +1681,6 @@ for fixed time $t = 0.01$ and the respective Hamiltonian $H$:
 In addition to the training data $\mathcal{T}$, we generate test data $\mathcal{V}$
 to compute the test loss. The test data is generated with the same procedure as the training
 data $\mathcal{T}$. We denote the number of samples in $\mathcal{V}$ with $n_{\text{test}} \in \N$.
-
-\todo{Describe different architectures, hyperparameters.}
 
 \subsubsection{Harmonic Oscillator}
 
@@ -2072,10 +2150,10 @@ and tanh activation, see \cref{fig_pend_exp2_loss}.
 		\nextgroupplot[
 			title={Sigmoid ($\gamma = 0.01$)},
 			legend entries={
-				FNN,
-				LA-SympNet,
-				N1-LA-SympNet,
-				N2-LA-SympNet,
+				LARGE-FNN,
+				LARGE-LA-SympNet,
+				LARGE-N1-LA-SympNet,
+				LARGE-N2-LA-SympNet,
 				G-SympNet,
 				N1-G-SympNet,
 				N2-G-SympNet
@@ -2101,15 +2179,15 @@ and tanh activation, see \cref{fig_pend_exp2_loss}.
 	
 			\addplot[
 				color=blue
-			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/large-g-sympnet/sigmoid/test_loss.csv};
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/sigmoid/test_loss.csv};
 	
 			\addplot[
 				color=olive,densely dashed
-			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/large-n1-g-sympnet/sigmoid/test_loss.csv};
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/n1-g-sympnet/sigmoid/test_loss.csv};
 	
 			\addplot[
 				color=cyan,densely dashed
-			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/large-n2-g-sympnet/sigmoid/test_loss.csv};
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/n2-g-sympnet/sigmoid/test_loss.csv};
 	
 		\nextgroupplot[title={tanh ($\gamma = 0.01$)}]
 			\addplot[
@@ -2130,15 +2208,15 @@ and tanh activation, see \cref{fig_pend_exp2_loss}.
 	
 			\addplot[
 				color=blue
-			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/large-g-sympnet/tanh/test_loss.csv};
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/tanh/test_loss.csv};
 	
 			\addplot[
 				color=olive,densely dashed
-			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/large-n1-g-sympnet/tanh/test_loss.csv};
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/n1-g-sympnet/tanh/test_loss.csv};
 	
 			\addplot[
 				color=cyan,densely dashed
-			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/large-n2-g-sympnet/tanh/test_loss.csv};
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/n2-g-sympnet/tanh/test_loss.csv};
 	
 		\nextgroupplot[title={ELU ($\gamma = 0.01$)}]
 			\addplot[
@@ -2159,43 +2237,43 @@ and tanh activation, see \cref{fig_pend_exp2_loss}.
 	
 			\addplot[
 				color=blue
-			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/large-g-sympnet/elu/test_loss.csv};
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/elu/test_loss.csv};
 	
 			\addplot[
 				color=olive,,densely dashed
-			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/large-n1-g-sympnet/elu/test_loss.csv};
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/n1-g-sympnet/elu/test_loss.csv};
 	
 			\addplot[
 				color=cyan,densely dashed
-			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/large-n2-g-sympnet/elu/test_loss.csv};
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot/n2-g-sympnet/elu/test_loss.csv};
 
 		%%% FROM HERE: fast learning rate
 		\nextgroupplot[title={Sigmoid ($\gamma = 1.0$)}]
 			\addplot[
 				color=olive,densely dashed
-			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot_fast_lr/large-n1-g-sympnet/sigmoid/test_loss.csv};
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot_fast_lr/n1-g-sympnet/sigmoid/test_loss.csv};
 	
 			\addplot[
 				color=cyan,densely dashed
-			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot_fast_lr/large-n2-g-sympnet/sigmoid/test_loss.csv};
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot_fast_lr/n2-g-sympnet/sigmoid/test_loss.csv};
 	
 		\nextgroupplot[title={tanh ($\gamma = 1.0$)}]	
 			\addplot[
 				color=olive,densely dashed
-			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot_fast_lr/large-n1-g-sympnet/tanh/test_loss.csv};
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot_fast_lr/n1-g-sympnet/tanh/test_loss.csv};
 	
 			\addplot[
 				color=cyan,densely dashed
-			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot_fast_lr/large-n2-g-sympnet/tanh/test_loss.csv};
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot_fast_lr/n2-g-sympnet/tanh/test_loss.csv};
 	
 		\nextgroupplot[title={ELU ($\gamma = 1.0$)}]
 			\addplot[
 				color=olive,densely dashed
-			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot_fast_lr/large-n1-g-sympnet/elu/test_loss.csv};
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot_fast_lr/n1-g-sympnet/elu/test_loss.csv};
 	
 			\addplot[
 				color=cyan,densely dashed
-			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot_fast_lr/large-n2-g-sympnet/elu/test_loss.csv};
+			] table[x=epoch,y=loss,col sep=comma] {../data/simple_pendulum_swing_rot_fast_lr/n2-g-sympnet/elu/test_loss.csv};
 				
 	\end{groupplot}
 \end{tikzpicture}
@@ -2269,10 +2347,10 @@ allows faster learning rates.}\label{fig_pend_exp2_loss}
 		\nextgroupplot[
 			title={Phase plot for $q_0 = \frac{\pi}{2},\, p_0 = 0$},
 			legend entries={
-				FNN (sigmoid),
-				LA-SympNet (tanh),
-				G-SympNet (tanh),
-				Exact
+				LARGE-FNN (sigmoid),
+				LARGE-LA-SympNet (tanh),
+				G-SympNet (sigmoid),
+				Störmer-Verlet
 			},
 			legend columns=4,
 			legend to name=leg_ped_swing_phase
@@ -2287,7 +2365,7 @@ allows faster learning rates.}\label{fig_pend_exp2_loss}
 	
 			\addplot[
 				color=blue
-			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/large-g-sympnet/tanh/swinging_case/phase_plot.csv};
+			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/sigmoid/swinging_case/phase_plot.csv};
 
 			\addplot[
 				color=gray
@@ -2304,7 +2382,7 @@ allows faster learning rates.}\label{fig_pend_exp2_loss}
 	
 			\addplot[
 				color=blue
-			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/large-g-sympnet/tanh/rotating_case/phase_plot.csv};
+			] table[x=q,y=p,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/sigmoid/rotating_case/phase_plot.csv};
 
 			\addplot[
 				color=gray
@@ -2334,8 +2412,8 @@ allows faster learning rates.}\label{fig_pend_exp2_loss}
 			legend style={nodes={scale=0.75, transform shape}},
 			legend entries={
 				Störmer-Verlet,
-				FNN (sigmoid),
-				G-SympNet (tanh)
+				LARGE-FNN (sigmoid),
+				G-SympNet (sigmoid)
 			}
 		]
 
@@ -2351,7 +2429,7 @@ allows faster learning rates.}\label{fig_pend_exp2_loss}
 
 			\addplot[
 				color=blue
-			] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing_rot/large-g-sympnet/tanh/swinging_case/total_energy.csv};
+			] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/sigmoid/swinging_case/total_energy.csv};
 
 		\nextgroupplot[title={Predicted position $q$ for $q_0 = \frac{\pi}{2},\, p_0 = 0$}, ylabel={$q(t)$}, xmin=91, xmax=97, legend pos=north west]
 			\addplot[
@@ -2364,7 +2442,7 @@ allows faster learning rates.}\label{fig_pend_exp2_loss}
 
 			\addplot[
 				color=blue
-			] table[x=t,y=q,col sep=comma] {../data/simple_pendulum_swing_rot/large-g-sympnet/tanh/swinging_case/q.csv};
+			] table[x=t,y=q,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/sigmoid/swinging_case/q.csv};
 
 		%% Rotating case	
 		\nextgroupplot[title={Total energy $H$ for $q_0 = \pi,\, p_0=1$}, ylabel={$H(t)$}, xmin=0, xmax=10]
@@ -2378,7 +2456,7 @@ allows faster learning rates.}\label{fig_pend_exp2_loss}
 
 			\addplot[
 				color=blue
-			] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing_rot/large-g-sympnet/tanh/rotating_case/total_energy.csv};
+			] table[x=t,y=E,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/sigmoid/rotating_case/total_energy.csv};
 
 		\nextgroupplot[title={Predicted position $q$ for $q_0 = \pi,\, p_0=1$}, ylabel={$q(t)$}, xmin=8, xmax=9, legend pos=north west]
 			\addplot[
@@ -2391,7 +2469,7 @@ allows faster learning rates.}\label{fig_pend_exp2_loss}
 
 			\addplot[
 				color=blue
-			] table[x=t,y=q,col sep=comma] {../data/simple_pendulum_swing_rot/large-g-sympnet/tanh/rotating_case/q.csv};
+			] table[x=t,y=q,col sep=comma] {../data/simple_pendulum_swing_rot/g-sympnet/sigmoid/rotating_case/q.csv};
 			
 		\end{groupplot}
 	\end{tikzpicture}
@@ -2405,7 +2483,56 @@ allows faster learning rates.}\label{fig_pend_exp2_loss}
 
 \subsection{High-dimensional systems}
 
-\todo{Describe Hamiltonian PDEs. A PDE describes system locally, thus it makes sense to share parameters, for
+The neural network architectures used in the experiments with high-dimensional systems
+are listed in \cref{table_high_dim_arch}.
+\begin{table}
+	\centering
+	\begin{tabular}{lp{8cm}c}
+		\toprule Architecture & Layers & Parameters \\
+		\midrule CNN & 
+		A standard purely linear convolutional neural network with four $1$-dimensional
+		convolution layers with kernel size $3$ and symmetric padding to keep the input dimension. 
+		& $12$ \\
+		%
+		C-SympNet & A purely linear SympNet consisting out of four alternating upper and lower
+		(symplectic) convolution layers with kernel size $3$ and constant zero-padding,
+		see \cref{def_conv_layer}. 
+		& $8$ \\
+		%
+		LARGE-CNN &
+		A standard convolutional neural network consisting of four consecutive blocks of
+		the following layers: $1$-dimensional convolution layer with kernel size $3$
+		and symmetric padding, $1$-dimensional transposed convolution layer
+		with kernel size $100$ and stride $100$, nonlinear activation layer
+		and $1$-dimensional convolution layer with kernel size $100$ and stride $100$. 
+		& $809$ \\
+		%
+		CG-SympNet & A SympNet consisting out of four consecutive blocks of
+		the following layers: upper (or lower) $1$-dimensional symplectic convolution layer with
+		kernel size $3$ and symmetric padding (see \cref{def_conv_layer}) 
+		followed by a upper (or lower) convolution gradient layer
+		with kernel size $100$ and stride $100$ (see \cref{sec_conv_gradient_layer}). 
+		The four blocks as a whole alternate between
+		the upper and lower variants, i.e. a single block in itself contains either only the upper or only
+		the lower variants. 
+		& $1208$ \\
+		%
+		N1-CG-SympNet & Same as CG-SympNet, but with normalized convolution gradient layers
+		(variant 1) instead of convolution gradient layers. \todo{Add reference}
+		& $2008$ \\
+		%
+		N2-CG-SympNet & Same as CG-SympNet, but with normalized convolution gradient layers
+		(variant 2) instead of convolution gradient layers. \todo{Add reference}
+		& $2008$ \\ \bottomrule
+	\end{tabular}
+	\caption{Table of all neural network architectures for the
+	high-dimensional experiments. The activation function used inside the nonlinear activation layers
+	and the convolution gradient layers is either sigmoid, tanh or ELU and is explicitly stated.
+	If not stated otherwise, we use the FD basis to parametrize the symmetric kernels 
+	inside the symplectic convolution layers.}\label{table_high_dim_arch}
+\end{table}
+
+\todo{A PDE describes system locally, thus it makes sense to share parameters, for
 example in the form of CNNs etc.}
 
 Assumptions:
@@ -2557,9 +2684,6 @@ boundary conditions $u_{\text{left}} = 0, \, u_{\text{right}} = 2\pi$.
 
 \todo{Padding modes}
 
-\todo{Activation layer with sin works well if $a \in \mathbb{R}$, i.e. activation function is applied
-isotropic.}
-
 \begin{figure}
 	\centering
 	\begin{tikzpicture}
@@ -2688,7 +2812,7 @@ isotropic.}
 			
 		\end{groupplot}
 	\end{tikzpicture}
-	\caption{\todo{...}}
+	\caption{\todo{Sine Gordon}}
 \end{figure}
 
 \begin{table}
@@ -2707,7 +2831,7 @@ isotropic.}
 		columns/test_loss_elu/.style={column name={ELU}}
 	] {../data-wave/sine_gordon/test_loss_summary.csv}
 
-	\caption{\todo{...}}
+	\caption{\todo{Sine Gordon}}
 \end{table}
 
 \begin{figure}
@@ -2772,7 +2896,7 @@ isotropic.}
 			
 		\end{groupplot}
 	\end{tikzpicture}
-	\caption{\todo{todo}}
+	\caption{\todo{Sine Gordon}}
 \end{figure}
 
 %----------------------------------------------------------------------------------------
@@ -2787,7 +2911,11 @@ isotropic.}
 
 \subsection{Outlook}\label{sec_outlook}
 
+\todo{Simple pendulum, rotating case}
+
 \todo{Recurrent networks}
+
+\todo{Convolution: non-equidistant grids, 2D, 3D}
 
 %----------------------------------------------------------------------------------------
 %
