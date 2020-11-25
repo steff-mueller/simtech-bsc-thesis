@@ -1226,6 +1226,7 @@ For a fixed kernel $k$, valid cross-correlation is a linear map regarding the se
 Therefore there exists a representation matrix $A_{k}$ with 
 $*_{\text{v}}(k,p) = A_{k}p$. Transposed valid cross-correlation 
 is defined as the linear map associated with the transpose $A_{k}^T$ of $A_{k}$.
+We denote the transposed valid cross-correlation by $*_{\text{v}}^T$.
 
 Again, most popular neural network libraries say convolution, but actually implement
 valid cross-correlation. In this case, transposed convolution actually refers to
@@ -1238,14 +1239,44 @@ instead of a full matrix $K$. Let us repeat the layer transfrom $\layertf$ for G
 	\layertf(p) = K^T \bigg( a_j \activation \lb (Kp)_j + c_j \rb \bigg)_{j=1}^n
 \end{equation*}
 
-A Gradient layer with width $n \in \mathbb{N}$ can be implemented by 
+A gradient layer with width $n \in \mathbb{N}$ can be implemented by 
 using valid cross-correlation (with stride) for $K^T \in \mathbb{R}^{d \times n}$ and the
 corresponding transposed valid cross-correlation (with stride) for $K \in \mathbb{R}^{n \times d}$.
 The choice of transpose is intentional, because we want to upscale the input $p \in \mathbb{R}^d$ ($n >> d$). 
 Cross-correlation without padding decreases the dimension. Therefore we first apply 
 transposed cross-correlation on $p$, because the transpose increases the dimension.
-A large kernel size $s_k$ and a large stride value $k$ allow for significant upscaling.
-We emphasize that the kernel $k$ has not to be symmetric in this setting.
+A large kernel size $n_k$ and a large stride number $s$ allow for significant upscaling.
+We emphasize that the kernel $k$ has not to be symmetric in this setting. 
+It is reasonable that the parametrization for $a \in \R^n$ and $c \in \R^n$ also respects
+the convolution in a certain way.
+One possibility to parametrize $a \in \R^n$ with a parameter $\tilde{a} \in \R^{n_k}$ is
+\begin{equation*}
+	c = *_{\text{v}}^T(\tilde{c},1_d)
+	.
+\end{equation*}
+The vector $c \in \R^n$ can be parametrized with a parameter $\tilde{c} \in \R^{n_k}$ analogously.
+To summarize, the convolution gradient layers then can be defined as:
+\begin{definition}
+	(Convolution gradient layers)
+	Given a kernel size $n_k \in \N$, a stride number $s \in \N$,
+	kernel parameters $k,\tilde{a},\tilde{c} \in \mathbb{R}^{n_k}$ and
+	an activation function $\activation : \R \to \R$,
+	we call the upper and lower triangular layers with layer transform
+	\begin{align*}
+		T(p) = *_{\text{v}} \lb k, \, \lb a_j \activation \lb \lb *_{\text{v}}^T(k,p) \rb_j + c_j \rb \rb_{j=1}^n \rb 
+		\quad
+		\text{with } c = *_{\text{v}}^T(\tilde{c},1_d) 
+		\text{ and } a = *_{\text{v}}^T(\tilde{a},1_d)
+	\end{align*}
+	the upper and lower gradient convolution layers 
+	$\mathcal{G}_\up^{\text{conv}}$ and $\mathcal{G}_\low^{\text{conv}}$.
+	The width $n \in \N$ corresponds to the output dimension of the transposed valid cross-correlation $*_{\text{v}}^T$
+	and thus depends on the kernel size $n_k$ and the stride number $s$.
+\end{definition}
+
+The convolution gradient layers are symplectic by construction,
+because they are a special parametrization of gradient layers.
+
 \todo{Cite similar idea}
 
 \subsection{Normalization}
@@ -1364,8 +1395,6 @@ are learnable parameters.
 
 \todo{Discuss variant 1 vs. variant 2 (numerical experiments)}
 
-\todo{Add special note for convolution gradient layers, respect convolution when normalizing.}
-
 \begin{corollary}\label{cor_norm_gradient_layers_symp}
 	Given an activation function $\sigma \in C^1(\R)$,
 	the normalized gradient layers $\mathcal{G}^{\eta}_{up}$ and $\mathcal{G}^{\eta}_{down}$
@@ -1396,6 +1425,44 @@ are learnable parameters.
 	With \cref{gradient_corollary} follows that both normalized Gradient layer variants
 	$\mathcal{G}_{up}^\eta$ and $\mathcal{G}_{low}^\eta$ are symplectic.
 \end{proof}
+
+\subsubsection{Normalized convolution gradient layers}\label{sec_conv_gradient_layer}
+
+Analogously to the convolution gradient layers introduced in \cref{sec_conv_gradient_layer},
+we can implement a normalized convolution gradient layer (variant 1 and variant 2) 
+with width $n \in \mathbb{N}$
+using valid cross-correlation (with stride) for $K^T \in \mathbb{R}^{d \times n}$ and the
+corresponding transposed valid cross-correlation (with stride) for $K \in \mathbb{R}^{n \times d}$.
+It is reasonable that the normalization respects the convolution in a certain way.
+This involves calculating the mean and variance in a way that the convolution is respected.
+In particular, given a convolution kernel size $n_k \in \N$
+that the normalization shares weights 
+
+In our numerical experiments, we only use normalized convolution gradient layers with equal 
+kernel size $n_k$ and stride number $s$, i.e. $n_k = s$. For this special configuration,
+the output $\tilde{p} \in \R^{n_k d}$ of the transposed cross-correlation can be expressed as
+\begin{equation*}
+	\tilde{p}_i = \lb *_{\text{v}}^T(k,p) \rb_i = \begin{cases}
+		k_i p_1 &: 1 \leq i \leq n_k \\
+		k_{i - n_k} p_2 &: n_k+1 \leq i \leq 2n_k \\
+		k_{i - 2n_k} p_3 &: 2n_k+1 \leq i \leq 3n_k \\
+		\dots
+	\end{cases} \quad (1 \leq i \leq n_k d)
+	.
+\end{equation*}
+So the transposed cross-correlation results in a upscaled vector $\tilde{p} \in \R^{n_k d}$ with blocks of size $n_k$.
+Therefore, we implement the batch normalization transform $\eta_{\gamma, \beta}$ in such a way that $\tilde{p}_i$ is
+normalized the same as $\tilde{p}_{i+n_k}$ for all $i = 1, \dots, n_k (d-1)$. In particular, this means that
+$\lb \mu_\mathcal{B} \rb_i = \lb \mu_\mathcal{B} \rb_{i+n_k}$, 
+$\lb \sigma^2_\mathcal{B} \rb_i = \lb \sigma^2_\mathcal{B} \rb_{i+n_k}$, 
+$\gamma_i = \gamma_{i+n_k}$ and $\beta_i = \beta_{i+n_k}$ for $i = 1, \dots, n_k (d-1)$
+and that the parameters $\gamma$ and $\beta$ can be parametrized with vectors
+$\tilde{\gamma} \in \R^{n_k}$ and $\tilde{\beta} \in \R^{n_k}$. All respective entries of $\tilde{p} \in \R^{n_k d}$ 
+belonging together are used to compute the mean and variance.
+As before, the mean and variance are computed over all training samples in the mini-batch $\mathcal{B}$.
+
+Similar normalization schemes, which respect the convolution, can be constructed for arbitrary 
+kernel size $n_k$ and stride value $s$.
 
 \subsubsection{Normalized activation layers}
 
@@ -2551,11 +2618,11 @@ are listed in \cref{table_high_dim_arch}.
 		& $1208$ \\
 		%
 		N1-CG-SympNet & Same as CG-SympNet, but with normalized convolution gradient layers
-		(variant 1) instead of convolution gradient layers. \todo{Add reference}
+		(variant 1, see \cref{sec_conv_gradient_layer}) instead of convolution gradient layers.
 		& $2008$ \\
 		%
 		N2-CG-SympNet & Same as CG-SympNet, but with normalized convolution gradient layers
-		(variant 2) instead of convolution gradient layers. \todo{Add reference}
+		(variant 2, see \cref{sec_conv_gradient_layer}) instead of convolution gradient layers.
 		& $2008$ \\ \bottomrule
 	\end{tabular}
 	\caption{Table of all neural network architectures for the
@@ -2633,7 +2700,7 @@ initial values bump function
 	\frac{1}{2} \lb 
 	exp \lb - \lb \frac{6x}{w} \rb^2 \rb - exp \lb - \lb \frac{6w/2}{w} \rb^2 \rb 
 	\rb & : \abs{x} \leq w \\
-	0 & \text{else}
+	0 & : \text{else}
 	\end{cases} \\
 	w_0(x) &= 0
 \end{align*}
