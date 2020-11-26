@@ -1263,12 +1263,12 @@ To summarize, the convolution gradient layers then can be defined as:
 	kernel parameters $k,\tilde{a},\tilde{c} \in \mathbb{R}^{n_k}$ and
 	an activation function $\activation : \R \to \R$,
 	we call the upper and lower triangular layers with layer transform
-	\begin{align*}
+	\begin{equation*}
 		T(p) = *_{\text{v}} \lb k, \, \lb a_j \activation \lb \lb *_{\text{v}}^T(k,p) \rb_j + c_j \rb \rb_{j=1}^n \rb 
 		\quad
 		\text{with } c = *_{\text{v}}^T(\tilde{c},1_d) 
 		\text{ and } a = *_{\text{v}}^T(\tilde{a},1_d)
-	\end{align*}
+	\end{equation*}
 	the upper and lower gradient convolution layers 
 	$\mathcal{G}_\up^{\text{conv}}$ and $\mathcal{G}_\low^{\text{conv}}$.
 	The width $n \in \N$ corresponds to the output dimension of the transposed valid cross-correlation $*_{\text{v}}^T$
@@ -1434,25 +1434,37 @@ we can implement a normalized convolution gradient layer (variant 1 and variant 
 with width $n \in \mathbb{N}$
 using valid cross-correlation (with stride) for $K^T \in \mathbb{R}^{d \times n}$ and the
 corresponding transposed valid cross-correlation (with stride) for $K \in \mathbb{R}^{n \times d}$.
+The layer transform $\layertf$ for the normalized version of the convolution gradient
+layers then can be written as
+\begin{equation*}
+	T(p) = *_{\text{v}} \lb k, \, \lb a_j \activation \lb \overline{p}_j \rb \rb_{j=1}^n \rb 
+	\quad
+	\text{with } \overline{p} = 
+	\eta_{\gamma, \beta} \lb \underbrace{*_{\text{v}}^T(k,p) + c}_{:= \tilde{p}} \rb
+	\text{, }\, c = *_{\text{v}}^T(\tilde{c},1_d) 
+	\text{ and } a = *_{\text{v}}^T(\tilde{a},1_d)
+\end{equation*}
 It is reasonable that the normalization respects the convolution in a certain way.
-This involves calculating the mean and variance in a way that the convolution is respected.
-In particular, given a convolution kernel size $n_k \in \N$
-that the normalization shares weights 
+This also involves calculating the mean and variance in a way that the convolution is respected.
 
 In our numerical experiments, we only use normalized convolution gradient layers with equal 
 kernel size $n_k$ and stride number $s$, i.e. $n_k = s$. For this special configuration,
-the output $\tilde{p} \in \R^{n_k d}$ of the transposed cross-correlation can be expressed as
+the output dimension of the transposed cross-correlation is $n_k d$ and
+the vector $\tilde{p} \in \R^{n_k d}$, which is the input for the
+batch normalization transform, can be expressed as
 \begin{equation*}
-	\tilde{p}_i = \lb *_{\text{v}}^T(k,p) \rb_i = \begin{cases}
-		k_i p_1 &: 1 \leq i \leq n_k \\
-		k_{i - n_k} p_2 &: n_k+1 \leq i \leq 2n_k \\
-		k_{i - 2n_k} p_3 &: 2n_k+1 \leq i \leq 3n_k \\
+	\tilde{p}_i = \lb *_{\text{v}}^T(k,p) + *_{\text{v}}^T(\tilde{c},1_d) \rb_i 
+	= \begin{cases}
+		k_i p_1 + \tilde{c}_i &: 1 \leq i \leq n_k \\
+		k_{i - n_k} p_2 + \tilde{c}_{i - n_k} &: n_k+1 \leq i \leq 2n_k \\
+		k_{i - 2n_k} p_3 + \tilde{c}_{i - 2n_k} &: 2n_k+1 \leq i \leq 3n_k \\
 		\dots
 	\end{cases} \quad (1 \leq i \leq n_k d)
 	.
 \end{equation*}
 So the transposed cross-correlation results in a upscaled vector $\tilde{p} \in \R^{n_k d}$ with blocks of size $n_k$.
-Therefore, we implement the batch normalization transform $\eta_{\gamma, \beta}$ in such a way that $\tilde{p}_i$ is
+Therefore, we implement the batch normalization transform 
+$\overline{p} = \eta_{\gamma, \beta}(\tilde{p})$ in such a way that $\tilde{p}_i$ is
 normalized the same as $\tilde{p}_{i+n_k}$ for all $i = 1, \dots, n_k (d-1)$. In particular, this means that
 $\lb \mu_\mathcal{B} \rb_i = \lb \mu_\mathcal{B} \rb_{i+n_k}$, 
 $\lb \sigma^2_\mathcal{B} \rb_i = \lb \sigma^2_\mathcal{B} \rb_{i+n_k}$, 
@@ -1461,7 +1473,6 @@ and that the parameters $\gamma$ and $\beta$ can be parametrized with vectors
 $\tilde{\gamma} \in \R^{n_k}$ and $\tilde{\beta} \in \R^{n_k}$. All respective entries of $\tilde{p} \in \R^{n_k d}$ 
 belonging together are used to compute the mean and variance.
 As before, the mean and variance are computed over all training samples in the mini-batch $\mathcal{B}$.
-
 Similar normalization schemes, which respect the convolution, can be constructed for arbitrary 
 kernel size $n_k$ and stride value $s$.
 
