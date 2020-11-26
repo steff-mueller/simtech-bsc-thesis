@@ -353,7 +353,7 @@ Kronecker delta
 		y(t_0) &= y_0
 	\end{align*}
 	where $y: I \subset \mathbb{R} \to \mathbb{R}^{2d},\, t \mapsto y(t) = (q(t),p(t))$ and 
-	$y_0 = (q_0, p_0) \in \mathbb{R}^{2d}$ the initial value at $t_0 \in \mathbb{R}$. 
+	$y_0 = (q_0, p_0) \in \mathbb{R}^{2d}$ the initial value at $t_0 \in I$. 
 	The function $H: \mathbb{R}^{2d} \to \mathbb{R}$ is called the Hamiltonian 
 	or the total energy. The entries of $q = q(t) \in \mathbb{R}^d$ are called 
 	generalized coordinates
@@ -1444,7 +1444,7 @@ we can implement a normalized convolution gradient layer (variant 1 and variant 
 with width $n \in \mathbb{N}$
 using valid cross-correlation (with stride) for $K^T \in \mathbb{R}^{d \times n}$ and the
 corresponding transposed valid cross-correlation (with stride) for $K \in \mathbb{R}^{n \times d}$.
-The layer transform $\layertf$ for the normalized version of the convolution gradient
+The layer transform $\layertf$ for the normalized version (variant 1) of the convolution gradient
 layers then can be written as
 \begin{equation*}
 	T(p) = \star_{\text{v}} \lb k, \, \lb a_j \activation \lb \overline{p}_j \rb \rb_{j=1}^n \rb 
@@ -1454,6 +1454,8 @@ layers then can be written as
 	\text{, }\, c = \star_{\text{v}}^T(\tilde{c},1_d) 
 	\text{ and } a = \star_{\text{v}}^T(\tilde{a},1_d)
 \end{equation*}
+The variant 2 follows analogously by inserting the factor 
+$\frac{\gamma_j}{(\sigma^2_\mathcal{B})_j + \epsilon}$ at the respective place.
 It is reasonable that the normalization respects the convolution in a certain way.
 This also involves calculating the mean and variance in a way that the convolution is respected.
 
@@ -2474,7 +2476,7 @@ Test losses bigger than $10^{-2}$ and architectures that diverged during trainin
 				Störmer-Verlet
 			},
 			legend columns=4,
-			legend to name=leg_ped_swing_phase
+			legend to name=leg_ped_swing_rot_phase
 		]
 			\addplot[
 				color=green,thin
@@ -2512,7 +2514,7 @@ Test losses bigger than $10^{-2}$ and architectures that diverged during trainin
 		\end{groupplot}
 	\end{tikzpicture}
 	\\[5pt]
-	\ref{leg_ped_swing_phase}
+	\ref{leg_ped_swing_rot_phase}
 	\caption{Phase plots for simple pendulum. Training and test data uniformly sampled from $\mathcal{D}_{\text{swing+rotate}}$.
 	(Left) Only the G-SympNet is indistinguishable from the exact phase plot. The FNN does not have a closed orbit.
 	(Right) The LA-SympNet fails to predict the phase plot for $q_0 = \pi,\, p_0=1$.}
