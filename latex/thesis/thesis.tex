@@ -837,12 +837,16 @@ We repeat the statements here and refer to \cite{Jin2020} for proofs.
 	$\norm{f-g}_{C^r(W,\R^n)} < \epsilon$.
 \end{definition}
 
+\todo{Complete this section}
+
 \begin{definition}\label{def_la_sympnet}
 	(LA-SympNet)
+	\todo{linear and activation layers}
 \end{definition}
 
 \begin{definition}\label{def_g_sympnet}
 	(G-SympNet)
+	\todo{gradient layers only}
 \end{definition}
 
 \begin{theorem}
@@ -1473,7 +1477,7 @@ and that the parameters $\gamma$ and $\beta$ can be parametrized with vectors
 $\tilde{\gamma} \in \R^{n_k}$ and $\tilde{\beta} \in \R^{n_k}$. All respective entries of $\tilde{p} \in \R^{n_k d}$ 
 belonging together are used to compute the mean and variance.
 As before, the mean and variance are computed over all training samples in the mini-batch $\mathcal{B}$.
-Similar normalization schemes, which respect the convolution, can be constructed for arbitrary 
+Similar normalization schemes can be constructed for other configurations of the 
 kernel size $n_k$ and stride value $s$.
 
 \subsubsection{Normalized activation layers}
@@ -2585,8 +2589,8 @@ Test losses bigger than $10^{-2}$ and architectures that diverged during trainin
 		\end{groupplot}
 	\end{tikzpicture}
 	\caption{
-	Training and test data generated from $\mathcal{D}_{\text{swing+rotate}}$, 
-	learning rate $\gamma = 0.01$.
+	Training and test data generated from $\mathcal{D}_{\text{swing+rotate}}$.
+	The learning rate is set to $\gamma = 0.01$.
 	Total energy and position over time for simple pendulum for $q_0 = \frac{\pi}{2},\, p_0 = 0$.
 	(first row) and $q_0 = \pi,\, p_0=1$ (second row).
 	The total energy is better maintained with the SympNet.
@@ -2596,18 +2600,9 @@ Test losses bigger than $10^{-2}$ and architectures that diverged during trainin
 \FloatBarrier
 \subsection{High-dimensional systems}
 
-\todo{A PDE describes system locally, thus it makes sense to share parameters, for
-example in the form of CNNs etc.}
-
-Assumptions:
-\begin{itemize}
-	\item \todo{Original PDE has constant coefficients Or rather should not depend on $x$ itself?}
-	\item Equidistant grid points
-\end{itemize}
-
-\todo{Explain why we need assumptions.}
-
-The one-dimensional semi-linear wave equation with constant speed $c \in \R$, nonlinear term 
+In this section, we work with a high-dimensional Hamiltonian system with $d \gg 1$.
+Namely,
+the one-dimensional semi-linear wave equation with constant speed $c \in \R$, nonlinear term 
 $g : \R \to \R$ and domain length $l \in \R$
 \begin{equation*}
 	\frac{\partial^2}{\partial t^2} u(t,x) = 
@@ -2615,7 +2610,6 @@ $g : \R \to \R$ and domain length $l \in \R$
 	\quad \forall x \in \lsb -\frac{l}{2},\frac{l}{2} \rsb, 
 	\, t \in I \subset \R
 \end{equation*}
-\todo{double-check domain}
 with initial conditions
 \begin{align*}
 	u(t_0,x) &= u_0(x) \\
@@ -2649,9 +2643,32 @@ with Hamiltonian
 where $G'(u) = \int_0^u g(v) dv$, $q_0 := u_{\text{left}}$ and $q_{n+1} := u_{\text{right}}$.
 The generalized coordinates $q_i(t)$ then refer to $u(t,x_i)$ and 
 the conjugate momenta $p_i(t)$ then refer to $\deldelt u(t,x_i)$.
+The result Hamiltonian system has a large phase space dimension $d=n \gg 1$.
+It suggests itself to use convolution layers, since otherwise
+the parameter space would explode. It is also physically reasonable
+to use convolution layers, because the original PDE describes the system locally.
+Thus it makes sense to share parameters on the domain.
+The neural network architectures used in the experiments
+are listed in \cref{table_high_dim_arch}. With these architectures,
+we implicitly assume that the PDE itself does not depend on the position variable $x$.
+We alsu assume that the grid points are equidistant. Both conditions are met
+in our case with the wave equation. If one or both conditions do not apply, sharing the same
+parameters over the whole domain would not work anymore without 
+adding further logic, because the current position $x$ then would influence
+local system behavior.
 
-The neural network architectures used in the experiments with high-dimensional systems
-are listed in \cref{table_high_dim_arch}.
+In our experiments with the wave equation, the phase spaces samples
+used to generate the training and test data originate from the trajectory
+starting from $y_0$, i.e. $x_i = y_{i-1} = \phi^{\text{h}}_{t,H}(x_i)$ for
+$i = 1, \dots, n_{\text{train}} + n_{\text{test}}$. The data is generated
+for the fixed time $t = 0.01$ in all experiments. 
+The first $n_{\text{train}}$ go to the training data, the remaining samples
+to the test data.
+The training size
+$n_{\text{train}} \in \N$ is chosen such that it contains all data up to
+total accumulated time $T=1$, i.e. $n_{\text{train}} = 100$. The test data
+contains the trajectory samples for total accumulated time $T=1$ to $T=10$.
+All experiments are conducted with the learning rate $\gamma = 0.1$.
 
 \begin{table}
 	\centering
@@ -2703,13 +2720,15 @@ are listed in \cref{table_high_dim_arch}.
 
 \subsubsection{Linear wave equation}
 
-Transport problem
+\todo{Transport problem, finish this section}
 
 $G(u) = g(u) =0$, $u_{\text{left}} = u_{\text{right}} = 0$
 
-$c=1$
+$c=1, l=1$
 
-initial values bump function
+$n=100$ grid points
+
+initial values (bump function)
 \begin{align*}
 	u_0(x) &= \begin{cases}
 	\frac{1}{2} \lb 
@@ -2796,10 +2815,12 @@ with $w = l/4$.
 			
 		\end{axis}
 	\end{tikzpicture}
-	\caption{\todo{todo}}
+	\caption{Predicted displacement $q(t=9,x)$ for the
+	linear wave equation experiment.}
 \end{figure}
 
-\todo{The choice of basis for the symmetric convolution kernels is critical (for fast convergence)!}
+\todo{The choice of basis for the symmetric convolution kernels 
+has a large influence on the test loss!}
 
 \subsubsection{Sine-Gordon}
 
@@ -2818,6 +2839,12 @@ For our experiment, we set the initial values
 	w_0(x) &= \deldelt u_{\text{sol}}(0,x)
 \end{align*}
 with $v=0.2$ and the boundary conditions $u_{\text{left}} = 0, \, u_{\text{right}} = 2\pi$.
+
+\todo{Finish this section}
+
+$l=50$
+
+$n=2000$ grid points
 
 \todo{Padding modes}
 
@@ -2949,7 +2976,9 @@ with $v=0.2$ and the boundary conditions $u_{\text{left}} = 0, \, u_{\text{right
 			
 		\end{groupplot}
 	\end{tikzpicture}
-	\caption{\todo{Sine Gordon}}
+	\caption{Training and test losses for the Sine-Gordon experiment
+	(First row) sigmoid activation (Second row) tanh activation
+	(Third row) ELU activation}
 \end{figure}
 
 \begin{table}
@@ -2968,7 +2997,7 @@ with $v=0.2$ and the boundary conditions $u_{\text{left}} = 0, \, u_{\text{right
 		columns/test_loss_elu/.style={column name={ELU}}
 	] {../data-wave/sine_gordon/test_loss_summary.csv}
 
-	\caption{\todo{Sine Gordon}}
+	\caption{Test losses for Sine-Gordon experiment after $2000$ epochs.}
 \end{table}
 
 \begin{figure}
@@ -3033,7 +3062,8 @@ with $v=0.2$ and the boundary conditions $u_{\text{left}} = 0, \, u_{\text{right
 			
 		\end{groupplot}
 	\end{tikzpicture}
-	\caption{\todo{Sine Gordon}}
+	\caption{Predicted displacement $q(t,x)$ for $t=3$ and $t=9$ for the
+	Sine-Gordon experiment.}
 \end{figure}
 
 %----------------------------------------------------------------------------------------
