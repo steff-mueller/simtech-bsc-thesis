@@ -22,6 +22,7 @@
 \usepackage{multirow}
 \usepackage{makecell}
 \usepackage{algpseudocode,algorithm}
+\usepackage{placeins}
 %%% Title page
 \usepackage{common/titlePageST}
 %%% Appendix in TOC
@@ -2503,11 +2504,11 @@ Test losses bigger than $10^{-2}$ and architectures that diverged during trainin
 			group style={
 				group size=2 by 2,
 				horizontal sep=2cm,
-				vertical sep=2.2cm,
+				vertical sep=2cm,
 			},
 			no markers,
 			xlabel={t},
-			width=7.7cm,
+			width=7cm,
 			legend style={nodes={scale=0.75, transform shape}},
 			legend entries={
 				Störmer-Verlet,
@@ -2572,65 +2573,17 @@ Test losses bigger than $10^{-2}$ and architectures that diverged during trainin
 			
 		\end{groupplot}
 	\end{tikzpicture}
-	\caption{Total energy and position over time for simple pendulum for $q_0 = \frac{\pi}{2},\, p_0 = 0$
+	\caption{
+	Training and test data generated from $\mathcal{D}_{\text{swing+rotate}}$, 
+	learning rate $\gamma = 0.01$.
+	Total energy and position over time for simple pendulum for $q_0 = \frac{\pi}{2},\, p_0 = 0$.
 	(first row) and $q_0 = \pi,\, p_0=1$ (second row).
-	Training and test data uniformly sampled from $\mathcal{D}_{\text{swing+rotate}}$.
-	The results are from the neural networks trained with slower learning rate $\gamma = 0.01$.
-	The total energy is better maintained with the G-SympNet.
-	The prediction of the position over long time is better with SympNets than with the FNN.}
+	The total energy is better maintained with the SympNet.
+	The prediction of the position over long time is better with the SympNet than with the FNN.}
 \end{figure}
 
+\FloatBarrier
 \subsection{High-dimensional systems}
-
-The neural network architectures used in the experiments with high-dimensional systems
-are listed in \cref{table_high_dim_arch}.
-\begin{table}
-	\centering
-	\begin{tabular}{lp{8cm}c}
-		\toprule Architecture & Layers & Parameters \\
-		\midrule CNN & 
-		A standard purely linear convolutional neural network with four $1$-dimensional
-		convolution layers with kernel size $3$ and symmetric padding to keep the input dimension. 
-		& $12$ \\
-		%
-		C-SympNet & A purely linear SympNet consisting out of four alternating upper and lower
-		(symplectic) convolution layers with kernel size $3$ and constant zero-padding,
-		see \cref{def_conv_layer}. 
-		& $8$ \\
-		%
-		LARGE-CNN &
-		A standard convolutional neural network consisting of four consecutive blocks of
-		the following layers: $1$-dimensional convolution layer with kernel size $3$
-		and symmetric padding, $1$-dimensional transposed convolution layer
-		with kernel size $100$ and stride $100$, nonlinear activation layer
-		and $1$-dimensional convolution layer with kernel size $100$ and stride $100$. 
-		& $809$ \\
-		%
-		CG-SympNet & 
-		A SympNet consisting out of four consecutive blocks of
-		the following two layers: upper (or lower) $1$-dimensional symplectic convolution layer with
-		kernel size $3$ and symmetric padding (see \cref{def_conv_layer}) 
-		followed by a upper (or lower) convolution gradient layer
-		with kernel size $100$ and stride $100$ (see \cref{sec_conv_gradient_layer}). 
-		The four blocks as a whole alternate between
-		the upper and lower variants, i.e. a single block in itself contains either only the upper or only
-		the lower variants. 
-		& $1208$ \\
-		%
-		N1-CG-SympNet & Same as CG-SympNet, but with normalized convolution gradient layers
-		(variant 1, see \cref{sec_conv_gradient_layer}) instead of convolution gradient layers.
-		& $2008$ \\
-		%
-		N2-CG-SympNet & Same as CG-SympNet, but with normalized convolution gradient layers
-		(variant 2, see \cref{sec_conv_gradient_layer}) instead of convolution gradient layers.
-		& $2008$ \\ \bottomrule
-	\end{tabular}
-	\caption{Table of all neural network architectures for the
-	high-dimensional experiments. The activation function used inside the nonlinear activation layers
-	and the convolution gradient layers is either sigmoid, tanh or ELU and is explicitly stated.
-	If not stated otherwise, we use the FD basis to parametrize the symmetric kernels 
-	inside the symplectic convolution layers.}\label{table_high_dim_arch}
-\end{table}
 
 \todo{A PDE describes system locally, thus it makes sense to share parameters, for
 example in the form of CNNs etc.}
@@ -2685,6 +2638,57 @@ with Hamiltonian
 where $G'(u) = \int_0^u g(v) dv$, $q_0 := u_{\text{left}}$ and $q_{n+1} := u_{\text{right}}$.
 The generalized coordinates $q_i(t)$ then refer to $u(t,x_i)$ and 
 the conjugate momenta $p_i(t)$ then refer to $\deldelt u(t,x_i)$.
+
+The neural network architectures used in the experiments with high-dimensional systems
+are listed in \cref{table_high_dim_arch}.
+
+\begin{table}
+	\centering
+	\begin{tabular}{lp{8cm}c}
+		\toprule Architecture & Layers & Parameters \\
+		\midrule CNN & 
+		A standard purely linear convolutional neural network with four $1$-dimensional
+		convolution layers with kernel size $3$ and symmetric padding to keep the input dimension. 
+		& $12$ \\
+		%
+		C-SympNet & A purely linear SympNet consisting out of four alternating upper and lower
+		(symplectic) convolution layers with kernel size $3$ and constant zero-padding,
+		see \cref{def_conv_layer}. 
+		& $8$ \\
+		%
+		LARGE-CNN &
+		A standard convolutional neural network consisting of four consecutive blocks of
+		the following layers: $1$-dimensional convolution layer with kernel size $3$
+		and symmetric padding, $1$-dimensional transposed convolution layer
+		with kernel size $100$ and stride $100$, nonlinear activation layer
+		and $1$-dimensional convolution layer with kernel size $100$ and stride $100$. 
+		& $809$ \\
+		%
+		CG-SympNet & 
+		A SympNet consisting out of four consecutive blocks of
+		the following two layers: upper (or lower) $1$-dimensional symplectic convolution layer with
+		kernel size $3$ and symmetric padding (see \cref{def_conv_layer}) 
+		followed by a upper (or lower) convolution gradient layer
+		with kernel size $100$ and stride $100$ (see \cref{sec_conv_gradient_layer}). 
+		The four blocks as a whole alternate between
+		the upper and lower variants, i.e. a single block in itself contains either only the upper or only
+		the lower variants. 
+		& $1208$ \\
+		%
+		N1-CG-SympNet & Same as CG-SympNet, but with normalized convolution gradient layers
+		(variant 1, see \cref{sec_conv_gradient_layer}) instead of convolution gradient layers.
+		& $2008$ \\
+		%
+		N2-CG-SympNet & Same as CG-SympNet, but with normalized convolution gradient layers
+		(variant 2, see \cref{sec_conv_gradient_layer}) instead of convolution gradient layers.
+		& $2008$ \\ \bottomrule
+	\end{tabular}
+	\caption{Table of all neural network architectures for the
+	high-dimensional experiments. The activation function used inside the nonlinear activation layers
+	and the convolution gradient layers is either sigmoid, tanh or ELU and is explicitly stated.
+	If not stated otherwise, we use the FD basis to parametrize the symmetric kernels 
+	inside the symplectic convolution layers.}\label{table_high_dim_arch}
+\end{table}
 
 \subsubsection{Linear wave equation}
 
