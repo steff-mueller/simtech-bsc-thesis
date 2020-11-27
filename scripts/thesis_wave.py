@@ -214,6 +214,7 @@ def update_csv(args):
         td_x = np.load(curr_exp_dir
             .joinpath(exp.architectures[0].name, exp.activations[0], 'exact_td_x.npy'))
         
+        print_q_over_domain(td_x, 0.0, exp, curr_destination_dir.joinpath('exact', 'q_t0.csv'))
         print_q_over_domain(td_x, 3.0, exp, curr_destination_dir.joinpath('exact', 'q_t3.csv'))
         print_q_over_domain(td_x, 9.0, exp, curr_destination_dir.joinpath('exact', 'q_t9.csv'))
 

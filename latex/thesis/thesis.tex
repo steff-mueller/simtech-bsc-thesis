@@ -2676,20 +2676,21 @@ Test losses bigger than $10^{-2}$ and architectures that diverged during trainin
 \FloatBarrier
 \subsection{High-dimensional systems}
 
-In this section, we work with a high-dimensional Hamiltonian system with $d \gg 1$.
-Namely,
+In this section, we work with a high-dimensional Hamiltonian system with $d \gg 1$
+arising from a semi-discretized partial differential equation.
+Namely,x
 the one-dimensional semi-linear wave equation with constant speed $c \in \R$, nonlinear term 
-$g : \R \to \R$ and domain length $l \in \R$
+$g : \R \to \R$, domain length $l \in \R$ and domain $\Omega = [-l/2, l/2]$
 \begin{equation*}
 	\frac{\partial^2}{\partial t^2} u(t,x) = 
 	c^2 \frac{\partial^2}{\partial x^2} u(t,x) - g(u(t,x)) 
-	\quad \forall x \in \lsb -\frac{l}{2},\frac{l}{2} \rsb, 
+	\quad \forall x \in \Omega, 
 	\, t \in I \subset \R
 \end{equation*}
 with initial conditions
 \begin{align*}
 	u(t_0,x) &= u_0(x) \\
-	\deldelt u(t_0,x) &= w_0(x) \quad \forall x \in \lsb -\frac{l}{2},\frac{l}{2} \rsb
+	\deldelt u(t_0,x) &= w_0(x) \quad \forall x \in \Omega
 \end{align*}
 and Dirichlet boundary conditions
 \begin{equation*}
@@ -2697,9 +2698,9 @@ and Dirichlet boundary conditions
 \end{equation*}
 can be transformed into a Hamiltonian ODE system upon discretization with finite differences
 (see \cite{2006ham_pde} and \cite{peng2016} for details). 
-Here, $u(x,t) \in \R$ denotes the unknown time-dependent displacement field on the interval $[-l/2, l/2]$.
+Here, $u(x,t) \in \R$ denotes the unknown time-dependent displacement field on the domain $\Omega$.
 
-Given an equally-spaced grid $\{ x_i \}_{n=0}^{n+1} \subset \R$, $x_0 = -l/2$, $x_{n+1} = l/2$,
+Given an equally-spaced grid $\{ x_i \}_{n=0}^{n+1} \subset \Omega$, $x_0 = -l/2$, $x_{n+1} = l/2$,
 with grid width $\Delta x$,
 initial values $y_0 = (\bar{q}_0^T, \bar{p}_0^T)^T \in \R^{2n}$, $\bar{q}_0 = \lb u_0(x_i) \rb_{i=1}^n \in \R^n$, 
 $\bar{p}_0 = \lb w_0(x_i) \rb_{i=1}^n \in \R^n$,
@@ -2726,12 +2727,24 @@ to use convolution layers, because the original PDE describes the system locally
 Thus it makes sense to share parameters on the domain.
 The neural network architectures used in the experiments
 are listed in \cref{table_high_dim_arch}. With these architectures,
-we implicitly assume that the PDE itself does not depend on the position variable $x$.
-We alsu assume that the grid points are equidistant. Both conditions are met
+we implicitly assume that the PDE coefficients do not depend on the position variable $x$.
+We also assume that the grid points are equidistant. Both conditions are met
 in our case with the wave equation. If one or both conditions do not apply, sharing the same
 parameters over the whole domain would not work anymore without 
 adding further logic, because the current position $x$ then would influence
 local system behavior.
+
+In the nonlinear case, we also use that the nonlinearity $g$ 
+only depends on $u(t,x)$ at a single point $x$, and not
+on values on a neighborhood around $x$. 
+This motivates why we set the kernel size and stride number
+to the same value for the convolution gradient layers in 
+the CG-SympNets (see \cref{table_high_dim_arch}).
+If the kernel size is equal to the stride number, the (transposed) cross-correlation
+has no overlap, which implies that the grid points do not influence each other.
+So the intuition behind the 
+proposed CG-Sympnet architecture is that the (linear) convolution layers learn the
+linear part, while the nonlinear convolution gradient layers learn the nonlinear part.
 
 In our experiments with the wave equation, the phase spaces samples
 used to generate the training and test data originate from the trajectory
@@ -2739,7 +2752,8 @@ starting from $y_0$, i.e. $x_i = y_{i-1} = \phi^{\text{h}}_{t,H}(x_{i-1})$ for
 $i = 1, \dots, n_{\text{train}} + n_{\text{test}}$. The data is generated
 for the fixed time $t = 0.01$ in all experiments. 
 The first $n_{\text{train}}$ samples go to the training data, the remaining samples
-to the test data. The training size
+to the test data. In that sense, the test loss is an indicator how well 
+the model extrapolates in time. The training size
 $n_{\text{train}} \in \N$ is chosen such that it contains all data up to
 total accumulated time $T=1$, i.e. $n_{\text{train}} = 100$. The test data
 contains the trajectory samples for total accumulated time $T=1$ to $T=10$.
@@ -2751,7 +2765,7 @@ All experiments are conducted with the learning rate $\gamma = 0.1$.
 		\toprule Architecture & Layers & Parameters \\
 		\midrule CNN & 
 		A standard purely linear convolutional neural network with four $1$-dimensional
-		convolution layers with kernel size $3$ and symmetric padding to keep the input dimension. 
+		convolution layers with kernel size $3$ and constant zero-padding to keep the input dimension. 
 		& $12$ \\
 		%
 		C-SympNet & A purely linear SympNet consisting out of four alternating upper and lower
@@ -2768,7 +2782,7 @@ All experiments are conducted with the learning rate $\gamma = 0.1$.
 		& $809$ \\
 		%
 		CG-SympNet & 
-		A SympNet consisting out of four consecutive blocks of
+		A SympNet consisting of four consecutive blocks of
 		the following two layers: upper (or lower) $1$-dimensional symplectic convolution layer with
 		kernel size $3$ and symmetric padding (see \cref{def_conv_layer}) 
 		followed by a upper (or lower) convolution gradient layer
@@ -2795,15 +2809,9 @@ All experiments are conducted with the learning rate $\gamma = 0.1$.
 
 \subsubsection{Linear wave equation}
 
-\todo{Transport problem, finish this section}
-
-$G(u) = g(u) =0$, $u_{\text{left}} = u_{\text{right}} = 0$
-
-$c=1, l=1$
-
-$n=100$ grid points
-
-initial values (bump function)
+The first experiment is conducted with the linear wave equation, i.e.
+$G(u) = g(u) =0$. We set $c=1, l=1$ and use $100$ grid points for the discretization.
+The initial values are set to a bump function
 \begin{align*}
 	u_0(x) &= \begin{cases}
 	\frac{1}{2} \lb 
@@ -2813,7 +2821,30 @@ initial values (bump function)
 	\end{cases} \\
 	w_0(x) &= 0
 \end{align*}
-with $w = l/4$.
+with $w = l/4$, see first plot in \cref{fig_linear_wave_eq_displacement}.
+The Dirichlet boundary values are set to $u_{\text{left}} = u_{\text{right}} = 0$.
+So this corresponds to the linear wave equation transport problem with fixed ends.
+As with the Harmonic Oscillator, the resulting Hamiltonian ODE is linear and thus the
+flow is linear. Therefore, a linear model as the CNN
+and C-Sympnet architectures (see \cref{table_high_dim_arch}) should be able to represent the flow.
+The Dirichlet boundary values are encoded in the convolution layers of the
+C-SympNet via constant zero-padding.
+
+The test losses for the CNN and C-SympNet architectures are depicted in
+\cref{fig_loss_linear_wave_eq}. We parametrize the symmetric kernels of C-SympNet
+with the canonical basis and the finite-difference inspired (FD) basis. As it turns out,
+the C-SympNet with FD basis has a much lower test loss and converges much faster
+than the C-SympNet with the canonical basis.
+The naive non-physically informed linear CNN architecture performs worst as expected. 
+The CNN architecture is naive, because each convolution
+layer of the CNN architecture uses the same kernel for the whole input $(q,p)$.
+
+The extrapolation performance of all architectures can be seen in
+\cref{fig_linear_wave_eq_displacement} (second and third plot). The C-SympNet with FD basis
+is indistinguishable from the Störmer-Verlet solution. The CNN solution gets unstable after
+a few time iterations.
+
+Additionally, the FD basis gives interpretability in terms of finite differences in this context.
 
 \begin{figure}
 \centering
@@ -2847,18 +2878,22 @@ with $w = l/4$.
 		
 	\end{axis}
 \end{tikzpicture}
-\caption{\todo{todo}}
+\caption{Test losses for the linear wave equation
+experiment after $500$ epochs.}\label{fig_loss_linear_wave_eq}
 \end{figure}
 
 \begin{figure}
 	\centering
 	\begin{tikzpicture}
-		\begin{axis}[
+		\begin{groupplot}[
+			group style={
+				group size=1 by 3,
+				vertical sep=2.2cm,
+			},
 			no markers,
 			width=0.7*\linewidth, height=\axisdefaultheight,
-			title={Displacement $q(t=9,x)$ (Linear wave equation)},
 			xlabel={$x$}, xmin=-0.5, xmax=0.5,
-			ylabel={$q(t=9,x)$}, ymin=-0.3, ymax=0.2, restrict y to domain=-2:2,
+			ymin=-0.3, ymax=0.55, restrict y to domain=-2:2,
 			legend style={
 				nodes={scale=0.75, transform shape},
 				legend cell align=left,
@@ -2870,38 +2905,63 @@ with $w = l/4$.
 				C-SympNet (FD basis),
 				Störmer-Verlet,
 			}
-		]	
-	
-		\addplot[
-			color=green
-		] table[x=x,y=q,col sep=comma] {../data-wave/transport/linear_cnn/sigmoid/q_t9.csv};
-	
-		\addplot[
-			color=blue
-		] table[x=x,y=q,col sep=comma] {../data-wave/transport/linear_canonical/sigmoid/q_t9.csv};
-	
-		\addplot[
-			color=magenta
-		] table[x=x,y=q,col sep=comma] {../data-wave/transport/linear_fd/sigmoid/q_t9.csv};
+		]
 
-		\addplot[
-			color=darkgray
-		] table[x=x,y=q,col sep=comma] {../data-wave/transport/exact/q_t9.csv};
+		\nextgroupplot[
+			title={Displacement $q(t=0,x)$}, ylabel={$q(t=0,x)$},
+			legend entries={
+				Initial value
+			}
+		]
+			\addplot[
+				color=darkgray
+			] table[x=x,y=q,col sep=comma] {../data-wave/transport/exact/q_t0.csv};
+
+		\nextgroupplot[title={Displacement $q(t=3,x)$}, ylabel={$q(t=3,x)$}]
+			\addplot[
+				color=green
+			] table[x=x,y=q,col sep=comma] {../data-wave/transport/linear_cnn/sigmoid/q_t3.csv};
+		
+			\addplot[
+				color=blue
+			] table[x=x,y=q,col sep=comma] {../data-wave/transport/linear_canonical/sigmoid/q_t3.csv};
+		
+			\addplot[
+				color=magenta
+			] table[x=x,y=q,col sep=comma] {../data-wave/transport/linear_fd/sigmoid/q_t3.csv};
+
+			\addplot[
+				color=darkgray
+			] table[x=x,y=q,col sep=comma] {../data-wave/transport/exact/q_t3.csv};
+	
+		\nextgroupplot[title={Displacement $q(t=9,x)$}, ylabel={$q(t=9,x)$}]
+			\addplot[
+				color=green
+			] table[x=x,y=q,col sep=comma] {../data-wave/transport/linear_cnn/sigmoid/q_t9.csv};
+		
+			\addplot[
+				color=blue
+			] table[x=x,y=q,col sep=comma] {../data-wave/transport/linear_canonical/sigmoid/q_t9.csv};
+		
+			\addplot[
+				color=magenta
+			] table[x=x,y=q,col sep=comma] {../data-wave/transport/linear_fd/sigmoid/q_t9.csv};
+
+			\addplot[
+				color=darkgray
+			] table[x=x,y=q,col sep=comma] {../data-wave/transport/exact/q_t9.csv};
 			
-		\end{axis}
+		\end{groupplot}
 	\end{tikzpicture}
-	\caption{Predicted displacement $q(t=9,x)$ for the
-	linear wave equation experiment.}
+	\caption{Displacement $q(t,x)$ for $t=0$ (initial values) and $t=3,9$ (extrapolation) for the
+	linear wave equation experiment. The C-SympNet with FD basis is indistinguishable
+	from the Störmer-Verlet solution.}\label{fig_linear_wave_eq_displacement}
 \end{figure}
-
-\todo{The choice of basis for the symmetric convolution kernels 
-has a large influence on the test loss!}
 
 \subsubsection{Sine-Gordon}
 
 The Sine-Gordon equation is a 
 semi-linear wave equation with $G(u) = 1 - cos(u)$, $g(u) = sin(u)$ and $c=1$.
-
 One can show that the Sine-Gordon equation has the solution
 \begin{equation*}
 	u_{\text{sol}}(t,x) = 4 arctan \lsb exp \lb \frac{x-x_0-vt}{\sqrt{1-v^2}} \rb \rsb 
@@ -2913,15 +2973,33 @@ For our experiment, we set the initial values
 	u_0(x) &= u_{\text{sol}}(0,x) \\
 	w_0(x) &= \deldelt u_{\text{sol}}(0,x)
 \end{align*}
-with $v=0.2$ and the boundary conditions $u_{\text{left}} = 0, \, u_{\text{right}} = 2\pi$.
+with $v=0.2$ and the Dirichlet boundary values to $u_{\text{left}} = 0, \, u_{\text{right}} = 2\pi$.
+Furthermore, we set $l=50$ and use $2000$ grid points for the discretization.
 
-\todo{Finish this section}
+For this experiment, the flow is nonlinear and thus a purely linear model will not suffice.
+The LARGE-CNN and the CG-SympNets are nonlinear models.
+The Dirichlet boundary values $u_{\text{left}}$ and $u_{\text{right}}$ could again
+be embedded into the CG-SympNets via constant padding, 
+either by specifying the padding values $u_{\text{left}}$ and $u_{\text{right}}$ before training
+or by making the padding values learnable during training.
+Instead, we use symmetric padding this time, because for the discretized solution it holds
+$u_{\text{left}} = q_0 \approx q_1$ and $q_{n} \approx q_{n+1} = u_{\text{right}}$
+on the time domain in which we are interested.
 
-$l=50$
+The training and test losses for the LARGE-CNN and CG-SympNets
+are shown in \cref{fig_losses_sine_gordon} and \cref{table_losses_sine_gordon}.
+Again, the non-physically-informed naive LARGE-CNN performs worst as expected, 
+because it applies the same kernels on the whole input $(q,p)$. 
+In this experiment, N1 normalization always outperforms N2 normalization by a great margin.
+The N1-CG-SympNet and the CG-SympNet (without normalization) perform nearly the same.
+The best performing architecture is the N1-CG-SympNet
+with ELU activation, see \cref{table_losses_sine_gordon}. Actually, N1 normalization
+only improved the performance for the ELU activation, while it led to a small 
+decrease of performance for the sigmoid and tanh activation.
 
-$n=2000$ grid points
-
-\todo{Padding modes}
+The extrapolation performance of the two best performing architectures and the LARGE-CNN
+can be seen at \cref{fig_sine_gordon_displacement}. The LARGE-CNN gets unstable after a few time iterations,
+whereas the CG-SympNet and the N1-CG-SympNet still give a reasonable solution at $t=9$.
 
 \begin{figure}
 	\centering
@@ -3053,7 +3131,7 @@ $n=2000$ grid points
 	\end{tikzpicture}
 	\caption{Training and test losses for the Sine-Gordon experiment
 	(First row) sigmoid activation (Second row) tanh activation
-	(Third row) ELU activation}
+	(Third row) ELU activation}\label{fig_losses_sine_gordon}
 \end{figure}
 
 \begin{table}
@@ -3073,6 +3151,7 @@ $n=2000$ grid points
 	] {../data-wave/sine_gordon/test_loss_summary.csv}
 
 	\caption{Test losses for Sine-Gordon experiment after $2000$ epochs.}
+	\label{table_losses_sine_gordon}
 \end{table}
 
 \begin{figure}
@@ -3080,7 +3159,7 @@ $n=2000$ grid points
 	\begin{tikzpicture}
 		\begin{groupplot}[
 			group style={
-				group size=1 by 2,
+				group size=1 by 3,
 				vertical sep=2.2cm,
 			},
 			no markers,
@@ -3096,10 +3175,20 @@ $n=2000$ grid points
 			legend entries={
 				LARGE-CNN,
 				CG-SympNet (tanh),
-				CG-SympNet (ELU),
+				N1-CG-SympNet (ELU),
 				Störmer-Verlet,
 			}
 		]
+
+		\nextgroupplot[
+			title={Displacement $q(t=0,x)$ (Sine Gordon)}, ylabel={$q(t=0,x)$},
+			legend entries={
+				Initial value
+			}
+		]
+			\addplot[
+				color=darkgray
+			] table[x=x,y=q,col sep=comma] {../data-wave/sine_gordon/exact/q_t0.csv};
 
 		\nextgroupplot[title={Displacement $q(t=3,x)$ (Sine Gordon)}, ylabel={$q(t=3,x)$}]
 			\addplot[
@@ -3137,8 +3226,8 @@ $n=2000$ grid points
 			
 		\end{groupplot}
 	\end{tikzpicture}
-	\caption{Predicted displacement $q(t,x)$ for $t=3$ and $t=9$ for the
-	Sine-Gordon experiment.}
+	\caption{Displacement $q(t,x)$ for $t=0$ (initial values) and $t=3,9$ (extrapolation) for the
+	Sine-Gordon experiment.}\label{fig_sine_gordon_displacement}
 \end{figure}
 
 %----------------------------------------------------------------------------------------
@@ -3159,7 +3248,7 @@ $n=2000$ grid points
 
 \todo{preserve total energy}
 
-\todo{better long-time prediction performance}
+\todo{better long-time prediction performance, extrapolation}
 
 \subsection{Outlook}\label{sec_outlook}
 
@@ -3172,6 +3261,8 @@ $n=2000$ grid points
 \todo{ELU}
 
 \todo{reversible}
+
+\todo{approximation theorems, non-$r$-finite, periodic}
 
 %----------------------------------------------------------------------------------------
 %
