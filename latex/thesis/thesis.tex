@@ -666,11 +666,11 @@ choosing the potential $V(p) := p^TAp$.
 \end{proof}
 
 We may enhance expressivity of a linear layer by alternately composing multiple
-$\ell_{up}$ and $\ell_{low}$. We define 
-$\mathcal{L}^{n}_{up},\, \mathcal{L}^{n}_{low} : \mathbb{R}^{2d} \to \mathbb{R}^{2d}$ with
+$\ell_{\up}$ and $\ell_{\low}$. We define 
+$\mathcal{L}^{n}_{\up},\, \mathcal{L}^{n}_{\low} : \mathbb{R}^{2d} \to \mathbb{R}^{2d}$ with
 
 \begin{align*}
-	\mathcal{L}^{n}_{up} \qpvec &:= \begin{pmatrix}
+	\mathcal{L}^{n}_{\up} \qpvec &:= \begin{pmatrix}
 		I && 0 / S_n \\
 		S_n / 0 && I
 	\end{pmatrix}
@@ -683,7 +683,7 @@ $\mathcal{L}^{n}_{up},\, \mathcal{L}^{n}_{low} : \mathbb{R}^{2d} \to \mathbb{R}^
 		I && S_1 \\
 		0 && I
 	\end{pmatrix} + b \\
-	\mathcal{L}^{n}_{low} \qpvec &:= \begin{pmatrix}
+	\mathcal{L}^{n}_{\low} \qpvec &:= \begin{pmatrix}
 		I && S_n / 0 \\
 		0 / S_n && I
 	\end{pmatrix}
@@ -698,12 +698,12 @@ $\mathcal{L}^{n}_{up},\, \mathcal{L}^{n}_{low} : \mathbb{R}^{2d} \to \mathbb{R}^
 	\end{pmatrix} + b
 \end{align*}
 
-$\mathcal{L}^{n}_{up}$ and $\mathcal{L}^{n}_{low}$ are again symplectic because they 
+$\mathcal{L}^{n}_{\up}$ and $\mathcal{L}^{n}_{\low}$ are again symplectic because they 
 are a composition of the symplectic maps $\ell_{up}$ and $\ell_{low}$.
 
 \citeauthor{jin2020unit} show in \cite{jin2020unit} that $\mathcal{L}^{9}_{up}$
 can parametrize every symplectic linear map. In other words, 
-the set of all possible $\mathcal{L}^{9}_{up}$ is equal to the set of all symplectic linear maps.
+the set of all possible $\mathcal{L}^{9}_{\up}$ is equal to the set of all symplectic linear maps.
 
 It does not make sense to put two upper linear layers or two lower linear layers after each other,
 because this reduces to a single upper or lower linear layer:
@@ -831,7 +831,8 @@ We repeat the statements here and refer to \cite{Jin2020} for proofs.
 \begin{definition}
 	($r$-finite)
 	Let $r \in \N_0$ be given. The function $\sigma$ is r-finite if $\sigma \in C^r(\R)$
-	and $0 < \int \abs{\dd{x} \sigma} d\lambda < \infty$. $\lambda$ is the Lebesgue measure on $\R$.
+	and $0 < \int \abs{\frac{\mathrm{d}^r}{\mathrm{d}x^r} \sigma} d\lambda < \infty$. $\lambda$ 
+	is the Lebesgue measure on $\R$.
 \end{definition}
 
 \begin{definition}
@@ -843,31 +844,98 @@ We repeat the statements here and refer to \cite{Jin2020} for proofs.
 	$\norm{f-g}_{C^r(W,\R^n)} < \epsilon$.
 \end{definition}
 
-\todo{Complete this section}
-
 \begin{definition}\label{def_la_sympnet}
 	(LA-SympNet)
-	\todo{linear and activation layers}
+	We call a neural network $\Phi$ a LA-SympNet if it can be expressed as
+	a composition of linear and alternating lower and upper activation layers
+	\begin{equation*}
+		\Phi = \mathcal{L}^n
+		\circ \lb \mathcal{N}_{\text{up/low}} \circ \mathcal{L}^n \rb \circ
+		\cdots
+		\circ \lb \mathcal{N}_\up \circ \mathcal{L}^n \rb
+		\circ \lb \mathcal{N}_\low \circ \mathcal{L}^n \rb
+		.
+	\end{equation*}
+	Here, $\mathcal{L}^n = \mathcal{L}_{\text{low}}^n$ or $\mathcal{L}^n = \mathcal{L}_{\text{up}}^n$,
+	where $n \in \N$ denotes the number of the so-called (linear) sublayers.
+	The depth of the LA-SympNet is determined by the number of activation layers
+	$\mathcal{N}_{\text{up/low}}$.
 \end{definition}
 
 \begin{definition}\label{def_g_sympnet}
 	(G-SympNet)
-	\todo{gradient layers only}
+	We call a neural network $\Phi$ a G-SympNet if it can be expressed as a composition
+	of alternating lower and upper gradient layers
+	\begin{equation*}
+		\Phi = \mathcal{G}_{\text{up/low}} \cdots \circ \mathcal{G}_\up \circ \mathcal{G}_\low,
+	\end{equation*}
+	where all gradient layers share the same width $n \in \N$.
+	The depth of the G-SympNet is determined by the number of gradient layers
+	$\mathcal{G}_{\text{up/low}}$.
 \end{definition}
+
+Let us denote the set of all symplectic maps in $C^r(U, \R^{2d})$ for an open set $U \subset \R^{2d}$ as
+\begin{equation*}
+	\mathcal{S}\mathcal{P}^r(U) = \left\{ 
+		\phi \in C^r(U, \R^{2d}) : \phi \, \text{ is a symplectic map}
+	\right\}
+\end{equation*}
 
 \begin{theorem}
 	(Approximation theorem for LA-SympNets)
+	For all $r \in \N$ and open sets $U \subset \R^{2d}$, the set of all LA-SympNets
+	is $r$-uniformly dense on compacta in $\mathcal{S}\mathcal{P}^r(U)$ if the activation function
+	$\activation$ is $r$-finite.
 \end{theorem}
 
 \begin{theorem}
 	(Approximation theorem for G-SympNets)
+	For all $r \in \N$ and open sets $U \subset \R^{2d}$, the set of all G-SympNets
+	is $r$-uniformly dense on compacta in $\mathcal{S}\mathcal{P}^r(U)$ if the activation function
+	$\activation$ is $r$-finite.
 \end{theorem}
 
 The approximation theorems do not give any information
-about the size of the SympNet, or how long it would take to learn a SympNet.
-\todo{They simply states that there exists}
+about the required size of the SympNet, or how long it takes to learn a SympNet,
+but they state that for every smooth symplectic map, there exists a LA-SympNet or G-SympNet
+which approximates the smooth symplectic map arbitrarily well on a compact set,
+under certain conditions.
 
-\todo{sigmoid, tanh and elu are r-finite}
+\citeauthor{Jin2020} have already shown in \cite[Lemma 1]{Jin2020} that the
+sigmoid activation function $\sigma(x) = \frac{1}{1+e^{-x}}$
+is $r$-finite for $r \in \N$. This implies that the $\mathrm{tanh}$ activation function,
+$\mathrm{tanh}(x) = \frac{e^x - e^{-x}}{e^x + e^{-x}}$,
+also is $r$-finite, because with $\mathrm{tanh}(x) = 2\sigma(2x) - 1$, it follows for $r \in \N$
+that $\mathrm{tanh} \in C^r(\R)$ and
+\begin{equation*}
+	\frac{\mathrm{d}^r}{\mathrm{d}x^r} \mathrm{tanh}(x) = 
+	2^{r+1} \frac{\mathrm{d}^r}{\mathrm{d}x^r} \sigma(2x)
+	.
+\end{equation*}
+Thus we have
+\begin{equation*}
+	0 < \int_{- \infty}^{\infty} \abs{\frac{\mathrm{d}^r}{\mathrm{d}x^r} \mathrm{tanh}(x)} dx
+	= 2^{r+1} \int_{- \infty}^{\infty} \abs{\frac{\mathrm{d}^r}{\mathrm{d}x^r} \sigma(2x)} dx
+	= 2^{r+1} \int_{- \infty}^{\infty} \abs{\frac{\mathrm{d}^r}{\mathrm{d}x^r} \sigma(\tilde{x})} d\tilde{x}
+	< \infty
+	,
+\end{equation*}
+since the sigmoid function $\sigma$ is $r$-finite. This is the motivation why we conduct
+our numerical experiments with the sigmoid and tanh activation function. In addition to
+these two activation functions, we conduct the experiments with the ELU activation function defined as
+\begin{equation*}
+	\mathrm{ELU}(x) = \begin{cases}
+		x &: x > 0 \\
+		a (\exp(x) - 1) &: x \leq 0
+	\end{cases}
+\end{equation*}
+The ELU activation function is continously differentiable for $a=1$,
+which makes it a reasonable choice in our context. However, 
+the ELU activation function is not $r$-finite for all $r \in \N_0$, since
+it is only continously differentiable once and the integral 
+$\int \abs{\frac{\mathrm{d}^r}{\mathrm{d}x^r} \mathrm{ELU}} d\lambda$
+diverges for $r=0$ and $r=1$. Universal approximation theorems for SympNets
+for non-$r$-finite activation functions is an open topic to be explored.
 
 \section{Convolution and Normalization for SympNets}
 
@@ -894,7 +962,7 @@ in convolution layers. Instead, they implement the so called cross-correlation, 
 Cross-correlation is a flipped convolution and is defined as
 \begin{equation*}
 	\star: \mathbb{R}^{\mathbb{Z}} \times \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
-	\quad (f*g)(\tau) = \sum^{\infty}_{a=-\infty} f(a) g(\tau + a)
+	\quad (f \star g)(\tau) = \sum^{\infty}_{a=-\infty} f(a) g(\tau + a)
 \end{equation*}
 Because most popular neural network libraries implement cross correlation and call it convolution,
 we stick to the same convention and use cross-correlation from now on.
@@ -1437,7 +1505,7 @@ are learnable parameters.
 	$\mathcal{G}_{up}^\eta$ and $\mathcal{G}_{low}^\eta$ are symplectic.
 \end{proof}
 
-\subsubsection{Normalized convolution gradient layers}\label{sec_conv_gradient_layer}
+\subsubsection{Normalized convolution gradient layers}\label{sec_norm_conv_gradient_layer}
 
 Analogously to the convolution gradient layers introduced in \cref{sec_conv_gradient_layer},
 we can implement a normalized convolution gradient layer (variant 1 and variant 2) 
@@ -2651,7 +2719,7 @@ with Hamiltonian
 where $G'(u) = \int_0^u g(v) dv$, $q_0 := u_{\text{left}}$ and $q_{n+1} := u_{\text{right}}$.
 The generalized coordinates $q_i(t)$ then refer to $u(t,x_i)$ and 
 the conjugate momenta $p_i(t)$ then refer to $\deldelt u(t,x_i)$.
-The result Hamiltonian system has a large phase space dimension $d=n \gg 1$.
+The resulting Hamiltonian system has a large phase space dimension $d=n \gg 1$.
 It suggests itself to use convolution layers, since otherwise
 the parameter space would explode. It is also physically reasonable
 to use convolution layers, because the original PDE describes the system locally.
@@ -2667,12 +2735,11 @@ local system behavior.
 
 In our experiments with the wave equation, the phase spaces samples
 used to generate the training and test data originate from the trajectory
-starting from $y_0$, i.e. $x_i = y_{i-1} = \phi^{\text{h}}_{t,H}(x_i)$ for
+starting from $y_0$, i.e. $x_i = y_{i-1} = \phi^{\text{h}}_{t,H}(x_{i-1})$ for
 $i = 1, \dots, n_{\text{train}} + n_{\text{test}}$. The data is generated
 for the fixed time $t = 0.01$ in all experiments. 
-The first $n_{\text{train}}$ go to the training data, the remaining samples
-to the test data.
-The training size
+The first $n_{\text{train}}$ samples go to the training data, the remaining samples
+to the test data. The training size
 $n_{\text{train}} \in \N$ is chosen such that it contains all data up to
 total accumulated time $T=1$, i.e. $n_{\text{train}} = 100$. The test data
 contains the trajectory samples for total accumulated time $T=1$ to $T=10$.
@@ -2712,11 +2779,11 @@ All experiments are conducted with the learning rate $\gamma = 0.1$.
 		& $1208$ \\
 		%
 		N1-CG-SympNet & Same as CG-SympNet, but with normalized convolution gradient layers
-		(variant 1, see \cref{sec_conv_gradient_layer}) instead of convolution gradient layers.
+		(variant 1, see \cref{sec_norm_conv_gradient_layer}) instead of convolution gradient layers.
 		& $2008$ \\
 		%
 		N2-CG-SympNet & Same as CG-SympNet, but with normalized convolution gradient layers
-		(variant 2, see \cref{sec_conv_gradient_layer}) instead of convolution gradient layers.
+		(variant 2, see \cref{sec_norm_conv_gradient_layer}) instead of convolution gradient layers.
 		& $2008$ \\ \bottomrule
 	\end{tabular}
 	\caption{Table of all neural network architectures for the
@@ -3101,6 +3168,10 @@ $n=2000$ grid points
 \todo{Recurrent networks}
 
 \todo{Convolution: non-equidistant grids, 2D, 3D}
+
+\todo{ELU}
+
+\todo{reversible}
 
 %----------------------------------------------------------------------------------------
 %
