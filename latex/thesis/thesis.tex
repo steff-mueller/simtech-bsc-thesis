@@ -1348,7 +1348,7 @@ To summarize, the convolution gradient layers then can be defined as:
 		\text{with } c = \star_{\text{v}}^T(\tilde{c},1_d) 
 		\text{ and } a = \star_{\text{v}}^T(\tilde{a},1_d)
 	\end{equation*}
-	the upper and lower gradient convolution layers 
+	the upper and lower convolution gradient layers 
 	$\mathcal{G}_\up^{\text{conv}}$ and $\mathcal{G}_\low^{\text{conv}}$.
 	The width $n \in \N$ corresponds to the output dimension of the transposed valid cross-correlation $\star_{\text{v}}^T$
 	and thus depends on the kernel size $n_k$ and the stride number $s$.
@@ -2176,7 +2176,7 @@ Normalization leads to improved performance.}\label{fig_pend_exp1_loss}
 				FNN (tanh),
 				N2-LA-SympNet (tanh),
 				N2-G-SympNet (tanh),
-				Exact
+				Störmer-Verlet
 			},
 			legend columns=4,
 			legend to name=leg_ped_swing_phase
@@ -2670,8 +2670,9 @@ Test losses bigger than $10^{-2}$ and architectures that diverged during trainin
 	The learning rate is set to $\gamma = 0.01$.
 	Total energy and position over time for simple pendulum for $q_0 = \frac{\pi}{2},\, p_0 = 0$.
 	(first row) and $q_0 = \pi,\, p_0=1$ (second row).
-	The total energy is better maintained with the SympNet.
-	The prediction of the position over long time is better with the SympNet than with the FNN.}
+	The total energy is better maintained with the SympNet for $q_0 = \frac{\pi}{2},\, p_0 = 0$.
+	The prediction of the position over long time is better with the SympNet than with the FNN
+	in both cases.}
 \end{figure}
 
 \FloatBarrier
@@ -2679,7 +2680,7 @@ Test losses bigger than $10^{-2}$ and architectures that diverged during trainin
 
 In this section, we work with a high-dimensional Hamiltonian system with $d \gg 1$
 arising from a semi-discretized partial differential equation.
-Namely,x
+Namely,
 the one-dimensional semi-linear wave equation with constant speed $c \in \R$, nonlinear term 
 $g : \R \to \R$, domain length $l \in \R$ and domain $\Omega = [-l/2, l/2]$
 \begin{equation*}
@@ -2816,7 +2817,7 @@ The initial values are set to a bump function
 \begin{align*}
 	u_0(x) &= \begin{cases}
 	\frac{1}{2} \lb 
-	exp \lb - \lb \frac{6x}{w} \rb^2 \rb - exp \lb - \lb \frac{6w/2}{w} \rb^2 \rb 
+	\exp \lb - \lb \frac{6x}{w} \rb^2 \rb - \exp \lb - \lb \frac{6w/2}{w} \rb^2 \rb 
 	\rb & : \abs{x} \leq w \\
 	0 & : \text{else}
 	\end{cases} \\
@@ -2845,7 +2846,7 @@ The extrapolation performance of all architectures can be seen in
 is indistinguishable from the Störmer-Verlet solution. The CNN solution gets unstable after
 a few time iterations.
 
-Additionally, the FD basis gives interpretability in terms of finite differences in this context.
+Additionally, the FD basis gives interpretability in terms of finite differences in our context.
 
 \begin{figure}
 \centering
@@ -2962,10 +2963,10 @@ experiment after $500$ epochs.}\label{fig_loss_linear_wave_eq}
 \subsubsection{Sine-Gordon}
 
 The Sine-Gordon equation is a 
-semi-linear wave equation with $G(u) = 1 - cos(u)$, $g(u) = sin(u)$ and $c=1$.
+semi-linear wave equation with $G(u) = 1 - \cos(u)$, $g(u) = \sin(u)$ and $c=1$.
 One can show that the Sine-Gordon equation has the solution
 \begin{equation*}
-	u_{\text{sol}}(t,x) = 4 arctan \lsb exp \lb \frac{x-x_0-vt}{\sqrt{1-v^2}} \rb \rsb 
+	u_{\text{sol}}(t,x) = 4 \arctan \lsb \exp \lb \frac{x-x_0-vt}{\sqrt{1-v^2}} \rb \rsb 
 	.
 \end{equation*}
 
@@ -3274,7 +3275,15 @@ whereas the CG-SympNet and the N1-CG-SympNet still give a reasonable solution at
 \newpage
 \begin{appendices}
 \addtocontents{toc}{\protect\setcounter{tocdepth}{1}}
+\section{Implementation}
 
+\todo{PyTorch, Python, Docker, Tensorflow, git, GitLab}
+
+\todo{Visual Studio Code, SSH}
+
+\todo{reference ReadMe in code}
+
+\newpage~\newpage
 \section{Declaration of authorship}
 
 \vspace{3cm}
