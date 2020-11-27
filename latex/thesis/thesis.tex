@@ -258,6 +258,8 @@ Numerical Simulation (IANS)}%
 %----------------------------------------------------------------------------------------
 \section{Introduction}
 
+In our work, we ...
+
 \subsection{Outline}
 
 \subsection{Notation}
@@ -1003,8 +1005,6 @@ In other words, the valid cross-correlation $\star_{\text{v}}$ evaluates the cro
 only at positions where the finite-dimensional kernel $k$ and the 
 finite-dimensional input $x$ fully overlap and puts the result into a finite-dimensional vector.
 
-\todo{Add illustration}
-
 The kernel $k$ will be a parameter which the neural network should learn.
 Note that in this context it does not make a difference if we use convolution or cross-correlation, because
 the neural network would just learn a flipped version of the kernel $k$ in the opposite case.
@@ -1033,8 +1033,6 @@ The stride operators skips $s$ entries of $f \in \mathbb{R}^\mathbb{Z}$.
 		)
 	\end{equation*}
 \end{definition}
-
-\todo{Add illustration}
 
 Note that \cref{def_cross_corr_stride} equals \cref{def_cross_corr} for stride number $s=1$.
 
@@ -1365,7 +1363,6 @@ Batch normalization is a standard method to accelerate training initially propos
 \citeauthor{batchnorm-ioffe15} in \cite{batchnorm-ioffe15}. 
 We introduce a possibility to incorporate batch normalization
 into activation and gradient layers while maintaining symplecticity.
-\todo{Cite similar idea}
 
 \todo{Sigmoid activation function saturates for large values. Vanishing gradient.
 Therefore normalize input before applying activation function.}
@@ -1470,10 +1467,10 @@ We add normalization to gradient layers.
 	The variance $\sigma^2_\mathcal{B} \in \R^n$ refers to the mini-batch variance of $Kp+c$.
 \end{definition}
 
-$K \in \mathbb{R}^{n \times d}$ and $a,c, \gamma, \beta \in \mathbb{R}^n$
+Here, $K \in \mathbb{R}^{n \times d}$ and $a,c, \gamma, \beta \in \mathbb{R}^n$
 are learnable parameters.
-
-\todo{Discuss variant 1 vs. variant 2 (numerical experiments)}
+It turns out in our numerical experiments that variant 1 outperforms
+variant 2 or is equally good as variant 2 in almost all cases.
 
 \begin{corollary}\label{cor_norm_gradient_layers_symp}
 	Given an activation function $\sigma \in C^1(\R)$,
@@ -1731,9 +1728,14 @@ from \cref{gradient_corollary} and the fact that the composition of symplectic m
 
 \section{Numerical experiments}
 
-In this section, we compare the performance of different SympNet architectures.
+In this section, we compare the performance of different SympNet architectures 
+for predicting flows of Hamiltonian systems.
 Additionially, we compare SympNets to network architectures which do not intrinsically
 conserve the symplectic property.
+After the neural networks have been trained with a certain training set,
+we use them as numerical integrators
+to predict a trajectory for a given initial value $y_0$ of a Hamiltonian ODE.
+A single evaluation of the neural network then represents one time iteration.
 
 In all our experiments, we use the mean-square error (MSE) loss defined by
 \begin{equation*}
@@ -1840,7 +1842,8 @@ are listed in \cref{table_low_dim_arch}.
 	\caption{
 	Table of all neural network architectures for the
 	low-dimensional experiments. The activation function used inside the activation
-	and gradient layers is either sigmoid, tanh or ELU and is explicitly stated.
+	and gradient layers is either sigmoid, tanh or ELU and is explicitly stated
+	in the respective experiment.
 	}\label{table_low_dim_arch}
 \end{table}
 
@@ -1898,7 +1901,7 @@ The learning rate is set to $\gamma = 0.01$.}\label{fig_harm_osc_loss}
 
 For $q,p \in \R$, the Hamiltonian for the Simple Pendulum is given by
 \begin{equation*}
-	H(q,p) = \frac{p^2}{2ml^2} + mgl (1-cos(q))
+	H(q,p) = \frac{p^2}{2ml^2} + mgl (1-\cos(q))
 \end{equation*}
 For the experiment, we choose $m=1, g=1$ and $l=1$. The flow of the Simple Pendulum is nonlinear.
 Therefore, the flow cannot be represented by linear models, which makes the Simple Pendulum
@@ -1912,8 +1915,8 @@ phase space samples originating from two different sets $\mathcal{D}$:
 	\mathcal{D}_{\text{swing+rotate}} &= [-20, 20] \times [-2.5, 2.5]
 	\quad (\text{swinging and rotating})
 \end{align*}
-Physically, for $(q,p) \in \mathcal{D}_{\text{swing}}$ only swinging is possible,
-because $\abs{q} \leq \pi/2$ for all $t$ and too low momentum $p$.
+Physically, $\mathcal{D}_{\text{swing}}$ mostly contains phase spaces states where
+the pendulum is swinging, in contrast to $\mathcal{D}_{\text{swing+rotate}}$.
 We choose $n_{\text{train}} = 40$ and $n_{\text{test}} = 400$ for all experiments involving
 the Simple Pendulum. The test data is sampled from the same compact set $\mathcal{D}$ as the training data.
 
@@ -1921,12 +1924,15 @@ the Simple Pendulum. The test data is sampled from the same compact set $\mathca
 and activation functions with training and test data generated from $\mathcal{D}_{\text{swing}}$ and learning rate $\gamma = 0.01$.
 Note that incorporating normalization results in better training and test losses, and may also stabilize
 the learning process. The SympNets do not tend to overfit.
+The N1-G-SympNet with tanh activation function can even compete with the LA-SympNets, whereas
+without normalization the G-SympNet is not able to do so.
 In contrast, the fully-connected networks (FNN) tend to overfit, because they have a high test loss (right column) 
 compared to the training loss (left column).
 \cref{fig_pend_exp1_phase_plots} and \cref{fig_pend_exp1_time} show phase plots, the total energy over time
 and the predicted position over time for the two best-performing architectures and the FNN.
 Note that no architecture is able to successfully predict the phase flow for a initial value outside the training data,
 i.e. $(q_0, p_0) \notin \mathcal{D}_{\text{swing}}$.
+The total energy is maintained with the SympNets, in contrast to the FNN.
 
 \begin{figure}
 \centering
@@ -2174,8 +2180,8 @@ Normalization leads to improved performance.}\label{fig_pend_exp1_loss}
 			title={Phase plot for $q_0 = \frac{\pi}{2},\, p_0 = 0$},
 			legend entries={
 				FNN (tanh),
-				N2-LA-SympNet (tanh),
-				N2-G-SympNet (tanh),
+				N1-LA-SympNet (tanh),
+				N1-G-SympNet (tanh),
 				Störmer-Verlet
 			},
 			legend columns=4,
@@ -2220,7 +2226,7 @@ Normalization leads to improved performance.}\label{fig_pend_exp1_loss}
 	\ref{leg_ped_swing_phase}
 	\caption{Phase plots for simple pendulum. Training and test data generated from $\mathcal{D}_{\text{swing}}$.
 	(Left) The phase plots of the SympNets and the exact solution are indistinguishable.
-	(Right) The neural networks fails to generalize for a $(q_0, p_0) \notin \mathcal{D}_{\text{swing}}$.}
+	(Right) The neural networks fail to generalize for a $(q_0, p_0) \notin \mathcal{D}_{\text{swing}}$.}
 	\label{fig_pend_exp1_phase_plots}
 \end{figure}
 
@@ -2292,11 +2298,18 @@ is generated from $\mathcal{D}_{\text{swing+rotate}}$ instead.
 We perform the experiment with learning rate $\gamma = 0.01$ and faster learning rate $\gamma = 1.0$.
 \cref{table_pend_exp2_loss} shows the final test loss for the first learning rate $\gamma = 0.01$.
 \cref{table_pend_exp2_loss_fast_lr} shows the final test loss for the faster learning rate $\gamma = 1.0$.
-
+Compared to to the previous case with training data from $\mathcal{D}_{\text{swing}}$,
+the chosen activation function has a greater influence on model performance for
+$\mathcal{D}_{\text{swing+rotate}}$.
 The LARGE-LA-SympNet and the normalized variants LARGE-N1-LA-SympNet and LARGE-N2-LA-SympNet completely fail to learn the
 flow if the training data is generated from $\mathcal{D}_{\text{swing+rotate}}$, 
 although their depth has been increased such that they have the same amount of parameters 
-as the G-SympNets (see \cref{table_low_dim_arch}).
+as the G-SympNets (see \cref{table_low_dim_arch}). So the, in general, good performance of the 
+LA-SympNets in the previous case $\mathcal{D}_{\text{swing}}$ does not transfer to this case with
+$\mathcal{D}_{\text{swing+rotate}}$. For $\mathcal{D}_{\text{swing+rotate}}$, the SympNets
+do not work well with the SympNets, whereas the FNN with ELU activation still achieves 
+a comparatively low loss for the slower learning rate $\gamma = 0.01$ (see the right plot in the
+first row of \cref{fig_pend_exp2_loss}).
 
 For training and test data generated from $\mathcal{D}_{\text{swing+rotate}}$, 
 normalization does not lead to a significant change in prediction performance, compared to
@@ -2319,8 +2332,8 @@ similar performance improvement for $\mathcal{D}_{\text{swing+rotate}}$
 as with $\mathcal{D}_{\text{swing}}$. This issue needs further investigation.
 We comment this issue in the Outlook (\cref{sec_outlook}).
 
-For almost all experiments, the first variants of the normalization layers (N1) perform better or equally good
-to the second variants of the normalization layers (N2). There are only two cases where the N2 normalization variant
+For almost all experiments, the first variant of the normalization layers (N1) performs better or equally good
+to the second variant of the normalization layers (N2). There are only two cases where the N2 normalization variant
 has a slightly better final test loss than the N1 normalization variant 
 (see \cref{fig_pend_exp2_loss}, right plot in first row and mid plot in second row).
 
@@ -2843,10 +2856,13 @@ layer of the CNN architecture uses the same kernel for the whole input $(q,p)$.
 
 The extrapolation performance of all architectures can be seen in
 \cref{fig_linear_wave_eq_displacement} (second and third plot). The C-SympNet with FD basis
-is indistinguishable from the Störmer-Verlet solution. The CNN solution gets unstable after
-a few time iterations.
+is indistinguishable from the Störmer-Verlet solution.The extrapolation performance of the C-SympNet
+with the canonical basis is still quite good, although the test loss
+is much larger than the test loss for the C-SympNet with the FD basis.
+The CNN solution gets unstable after a few time iterations.
 
-Additionally, the FD basis gives interpretability in terms of finite differences in our context.
+The FD basis gives interpretability in terms of finite differences in our context,
+which might make it a favorable choice in our context.
 
 \begin{figure}
 \centering
@@ -2988,7 +3004,7 @@ Instead, we use symmetric padding this time, because for the discretized solutio
 $u_{\text{left}} = q_0 \approx q_1$ and $q_{n} \approx q_{n+1} = u_{\text{right}}$
 on the time domain in which we are interested.
 
-The training and test losses for the LARGE-CNN and CG-SympNets
+The training and test losses for the LARGE-CNN and CG-SympNets for different activation functions
 are shown in \cref{fig_losses_sine_gordon} and \cref{table_losses_sine_gordon}.
 Again, the non-physically-informed naive LARGE-CNN performs worst as expected, 
 because it applies the same kernels on the whole input $(q,p)$. 
