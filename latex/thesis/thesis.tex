@@ -204,7 +204,7 @@ Numerical Simulation (IANS)}%
 \addAuthorInfo{Author}{Steffen Müller}
 \addAuthorInfo{Student ID}{3260643}
 \addAuthorInfo{SimTech ID}{119} %
-\addAuthorInfo{Submission Date}{...} %FILLIN
+\addAuthorInfo{Submission Date}{01.12.2020} %FILLIN
 \end{authorST}%
 %------------------------------------------
 \end{titlePageST}
@@ -1436,7 +1436,7 @@ case for our numerical experiments, as we work with very small training data set
 
 \subsubsection{Normalized gradient layers}
 
-We add normalization to gradient layers.
+In this section, we incorporate the batch normalization transform into gradient layers.
 
 \begin{definition}\label{def_norm_gradient_layers_1}
 	(Normalized gradient layers - Variant 1)
@@ -2299,15 +2299,15 @@ We perform the experiment with learning rate $\gamma = 0.01$ and faster learning
 \cref{table_pend_exp2_loss} shows the final test loss for the first learning rate $\gamma = 0.01$.
 \cref{table_pend_exp2_loss_fast_lr} shows the final test loss for the faster learning rate $\gamma = 1.0$.
 Compared to to the previous case with training data from $\mathcal{D}_{\text{swing}}$,
-the chosen activation function has a greater influence on model performance for
-$\mathcal{D}_{\text{swing+rotate}}$.
+the chosen activation function has a greater influence on model performance.
 The LARGE-LA-SympNet and the normalized variants LARGE-N1-LA-SympNet and LARGE-N2-LA-SympNet completely fail to learn the
 flow if the training data is generated from $\mathcal{D}_{\text{swing+rotate}}$, 
 although their depth has been increased such that they have the same amount of parameters 
-as the G-SympNets (see \cref{table_low_dim_arch}). So the, in general, good performance of the 
-LA-SympNets in the previous case $\mathcal{D}_{\text{swing}}$ does not transfer to this case with
-$\mathcal{D}_{\text{swing+rotate}}$. For $\mathcal{D}_{\text{swing+rotate}}$, the SympNets
-do not work well with the SympNets, whereas the FNN with ELU activation still achieves 
+as the G-SympNets (see \cref{table_low_dim_arch}). So the in general good performance of the 
+LA-SympNets in the previous case with training data from $\mathcal{D}_{\text{swing}}$ 
+does not transfer to this case with training data from $\mathcal{D}_{\text{swing+rotate}}$.
+For training data from $\mathcal{D}_{\text{swing}}$, the SympNets
+do not work well with the ELU activation function, whereas the FNN with ELU activation still achieves 
 a comparatively low loss for the slower learning rate $\gamma = 0.01$ (see the right plot in the
 first row of \cref{fig_pend_exp2_loss}).
 
@@ -2322,14 +2322,23 @@ Furthermore, normalization shows more robustness with respect to faster learning
 (see second row in \cref{fig_pend_exp2_loss}). The G-SympNet without normalization fails to converge
 for the faster learning rate $\gamma = 1.0$, in contrast to the N1-G-SympNet and N2-G-SympNet.
 
-The generalized coordinate $q$ is an angular coordinate for the simple pendulum. This is the reason why 
-$\lim_{t \to \infty} q(t) = \infty$
+The generalized coordinate $q$ is an angular coordinate for the simple pendulum. 
+This is the reason why $\lim_{t \to \infty} q(t) = \infty$
 in the rotating case. This circumstance makes learning the neural network hard, especially if the
-goal is to have a good prediction over a long time. 
-Furthermore, intuitively, the large values of $q$ could mask the swinging case, where $\abs{q} \leq \pi/2$.
-This might be an explanation for why normalization does not lead to a 
-similar performance improvement for $\mathcal{D}_{\text{swing+rotate}}$
-as with $\mathcal{D}_{\text{swing}}$. This issue needs further investigation.
+goal is to have a good prediction over a long time.
+The Störmer-Verlet scheme for the Simple Pendulum contains the sine function.
+Consequently, the neural networks have to learn a representation for multiple periods of 
+the sine function, opposed to the swinging case where it suffices to learn the sine function 
+on $[-\pi/2, \pi/2]$. This could be an explanation why the good performance 
+of the LA-SympNets for the swinging case does not transfer to the rotating case, because
+learning a sine function with the structure of LA-SympNets is much more challenging as with the
+structure of the G-SympNets. With G-SympNets, a single gradient layer is able to represent
+the sine function on a compact set (see \citet[Lemma 4]{Jin2020}), whereas with the LA-SympNets 
+the linear layers need to work together with the nonlinear activation layers to do so.
+Furthermore, intuitively, the large values of $q$ in the rotating case could mask the swinging case, 
+where $\abs{q} \leq \pi/2$. This might be an explanation for why normalization does not lead to a 
+similar performance improvement for the swinging plus rotating case,
+as with the swinging-only case. This issue needs further investigation.
 We comment this issue in the Outlook (\cref{sec_outlook}).
 
 For almost all experiments, the first variant of the normalization layers (N1) performs better or equally good
@@ -3007,7 +3016,7 @@ on the time domain in which we are interested.
 The training and test losses for the LARGE-CNN and CG-SympNets for different activation functions
 are shown in \cref{fig_losses_sine_gordon} and \cref{table_losses_sine_gordon}.
 Again, the non-physically-informed naive LARGE-CNN performs worst as expected, 
-because it applies the same kernels on the whole input $(q,p)$. 
+because it applies the same kernels on the whole input vector $(q,p)$. 
 In this experiment, N1 normalization always outperforms N2 normalization by a great margin.
 The N1-CG-SympNet and the CG-SympNet (without normalization) perform nearly the same.
 The best performing architecture is the N1-CG-SympNet
@@ -3015,7 +3024,7 @@ with ELU activation, see \cref{table_losses_sine_gordon}. Actually, N1 normaliza
 only improved the performance for the ELU activation, while it led to a small 
 decrease of performance for the sigmoid and tanh activation.
 
-The extrapolation performance of the two best performing architectures and the LARGE-CNN
+The extrapolation performance of the two best performing SympNet architectures and the LARGE-CNN
 can be seen at \cref{fig_sine_gordon_displacement}. The LARGE-CNN gets unstable after a few time iterations,
 whereas the CG-SympNet and the N1-CG-SympNet still give a reasonable solution at $t=9$.
 
@@ -3258,29 +3267,83 @@ whereas the CG-SympNet and the N1-CG-SympNet still give a reasonable solution at
 \section{R\'esum\'e}
 \subsection{Summary and conclusion}
 
-\todo{normalization improves performance in a lot of cases}
+The main contribution of our work is to transfer the concepts of
+convolution and batch normalization to SympNets, while preserving symplecticity.
+Adding convolution makes SympNets applicaple for high-dimensional Hamiltonian systems,
+which typically arise from semi-discretized partial differential equations. 
 
-\todo{normalization leads to better stability}
+We have successfully reproduced the good performance of the LA-SympNets 
+observed by \citeauthor{Jin2020} for the simple pendulum swinging case.
+Furthermore, we have managed to
+make the G-SympNet competitive with the LA-SympNet for the simple pendulum swinging case
+by proposing a method to add batch normalization to SympNets while preserving symplecticity.
+We have seen that the good performance of the LA-SympNet does not
+transfer to the rotating case of the simple pendulum, at least if no further logic
+is added to prevent the angular coordinate to increase monotonically.
+We have seen that SympNets preserve the total energy in the simple pendulum swinging case and
+offer good long-term predictions compared to models which do not preserve the symplectic
+structure.
 
-\todo{small training data}
+\citeauthor{batchnorm-ioffe15} observed that batch normalization leads to more robustness
+with respect to faster learning rates. We reproduced this observation with our special
+batch normalization variant for SympNets.
+We have empirically noted that embedding physical knowledge into the structure of the model
+(like in our case symplecticity) reduces overfitting.
 
-\todo{preserve total energy}
+We have applied SympNets with convolution to the semi-linear wave
+equation and successfully extrapolated single trajectories of the resulting Hamiltonian ODE.
 
-\todo{better long-time prediction performance, extrapolation}
+We conclude that in our case
+it is a worthwile undertaking to structurally embed a priori knowledge of a system
+into a machine learning model, because it improves prediction performance
+and preserves potentially important properties of the original system, 
+like in our case the preservation of total energy.
 
 \subsection{Outlook}\label{sec_outlook}
 
-\todo{Simple pendulum, rotating case}
+As already noted by \citeauthor{Jin2020}, the unit triangular structure lends itself
+to be used in a recurrent neural network setting. For example, the neural network could 
+form a loop by connecting the last layer of the neural network to the first layer again.
+When unfolding the loop, this can be interpreted as parameter 
+sharing between several consecutive blocks of the neural network. 
+If we interpret a single block as a numerical integrator, this is equivalent to applying
+the same numerical integrator several times, i.e. the problem to predict the flow for
+time $t$ is divided in $t/n$ smaller problems, where $n \in \N$ denotes the number how often
+the loop connection is executed. Thus, this might improve model performance. This
+direction could be explored further and tested empirically.
 
-\todo{Recurrent networks}
+As also \citeauthor{Jin2020} already noted, a unit triangular layer is always invertible, 
+which means that every SympNet is reversible. So storing the intermediate values
+in the forward pass before computing the gradient is actually not necessary. This
+paves the way for memory-efficient implementations of SympNets.
 
-\todo{Convolution: non-equidistant grids, 2D, 3D}
+The performance of the SympNets for the simple pendulum rotating case has not been as good
+as for the swinging case. We have already noted that the angular coordinate $q$
+of the simple pendulum monotonically increases when the pendulum rotates,
+which might explain this observation. A simple fix worth trying might be
+to take the angular coordinate $q$ modulo $2\pi$, or incorporate other appropriate
+coordinate transformations. Another possible approach could be to divide the
+phase space into multiple domains with a different (sub-)neural network
+responsible for each domain, and implement transition maps between the different
+domains. The simple pendulum phase plot is $2\pi$-periodic on the $q$-axis.
+The universal approximation theorems however only apply for compact sets.
+It is an open research topic how to improve the extrapolation performance
+of neural networks for periodic functions \cite{Ziyin2020}.
 
-\todo{ELU}
+We have only worked with one-dimensional convolution so far. It could be investigated
+how to generalize our proposal for two and three dimensions. This would add
+even more application areas, as it would allow to predict the
+flow for two and three dimensional systems in space. Besides, it could be investigated
+how to allow discretizations with non-equidistant grids.
 
-\todo{reversible}
+So far, there only exists universal approximation theorems for SympNets 
+for $r$-finite activation functions.
+Universal approximation theorems for other activation functions, for example
+the continously differentiable ELU activation function, is still an open topic to be explored.
 
-\todo{approximation theorems, non-$r$-finite, periodic}
+We believe that the idea to intrinsically embed a priori information of a system
+into a machine learning model is very promising and should be further explored
+also in other contexts.
 
 %----------------------------------------------------------------------------------------
 %
