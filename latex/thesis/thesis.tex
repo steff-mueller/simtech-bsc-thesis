@@ -262,6 +262,28 @@ In our work, we ...
 
 \subsection{Outline}
 
+In \cref{sec_problem_setup}, we introduce the necessary theory for Hamiltonian systems
+which is required in the following sections. In particular, we give the
+definition of a symplectic map.
+In \cref{sec_architecture_of_sympnets}, after we briefly introduce basic neural network terminology,
+we recapitulate the architecture of SympNets (symplectic networks)
+as proposed by \citeauthor{Jin2020} in \cite{Jin2020}.
+\citeauthor{Jin2020} have also provided universal approximation theorems for SympNets.
+We repeat these statements in \cref{sec_unv_approx_theorem} and briefly discuss 
+reasonable nonlinear activation functions for SympNets.
+In \cref{sec_conv_and_norm_for_sympnets}, we extend SympNets by introducing
+convolution and batch normalization to SympNets,
+while still maintaining their symplectic property.
+In \cref{sec_relation_to_geometric_integrators}, we build a connection 
+between SympNets and two conventional geometric integrators.
+In \cref{sec_numerical_experiments}, we compare the performance of SympNets 
+with and without normalization. In addition, we compare their performance to neural 
+networks which do not intrinsically preserve the symplectic structure. 
+Furthermore, we apply convolutional SympNets to a high-dimensional Hamiltonian system 
+arising from the semi-linear wave equation.
+In \cref{sec_resume}, we summarize our results and give an outlook on possible further 
+topics to be explored.
+
 \subsection{Notation}
 
 The $d$-by-$d$ identity matrix is denoted by $I_d$. If the dimension $d$ can be inferred
@@ -335,7 +357,7 @@ Kronecker delta
 %
 %----------------------------------------------------------------------------------------
 \newpage
-\section{Problem setup}
+\section{Problem setup}\label{sec_problem_setup}
 
 \begin{definition}
 	A matrix $A \in \mathbb{R}^{2d \times 2d}$ is called symplectic if $A^TJA=J$.
@@ -417,7 +439,7 @@ Symplecticity has already been successfully embedded into numerical integrators 
 led to the development of geometric integrators, see for example \citeauthor{hairer2006}
 (\cite{hairer2006}).
 
-\section{Architecture of SympNets}
+\section{Architecture of SympNets}\label{sec_architecture_of_sympnets}
 
 In this section we recapitulate the architecture of SympNets (Symplectic Networks) as
 proposed by \citeauthor{Jin2020} in \cite{Jin2020}. We prove
@@ -826,7 +848,7 @@ In practice, we choose $n \gg d$ for large expressivity.
 Note that activation layers are a subset of gradient layers. We can see this by choosing
 $n=d$, $K=I_d$ and $c=0$.
 
-\section{Univeral approximation theorems}
+\section{Univeral approximation theorems}\label{sec_unv_approx_theorem}
 
 In \cite{Jin2020}, \citeauthor{Jin2020} show approximation theorems for SympNets.
 We repeat the statements here and refer to \cite{Jin2020} for proofs.
@@ -940,7 +962,7 @@ $\int \abs{\frac{\mathrm{d}^r}{\mathrm{d}x^r} \mathrm{ELU}} d\lambda$
 diverges for $r=0$ and $r=1$. Universal approximation theorems for SympNets
 for non-$r$-finite activation functions is an open topic to be explored.
 
-\section{Convolution and Normalization for SympNets}
+\section{Convolution and Normalization for SympNets}\label{sec_conv_and_norm_for_sympnets}
 
 In this section we introduce new extensions to SympNets. In particular, we bring the concept
 of convolution to SympNets and we propose a possibility how to embed normalization into SympNets while
@@ -1596,7 +1618,7 @@ The coefficients $a \in \mathbb{R}^d$ are learnable parameters.
 	\cref{cor_norm_gradient_layers_symp}.
 \end{proof}
 
-\section{Relation to geometric integrators}
+\section{Relation to geometric integrators}\label{sec_relation_to_geometric_integrators}
 
 The symplectic Euler and Störmer-Verlet schemes are two geometric integrators. Geometric integrators
 are numerical integrators for ODE systems, which preserve a geometric property. In our context,
@@ -1726,7 +1748,7 @@ to reproduce both schemes exactly or approximately, provided appropriate layer c
 Symplecticity for the explicit Euler and Störmer-Verlet schemes follows directly 
 from \cref{gradient_corollary} and the fact that the composition of symplectic maps is again symplectic.
 
-\section{Numerical experiments}
+\section{Numerical experiments}\label{sec_numerical_experiments}
 
 In this section, we compare the performance of different SympNet architectures 
 for predicting flows of Hamiltonian systems.
@@ -3264,7 +3286,7 @@ whereas the CG-SympNet and the N1-CG-SympNet still give a reasonable solution at
 %----------------------------------------------------------------------------------------
 \clearpage\newpage\null %empty page
 \newpage
-\section{R\'esum\'e}
+\section{R\'esum\'e}\label{sec_resume}
 \subsection{Summary and conclusion}
 
 The main contribution of our work is to transfer the concepts of
