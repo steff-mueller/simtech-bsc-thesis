@@ -298,7 +298,7 @@ Hamiltonian (ODE) systems as long no dissipative elements are introduced
 of applications, for example rigid body systems, molecular systems in chemistry or
 astronomicial systems \cite{leimkuhler_reich_2005}. Furthermore, high-dimensional
 Hamiltonian ODE systems arise from so-called Hamiltonian PDEs upon discretization
-in space \cite{leimkuhler_reich_2005}. Hamiltonian systems are fully described
+in space \cite{leimkuhler_reich_2005}. Canonical Hamiltonian systems are fully described
 by a so-called Hamiltonian, which can be interpeted as the total energy of the system.
 Poincaré has shown in 1899 that these Hamiltonian
 systems have an exceptional property: The flow map, which operates on the so-called phase space 
@@ -429,6 +429,7 @@ the skew-symmetric matrix $J \in \R^{2d \times 2d}$ as
 		0 & I_d \\
 		-I_d & 0
 	\end{pmatrix}
+	.
 \end{equation*}
 
 For $q,p \in \R^{d}$ and maps $f_{11}, f_{12}, f_{21}, f_{22} : \R^d \to \R^d$,
@@ -443,6 +444,7 @@ we define the block operator as
 		f_{11}(q) + f_{12}(p) \\
 		f_{21}(q) + f_{22}(p)
 	\end{pmatrix} \in \R^{2d}
+	.
 \end{equation*}
 We denote the identity map with $id$.
 
@@ -466,6 +468,7 @@ setup in more detail.
 	is called symplectic if the Jacobian matrix $\jac{\phi}{x}$ is symplectic everywhere, i.e.
 	\begin{equation*}
 		\lb \jac{\phi}{x} \rb^T J \lb \jac{\phi}{x} \rb = J
+		.
 	\end{equation*}
 \end{definition}
 
@@ -474,6 +477,7 @@ setup in more detail.
 	\begin{align*}
 		\dot{y}(t) &= J \grad{H}(y(t)) \quad \text{for } t \in I \subset \mathbb{R} \\
 		y(t_0) &= y_0
+		,
 	\end{align*}
 	where $y: I \subset \mathbb{R} \to \mathbb{R}^{2d},\, t \mapsto y(t) = (q(t),p(t))$ and 
 	$y_0 = (q_0, p_0) \in \mathbb{R}^{2d}$ the initial value at $t_0 \in I$. 
@@ -502,6 +506,7 @@ canonical Hamiltonian system with Hamiltonian $H$ for a fixed time $t$, i.e.
 		q(t; q_0, p_0) \\
 		p(t; q_0, p_0)
 	\end{pmatrix}
+	,
 \end{equation*}
 where $q(t; q_0, p_0)$ and $p(t; q_0, p_0)$ denote the solution of the Hamiltonian system
 at time $t$ for initial values $y_0 = (q_0,p_0) \in \mathbb{R}^{2d}$. 
@@ -563,7 +568,7 @@ In our special case we will always have $n_1 = n_2 = 2d$.
 \begin{definition}
 	(Neural Network)
 	A neural network $\Phi$ is a composition of one or multiple layers with
-	compatible input and ouput dimensions. 
+	compatible input and ouput dimensions:
 	\begin{equation*}
 		\Phi(x;\Theta) = \phi_{n_L} \lb \phi_{n_L-1} \lb \cdots
 		\lb \phi_2(
@@ -600,6 +605,7 @@ an iterative algorithm from the gradient descent family. For example, given
 initial parameters $\Theta_0$, the standard gradient descent algorithm is defined as
 \begin{equation*}
 	\Theta_{i+1} = \Theta_i - \gamma \grad[\Theta]{L(\mathcal{T};\Theta_{i})}
+	.
 \end{equation*}
 Here, $\gamma \in \R$ denotes the learning rate.
 If the training data $\mathcal{T}$ is split into multiple mini-batches 
@@ -609,6 +615,7 @@ is executed with a different mini-batch $\mathcal{B}_i$, i.e.
 	\Theta_{i+1} = \Theta_i - \gamma \grad[\Theta]{L(
 		\mathcal{B}_{((i \textrm{ mod } n_{\text{b}}) + 1)};
 		\Theta_{i})}
+	.
 \end{equation*}
 In this case, the algorithm is called stochastic gradient descent, because it estimates
 the gradient of the whole training data based on smaller mini-batches.
@@ -648,7 +655,7 @@ to be symplectic.
 		= \begin{pmatrix}
 			q \\
 			\layertf(q) + p
-		\end{pmatrix} + b \quad \text{(lower unit triangular layer)}
+		\end{pmatrix} + b. \quad \text{(lower unit triangular layer)}
 	\end{equation*}
 	If we do not explicitly specify the bias parameter $b$, we assume
 	that $b$ is a non-learnable constant with value $b=0$. The layer transform
@@ -697,17 +704,18 @@ unit triangular layer itself forms a residual block:
 	An upper or lower unit triangular layer $\phi_{\text{up}}$ or $\phi_{\text{low}}$
 	is symplectic if and only if the Jacobian of the layer transform
 	$\layertf \in C(\mathbb{R}^d, \R^d)$ 
-	is everywhere symmetric.
+	is symmetric everywhere.
 \end{lemma}
 \begin{proof}
 	We show the result for $\phi_{\text{up}}$ only. 
 	The proof is analogous for $\phi_{\text{low}}$.
-
+	We have that
 	\begin{equation*}
 		\jac{\phi_{\text{up}}}{(q,p)} = \begin{pmatrix}
 			I & \jac{\layertf}{p} \\
 			0 & I
 		\end{pmatrix}
+		.
 	\end{equation*}
 	It follows
 	\begin{align*}
@@ -727,10 +735,11 @@ unit triangular layer itself forms a residual block:
 			0 & I \\
 			-I & \lb \jac{\layertf}{p} \rb ^T-\jac{\layertf}{p}
 		\end{pmatrix} \overset{!}{=} J
+		.
 	\end{align*}
 	Thus, $\phi_{\text{up}}$ is symplectic if and only if
 	$\lb \jac{\layertf}{p} \rb ^T-\jac{\layertf}{p}=0$, 
-	i.e. if and only if the Jacobian $\jac{\layertf}{p}$ is everywhere symmetric.
+	i.e. if and only if the Jacobian $\jac{\layertf}{p}$ is symmetric everywhere.
 \end{proof}
 
 The next corollary is useful to construct symplectic unit triangular layers.
@@ -768,6 +777,7 @@ The linear layers can be expressed with matrix-vector multiplication, for exampl
 		I & S \\
 		0 & I
 	\end{pmatrix} \qpvec + b
+	.
 \end{equation*}
 
 The matrix $S$ and the bias $b$ are learnable parameters.
@@ -781,11 +791,12 @@ is a symmetric matrix by defintion. Alternatively, we can apply \cref{gradient_c
 choosing the potential $V(p) := p^TAp$.
 
 \begin{proof}
-	For $k=1, \dots, d$ we have
+	For $k=1, \dots, d$, we have
 	\begin{align*}
 		\lb \grad{V}(p) \rb_k &= \deldel{p_k} \lb \sum_{i,j=1}^d A_{ij} p_i p_j \rb
 		= \sum_{i,j=1}^d A_{ij} \deldel{p_k}(p_i) p_j + \sum_{i,j=1}^d A_{ij} p_i \deldel{p_k}(p_j) \\
-		&= \sum_{j=1}^d A_{kj} p_j + \sum_{i=1}^d A_{ik} p_i = ((A+A^T)p)_k \\
+		&= \sum_{j=1}^d A_{kj} p_j + \sum_{i=1}^d A_{ik} p_i = ((A+A^T)p)_k
+		.
 	\end{align*}
 	Choose $A=\frac{1}{2}S \implies A+A^T=S$.
 	Thus, symplecticity follows with \cref{gradient_corollary}.
@@ -822,8 +833,10 @@ $\mathcal{L}^{n}_{\up},\, \mathcal{L}^{n}_{\low} : \mathbb{R}^{2d} \to \mathbb{R
 		I && 0 \\
 		S_1 && I
 	\end{pmatrix} + b
+	.
 \end{align*}
 
+The composed layers
 $\mathcal{L}^{n}_{\up}$ and $\mathcal{L}^{n}_{\low}$ are again symplectic because they 
 are a composition of the symplectic maps $\ell_{up}$ and $\ell_{low}$.
 
@@ -895,12 +908,14 @@ The coefficients $a \in \mathbb{R}^d$ are learnable parameters.
 	i.e. $\dd{x} \mathcal{A} = \activation$. We define the potential
 	\begin{equation*}
 		V(p) := \sum_{k=1}^d a_k \mathcal{A}(p_k)
+		.
 	\end{equation*}
 
-	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and for $k=1, \dots d$
+	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and for $k=1, \dots d$ follows
 	\begin{equation*}
 		\lb \grad{V}(p) \rb_i = \deldel{p_i} \lb \sum_{k=1}^d a_k \mathcal{A}(p_k) \rb
 		= a_i \activation(p_i) = \lb \layertf(p) \rb_i
+		.
 	\end{equation*}
 	Symplecticity follows with \cref{gradient_corollary}.
 \end{proof}
@@ -940,13 +955,15 @@ In practice, we choose $n \gg d$ for large expressivity.
 	i.e. $\dd{x} \mathcal{A} = \activation$. We define the potential
 	\begin{equation*}
 		V(p) := \sum_{j=1}^n a_j \mathcal{A}((Kp)_j + c_j)
+		.
 	\end{equation*}
-	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and for $i=1, \dots, d$
+	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and for $i=1, \dots, d$ follows
 	\begin{align*}
 		(\grad{V(p)})_i &= \deldel{p_i} \lb \sum_{j=1}^n a_j \mathcal{A}((Kp)_j + c_j) \rb
 		= \sum_{j=1}^n a_j \activation((Kp)_j + c_j) 
 		\underbrace{\deldel{p_i} \lb (Kp)_j \rb}_{=K_{ji} = K^T_{ij}}
 		= (\layertf(p))_i
+		.
 	\end{align*}
 	With \cref{gradient_corollary} follows that the Gradient layers
 	$\mathcal{G}_{up}$ and $\mathcal{G}_{low}$ are symplectic.
@@ -1103,6 +1120,7 @@ Given two discrete functions $f,g \in \mathbb{R}^\mathbb{Z}$ convolution is defi
 \begin{equation*}
 	*: \mathbb{R}^{\mathbb{Z}} \times \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
 	\quad (f*g)(\tau) = \sum^{\infty}_{a=-\infty} f(a) g(\tau - a)
+	.
 \end{equation*}
 However, most popular neural network libraries actually do not implement real convolution
 in convolution layers. Instead, they implement the so called cross-correlation, but call it convolution. 
@@ -1110,6 +1128,7 @@ Cross-correlation is a flipped convolution and is defined as
 \begin{equation*}
 	\star: \mathbb{R}^{\mathbb{Z}} \times \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
 	\quad (f \star g)(\tau) = \sum^{\infty}_{a=-\infty} f(a) g(\tau + a)
+	.
 \end{equation*}
 Because most popular neural network libraries implement cross correlation and call it convolution,
 we stick to the same convention and use cross-correlation from now on.
@@ -1128,7 +1147,7 @@ via zero-continuation on $\mathbb{Z}$:
 
 Additionially, we define a shift operator $\mathcal{S}_\zeta$, 
 which shifts a discrete function $f \in \mathbb{R}^\mathbb{Z}$ by $\zeta \in \mathbb{Z}$ positions
-in the right direction
+in the right direction:
 \begin{equation*}
 	\mathcal{S}_\zeta : \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
 	\quad \lb \mathcal{S}_\zeta(f) \rb (\tau) := f(\tau - \zeta)
@@ -1143,6 +1162,7 @@ in the right direction
 		\quad \star_{\text{v}}(k,x) := \mathcal{I}_{n_x-n_k+1}^{-1} (
 			\mathcal{S}_{-1}( \mathcal{I}_{n_k}(k)) \star \mathcal{I}_{n_x}(x)
 		)
+		.
 	\end{equation*}
 \end{definition}
 In other words, the valid cross-correlation $\star_{\text{v}}$ evaluates the cross-correlation 
@@ -1157,6 +1177,7 @@ We define a stride operator $\mathcal{D}_s$ for a stride number $s \in \mathbb{N
 \begin{equation*}
 	\mathcal{D}_s : \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
 	\quad (\mathcal{D}_s)(\tau) := f(s \tau)
+	.
 \end{equation*}
 The stride operators skips $s$ entries of $f \in \mathbb{R}^\mathbb{Z}$.
 
@@ -1175,6 +1196,7 @@ The stride operators skips $s$ entries of $f \in \mathbb{R}^\mathbb{Z}$.
 		(
 			\mathcal{S}_{-1}( \mathcal{I}_{n_k}(k)) \star \mathcal{I}_{n_x}(x)
 		)
+		.
 	\end{equation*}
 \end{definition}
 
@@ -1198,6 +1220,7 @@ In order that the composition of padding and cross-correlation keeps the dimensi
 		\text{increased dim.} \\
 		\text{by } c \text{ via padding}
 	}} - \, n_k + 1 = d \iff c = n_k-1
+	.
 \end{equation*}
 For symmetry reasons, we pad the same number of values at the beginning and 
 the end of the input vector $p$. This means that the number of padded values $c$ has to be even,
@@ -1213,6 +1236,7 @@ which both increase the input vector dimension by $2m$.
 	\begin{equation*}
 		c_{\text{pad},m} : \mathbb{R}^d \to \mathbb{R}^{d+2m},
 		\quad c_{\text{pad},m}(p) = c_{\text{pad},m}(p;l,r) := \lb l^T, p^T, r^T \rb^T
+		.
 	\end{equation*}
 \end{definition}
 The constant padding $c_{\text{pad},m}$ is an affine linear map in $p$, because we can write
@@ -1232,6 +1256,7 @@ and $c_{\text{pad},m}(p;0_m,0_m)$ is linear regarding $p$.
 			\underbrace{p_1, p_2 \dots, p_d}_{d \text{ values}}, \,
 			\underbrace{p_d, p_{d-1} \dots, p_{d-m+1}}_{m \text{ values}}
 		)^T
+		.
 	\end{equation*}
 \end{definition}
 The symmetric padding $s_{\text{pad},m}$ is a linear map. We call the operation symmetric padding,
@@ -1241,6 +1266,7 @@ of the vector.
 Given an odd kernel $k \in \mathbb{R}^{2m+1}$, we set
 \begin{equation*}
 	\hat{k} = \hat{k}(k) := \mathcal{S}_{-m-1}(\mathcal{I}_{2m+1}(k))
+	.
 \end{equation*}
 Then $\hat{k}(-m) = k_1, \, \dots,\, \hat{k}(m) = k_{2m+1}$ and
 $\hat{k}(\tau)=0$ for $\abs{\tau} > m$. With $\hat{k}$, we can express the valid cross-correlation as
@@ -1248,6 +1274,7 @@ $\hat{k}(\tau)=0$ for $\abs{\tau} > m$. With $\hat{k}$, we can express the valid
 	\star_{\text{v}}(k,x) = \mathcal{I}_{n_x-2m}^{-1} (
 		\mathcal{S}_{m}(\hat{k}) \star \mathcal{I}_{n_x}(x)
 	)
+	,
 \end{equation*}
 because
 \begin{equation*}
@@ -1255,6 +1282,7 @@ because
 	= \mathcal{S}_{m}(\mathcal{S}_{-m-1}(\mathcal{I}_{2m+1}(k)))
 	= \mathcal{S}_{m+(-m-1)}(\mathcal{I}_{2m+1}(k))
 	= \mathcal{S}_{-1}(\mathcal{I}_{2m+1}(k))
+	.
 \end{equation*}
 
 \begin{definition}
@@ -1291,6 +1319,7 @@ we can write the layer transform as
 	\mathcal{I}_{d}^{-1} (
 		\mathcal{S}_{m}(\hat{k}) \star \hat{\chi}_{\text{pad},m}(p)
 	)
+	.
 \end{equation}
 
 \begin{lemma}\label{jac_linear_map}
@@ -1329,9 +1358,10 @@ $\jac{f}{x} \big|_{x=v} = \jac{f}{x}$.
 	\begin{equation}\label{eq_bilinear_proof_conv}
 		b : \mathbb{R}^d \times \mathbb{R}^d \to \mathbb{R},
 		\quad b(v,w) := \ip{v}{\lb \jac{\layertf}{p} \rb w}
+		.
 	\end{equation}
 	To show symmetry of the Jacobian, we show that 
-	$b(e_i, e_j) = b(e_j, e_i)$ for all $i,j=1,\dots,d$.
+	$b(e_i, e_j) = b(e_j, e_i)$ for all $i,j=1,\dots,d$:
 	\begin{align*}
 		b(e_i, e_j) &= \ip{e_i}{\lb \jac{\layertf}{p} \rb e_j}
 		= \ip{e_i}{\activation_{\mathcal{C}}(e_j)} \quad \text{(\cref{jac_linear_map})} \\
@@ -1363,6 +1393,7 @@ $\jac{f}{x} \big|_{x=v} = \jac{f}{x}$.
 	\begin{equation*}
 		\hat{s}_{\text{pad},m}(e_j)(\tau + a) = 
 		\delta_{(\tau + a) (m-j+1)} + \delta_{(\tau + a) (j+m)} + \delta_{(\tau + a) (2d+m-j+1)}
+		.
 	\end{equation*}
 	Consequently, for $\chi_{\text{pad},m} = s_{\text{pad},m}$ and $i,j=1, \dots, d$, 
 	the bilinear form \cref{eq_bilinear_proof_conv} becomes
@@ -1375,6 +1406,7 @@ $\jac{f}{x} \big|_{x=v} = \jac{f}{x}$.
 		} \\
 		&= \hat{k}((m-j+1-i)-m) + \hat{k}((j+m-i)-m) + \hat{k}((2d+m-j+1-i)-m) \\
 		&= \hat{k}(1-j-i) + \hat{k}(j-i) + \hat{k}(1+2d-j-i)
+		.
 	\end{align*}
 	The kernel $k$ is symmetric, thus $\hat{k}(j-i) = \hat{k}(i-j) \implies b(e_i, e_j) = b(e_j,e_i)$.
 \end{proof}
@@ -1386,6 +1418,7 @@ $\{ k \in \mathbb{R}^{2m+1} : k \text{ is a symmetric kernel} \}$.
 The symmetric kernel $k$ is then parametrized by the coefficients $\beta \in \mathbb{R}^m$ via
 \begin{equation*}
 	k = (b_1, b_2, \dots, b_m) \beta = \beta_1 b_1 + \beta_2 b_2 + \dots + \beta_m b_m
+	.
 \end{equation*}
 
 One choice is the canonical basis with basis vectors $b_1, \dots, b_m \in \mathbb{R}^{2m+1}$ given by
@@ -1397,7 +1430,7 @@ One choice is the canonical basis with basis vectors $b_1, \dots, b_m \in \mathb
 	\quad (j=-m, \dots, m)
 \end{equation*}
 
-Another possible basis choice inspired by finite differences is
+Another possible basis choice inspired by finite differences is:
 \begin{align*}
 	b_1^{FD} = (0, \dots, 0,& 1,0, \dots, 0)^T \in \mathbb{R}^{2m+1},\\
 	b_2^{FD} = (0, \dots, 0, 1,-&2,1, 0, \dots, 0)^T \in \mathbb{R}^{2m+1},\\
@@ -1414,7 +1447,7 @@ originate from Pascal's triangle.
 	\quad (j=-m, \dots, m)
 \end{equation*}
 
-The symmetry of the kernel basis vectors $b_i^{FD}$ follows with the definition of the binomial coefficient.
+The symmetry of the kernel basis vectors $b_i^{FD}$ follows with the definition of the binomial coefficient:
 \begin{align*}
 	\binom{2(i-1)}{j+i-1} &= \frac{2(i-1)!}{(j+i-1)!(2(i-1)-(j+i-1))!} \\
 	&= \frac{2(i-1)!}{(j+i-1)!(i-j-1)!}
@@ -1433,7 +1466,8 @@ and for $i=1, \dots, m$ and $j= 0, \dots, m$
 		(-1)^{j} \binom{2(i-1)}{j+i-1} : \abs{j} < i \\
 		0 : else
 	\end{dcases} \\
-	&= \hat{k}(b_i^{FD})(j) 
+	&= \hat{k}(b_i^{FD})(j)
+	.
 \end{align*}
 So $\{ b_i^{FD} \}_{i=1}^m$ is a valid basis of
 the space $\{ k \in \mathbb{R}^{2m+1} : k \text{ is a symmetric kernel} \}$.
@@ -1462,12 +1496,10 @@ valid cross-correlation. In this case, transposed convolution actually refers to
 transposed valid cross-correlation.
 
 For large $d \in \mathbb{N}$, it can make sense to use convolution inside Gradient layers 
-instead of a full matrix $K$. Let us repeat the layer transfrom $\layertf$ for Gradient layers.
-
+instead of a full matrix $K$. Let us repeat the layer transfrom $\layertf$ for Gradient layers:
 \begin{equation*}
 	\layertf(p) = K^T \bigg( a_j \activation \lb (Kp)_j + c_j \rb \bigg)_{j=1}^n
 \end{equation*}
-
 A gradient layer with width $n \in \mathbb{N}$ can be implemented by 
 using valid cross-correlation (with stride) for $K^T \in \mathbb{R}^{d \times n}$ and the
 corresponding transposed valid cross-correlation (with stride) for $K \in \mathbb{R}^{n \times d}$.
@@ -1525,6 +1557,7 @@ with size $n_{\mathcal{B}}$, we define the batch normalization transformation as
 	\eta_{\gamma, \beta}(x) 
 	:= \lb \frac{\gamma_j}{(\sigma^2_\mathcal{B})_j + \epsilon} 
 	\lb x_j - \lb \mu_\mathcal{B} \rb_j \rb + \beta_j \rb_{j=1}^n
+	.
 \end{equation*}
 where $n$ is the input dimension of the input $x \in \mathbb{R}^n$ and $\gamma, \beta \in \mathbb{R}^{n}$ 
 are learnable parameters.
@@ -1537,7 +1570,7 @@ The learnable parameters $\gamma, \beta \in \mathbb{R}^{n}$ allow the neural net
 the normalization during training if necessary. The batch normalization transform is able to 
 represent the identity transform by setting appropriate $\gamma, \beta$.
 
-The mean $\mu_\mathcal{B} \in \R^n$ and variance $\sigma^2_\mathcal{B} \in \R^n$ are estimated by
+The mean $\mu_\mathcal{B} \in \R^n$ and variance $\sigma^2_\mathcal{B} \in \R^n$ are estimated by:
 \begin{align*}
 	\mu_\mathcal{B} &= \frac{1}{n_{\mathcal{B}}} \sum_{i=1}^{n_{\mathcal{B}}} x_i \\
 	\sigma^2_\mathcal{B} &= \frac{1}{n_{\mathcal{B}}} 
@@ -1634,8 +1667,9 @@ variant 2 or is equally good as variant 2 in almost all cases.
 	\begin{equation*}
 		V(p) := \sum_{j=1}^n \alpha_j a_j \mathcal{A}(\overline{p}_j)
 		\quad \text{with } \overline{p} = \eta_{\gamma, \beta} \lb Kp + c \rb \in \R^n
+		.
 	\end{equation*}
-	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and for $i=1, \dots, d$
+	Then $V \in C^2(\mathbb{R}^d, \mathbb{R})$ and for $i=1, \dots, d$ follows
 	\begin{align*}
 		(\grad{V(p)})_i &= \deldel{p_i} \lb \sum_{j=1}^n \alpha_j a_j \mathcal{A}(\hat{p}_j) \rb
 		= \sum_{j=1}^n \alpha_j a_j \activation(\overline{p}_j) \deldel{p_i} \overline{p}_j
@@ -1646,10 +1680,11 @@ variant 2 or is equally good as variant 2 in almost all cases.
 		\grad{V(p)}
 		&= K^T \bigg( \alpha_j a_j \frac{\gamma_j}{(\sigma^2_\mathcal{B})_j + \epsilon}
 		\activation \lb \overline{p}_j \rb \bigg)_{j=1}^n
+		.
 	\end{align*}
-	If we choose $\alpha_j = 1$, follows $\grad{V(p)} = \layertf(p)$ for variant 2.
+	If we choose $\alpha_j = 1$, it follows $\grad{V(p)} = \layertf(p)$ for variant 2.
 	If we choose $\alpha_j = \frac{(\sigma^2_\mathcal{B})_j + \epsilon}{\gamma_j}$,
-	follows $\grad{V(p)} = \layertf(p)$ for variant 1.
+	it follows $\grad{V(p)} = \layertf(p)$ for variant 1.
 	With \cref{gradient_corollary} follows that both normalized Gradient layer variants
 	$\mathcal{G}_{up}^\eta$ and $\mathcal{G}_{low}^\eta$ are symplectic.
 \end{proof}
@@ -1670,6 +1705,7 @@ layers then can be written as
 	\eta_{\gamma, \beta} \lb \underbrace{\star_{\text{v}}^T(k,p) + c}_{:= \tilde{p}} \rb
 	\text{, }\, c = \star_{\text{v}}^T(\tilde{c},1_d) 
 	\text{ and } a = \star_{\text{v}}^T(\tilde{a},1_d)
+	.
 \end{equation*}
 The variant 2 follows analogously by inserting the factor 
 $\frac{\gamma_j}{(\sigma^2_\mathcal{B})_j + \epsilon}$ at the respective place.
@@ -1755,7 +1791,7 @@ this geometric property is symplecticity. Precisely, if we denote the numerical 
 $\phi^{\text{h}}_{t,H} : \mathbb{R}^{2d} \to \mathbb{R}^{2d}$, the map $\phi^{\text{h}}_{t,H}$ is
 symplectic.
 
-The two variants of the symplectic Euler scheme are given by
+The two variants of the symplectic Euler scheme are given by:
 \begin{equation*}
 	\begin{split}
 			p_{n+1} &= p_n - h \grad[q]{H} (p_{n+1}, q_n) \\
@@ -1779,6 +1815,7 @@ and the $q$-staggered variant of the Störmer-Verlet scheme is given by
 	q_{n+1/2} &= q_n + \frac{h}{2} \grad[p]{H}(p_n, q_{n+1/2}) \\[7pt]
 	p_{n+1} &= q_n - \frac{h}{2} \lb \grad[q]{H}(p_n, q_{n+1/2}) + \grad[q]{H}(p_{n+1}, q_{n+1/2}) \rb \\[7pt]
 	q_{n+1} &= q_{n+1/2} + \frac{h}{2} \grad[p]{H}(p_{n+1}, q_{n+1/2})
+	.
 \end{align*}
 We refer to \citet[p.~189 and p.~190]{hairer2006} for details.
 
@@ -1821,6 +1858,7 @@ and the right variant of the symplectic Euler scheme as
 		q_{n} \\
 		p_{n}
 	\end{pmatrix}
+	.
 \end{equation*}
 
 Similarly, the $p$-staggered Störmer-Verlet scheme can be expressed as
@@ -1868,6 +1906,7 @@ and the $q$-staggered Störmer-Verlet scheme as
 		q_{n} \\
 		p_{n}
 	\end{pmatrix}
+	.
 \end{equation*}
 
 To conclude, the explicit Euler and Störmer-Verlet schemes can be expressed with
@@ -2007,6 +2046,7 @@ from phase space samples uniformly sampled from a compact set $\mathcal{D} \subs
 For $q,p \in \R$, the Hamiltonian for the Harmonic Oscillator is given by
 \begin{equation*}
 	H(q,p) = \frac{p^2}{2m} + \frac{1}{2} kq^2
+	.
 \end{equation*}
 For the experiment, we choose $m=1$ and $k=1$.
 
@@ -2053,6 +2093,7 @@ The learning rate is set to $\gamma = 0.01$.}\label{fig_harm_osc_loss}
 For $q,p \in \R$, the Hamiltonian for the Simple Pendulum is given by
 \begin{equation*}
 	H(q,p) = \frac{p^2}{2ml^2} + mgl (1-\cos(q))
+	.
 \end{equation*}
 For the experiment, we choose $m=1, g=1$ and $l=1$. The flow of the Simple Pendulum is nonlinear.
 Therefore, the flow cannot be represented by linear models, which makes the Simple Pendulum
@@ -2891,6 +2932,7 @@ with Hamiltonian
 	+ \frac{c^2 (q_i - q_{i-1})^2}{4 \Delta x^2} + G(q_i)
 	\rb
 	\quad (q,p \in \R^n)
+	,
 \end{equation*}
 where $G'(u) = \int_0^u g(v) dv$, $q_0 := u_{\text{left}}$ and $q_{n+1} := u_{\text{right}}$.
 The generalized coordinates $q_i(t)$ then refer to $u(t,x_i)$ and 
