@@ -454,6 +454,8 @@ We denote the identity map with $id$.
 %----------------------------------------------------------------------------------------
 \newpage
 \section{Problem setup}\label{sec_problem_setup}
+Let us introduce the basic theory for Hamiltonian systems and describe the problem
+setup in more detail.
 
 \begin{definition}
 	A matrix $A \in \mathbb{R}^{2d \times 2d}$ is called symplectic if $A^TJA=J$.
@@ -748,6 +750,9 @@ The next corollary is useful to construct symplectic unit triangular layers.
 \end{proof}
 
 \subsection{Linear layers}
+In this section, we introduce symplectic linear layers. These linear layers can be interpreted 
+as the symplectic analogon to the fully-connected linear layers used in a fully-connected
+neural network (FNN).
 
 \begin{definition}\label{def_linear_layer}
 	(Linear layers)
@@ -864,6 +869,11 @@ with $S := S_1 + S_2$ and $b := \begin{pmatrix}
 + b_2$.
 
 \subsection{Activation layers}
+In this section, we introduce the symplectic analogon
+to activation layers in fully-connected neural networks.
+In contrast to the linear layers introduced in the previous section,
+the activation layers are nonlinear as long the activation
+function $\activation : \R \to \R$ is nonlinear.
 
 \begin{definition}
 	(Activation layers)
@@ -903,7 +913,8 @@ of a gradient layer can be compared to two fully-connected linear layers with a
 nonlinear activation in-between. The name "gradient layer" is
 motivated by the fact that the layer transform $\layertf$ can approximate,
 under certain conditions, an arbitrary $\grad{V}$ for $V \in C^1(\R^d)$, 
-see \citet[Lemma 4]{Jin2020}. 
+see \citet[Lemma 4]{Jin2020}. The gradient layers are, among others, inspired
+by the symmetric layer in \citet{Ruthotto2020}.
 
 \begin{definition}
 	(Gradient layers)
@@ -1076,9 +1087,14 @@ maintaining symplecticity.
 
 \subsection{Introduction to Convolution}
 
-\todo{Motivate convolution layers (weight sharing, sparse-connectivity)}
+Convolution in neural networks has been successfully used in a variety of 
+applications, because it enables parameter sharing and leads to 
+sparse-connectivity compared to for example a fully-connected layer \cite{Goodfellow2016}.
+Basically, in convolutional neural networks, matrix multiplication is 
+replaced by convolution, which also is a linear operation.
 
-We introduce convolution in a rather abstract way in order to simplify the following proofs.
+We introduce convolution in a rather abstract way in order to simplify the following proofs
+for symplecticity.
 General convolution is defined on infinite-dimensional function spaces.
 Neural networks implement a finite-dimensional version, as the operation has to be
 computable.
@@ -1382,7 +1398,6 @@ One choice is the canonical basis with basis vectors $b_1, \dots, b_m \in \mathb
 \end{equation*}
 
 Another possible basis choice inspired by finite differences is
-\todo{Cite paper with similar idea}
 \begin{align*}
 	b_1^{FD} = (0, \dots, 0,& 1,0, \dots, 0)^T \in \mathbb{R}^{2m+1},\\
 	b_2^{FD} = (0, \dots, 0, 1,-&2,1, 0, \dots, 0)^T \in \mathbb{R}^{2m+1},\\
@@ -1423,12 +1438,19 @@ and for $i=1, \dots, m$ and $j= 0, \dots, m$
 So $\{ b_i^{FD} \}_{i=1}^m$ is a valid basis of
 the space $\{ k \in \mathbb{R}^{2m+1} : k \text{ is a symmetric kernel} \}$.
 
+\citet{Ruthotto2020} discuss similar parametrizations for
+convolution kernels, albeit in a more general PDE context. They
+suggest for example to parametrize the kernel by taking a linear combination
+of basis kernels refering to reaction, convection and diffusion terms.
 In our numerical experiments, it turns out that
 parametrization plays an important role how well a neural network learns.
 
 \subsection{Convolution Gradient Layers}\label{sec_conv_gradient_layer}
 
 In this section, we propose convolution for gradient layers.
+\citet{Ruthotto2020} discuss convolution for a similar residual layer in a more 
+general PDE context.
+
 For a fixed kernel $k$, valid cross-correlation is a linear map regarding the second argument. 
 Therefore there exists a representation matrix $A_{k}$ with 
 $\star_{\text{v}}(k,p) = A_{k}p$. Transposed valid cross-correlation 
@@ -1484,17 +1506,17 @@ To summarize, the convolution gradient layers then can be defined as:
 The convolution gradient layers are symplectic by construction,
 because they are a special parametrization of gradient layers.
 
-\todo{Cite similar idea}
-
 \subsection{Normalization}
 
 Batch normalization is a standard method to accelerate training initially proposed by
-\citeauthor{batchnorm-ioffe15} in \cite{batchnorm-ioffe15}. 
+\citeauthor{batchnorm-ioffe15} in \cite{batchnorm-ioffe15}.
+One motivation for batch normalization comes from that the sigmoid activation function saturates 
+for large absolute values, which in turn results in vanishing gradients. The motivation of batch
+normalization then is to prevent getting into the saturating regime of the sigmoid function
+by normalizing the input. In a more general remark, \citet{Santurkar2018} argue that
+batch normalization smooths the optimization landscape.
 We introduce a possibility to incorporate batch normalization
-into activation and gradient layers while maintaining symplecticity.
-
-\todo{Sigmoid activation function saturates for large values. Vanishing gradient.
-Therefore normalize input before applying activation function.}
+into activation and gradient layers while maintaining their symplecticity.
 
 Given a mini-batch input $\mathcal{B} = \{  x_1, x_2, \dots, x_{n_{\mathcal{B}}} \} \subset \mathbb{R}^{n}$ 
 with size $n_{\mathcal{B}}$, we define the batch normalization transformation as
@@ -3485,11 +3507,17 @@ also in other contexts.
 \addtocontents{toc}{\protect\setcounter{tocdepth}{1}}
 \section{Implementation}
 
-\todo{PyTorch, Python, Docker, Tensorflow, git, GitLab}
-
-\todo{Visual Studio Code, SSH}
-
-\todo{reference ReadMe in code}
+The symplectic neural network has been implemented in Python via the PyTorch neural network
+library \cite{PyTorch2019}. The PyTorch Tensorboard extension has been used to get 
+live monitoring of the neural networks during training and for experiment tracking 
+and comparison (\url{https://pytorch.org/docs/stable/tensorboard.html}). 
+Docker containers have been used for a reproducible
+development and execution environment. The source code has been managed with Git
+version control and hosted in GitLab. The Visual Studio Code Remote SSH extension
+has been used for comfortable editing of source code files on
+a remote cluster from the local development machine
+(\url{https://code.visualstudio.com/docs/remote/ssh}). We refer to the supplemented
+source code for instructions how to run the experiments.
 
 \newpage~\newpage
 \section{Declaration of authorship}
