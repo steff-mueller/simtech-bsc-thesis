@@ -230,7 +230,7 @@ We empirically verify that SympNets with batch normalization are more robust
 with respect to faster learning rates.
 With convolution,
 we make SympNets suitable for high-dimensional Hamiltonian ODE systems arising from
-semi-discretization in space of Hamiltonian PDEs. In particular, we successfully 
+semi-discretization of Hamiltonian PDEs. In particular, we successfully 
 extrapolate trajectories of the the semi-linear wave equation with SympNets in our 
 numerical experiments. We show how SympNets relate to two conventional geometric 
 integrators commonly used for time integration of Hamiltonian systems.
@@ -245,7 +245,7 @@ integrators commonly used for time integration of Hamiltonian systems.
 %----------------------------------------------------------------------------------------
 \section*{Acknowledgements}
 I want to thank Patrick Buchfink for reviewing this thesis and for the numerous
-fruitful and enjoyable - due to the COVID-19 pandemic - online discussions.
+fruitful and enjoyable discussions.
 \clearpage
 \newpage\thispagestyle{plain}\null
 \newpage\thispagestyle{plain}
@@ -304,7 +304,7 @@ Poincaré has shown in 1899 that these Hamiltonian
 systems have an exceptional property: The flow map, which operates on the so-called phase space 
 and which advances the state of a Hamiltonian system by a certain time $t$, is symplectic. 
 Informally, symplecticity is a stronger occurence of volume and orientation preservation
-\cite{leimkuhler_reich_2005}. This property of the flow map led to the development of 
+\cite{leimkuhler_reich_2005}. This exceptional property of the flow map led to the development of 
 so-called geometric numerical integrators, which are symplectic themselves. It turns out 
 that these geometric integrators offer much better solutions over long time than their
 non-symplectic counterparts \cite{hairer2006}. We want to learn such a flow map with 
@@ -331,7 +331,7 @@ network during training and prediction, making training and
 prediction more efficient. Furthermore, the networks proposed by \citeauthor{Jin2020}
 only need examples from phase space instead of time derivatives for the training data.
 
-In this thesis, we extend the SympNets proposed by \citeauthor{Jin2020} by introducing
+In this thesis, we extend the SympNets by introducing
 the concepts of batch normalization and convolution to SympNets,
 while maintaining their symplectic property. We achieve to
 improve the baseline performance of SympNets by proposing a symplectic
@@ -368,22 +368,62 @@ topics to be explored.
 
 \subsection{Notation}
 
-The $d$-by-$d$ identity matrix is denoted by $I_d$. If the dimension $d$ can be inferred
-from context we may just write $I$.
-
-$\onevec{n} \in \R^n$ denotes the $n$-dimensional $1$-vector.
+Given some entries $v_1, \dots, v_n \in \R$, we construct a vector $v \in \R^n$ with
+\begin{equation*}
+	v = \begin{pmatrix}
+		v_i
+	\end{pmatrix}_{i=1}^n
+	.
+\end{equation*}
+We denote the $i$-th entry of a vector $v \in \R^n$ with $v_i$ or $(v)_i$.
+We write a matrix $A \in \R^{n \times k}$ consisting of the column vectors 
+$v_1, \dots, v_k \in \R^n$ as $A = (v_1, \dots, v_k)$.
+Given some matrices $A,B,C,D \in \R^{n_1 \times n_2}$, we write
+\begin{equation*}
+	\begin{pmatrix}
+		A & B \\
+		C & D
+	\end{pmatrix} \in \R^{2n_1 \times 2n_2}
+\end{equation*}
+for the matrix consisting of the blocks $A,B,C$ and $D$.
+The $n$-by-$n$ identity matrix is denoted by $I_n \in \R^{n \times n}$. 
+If the dimension $n$ can be inferred from context we may just write $I$.
+We denote the $n$-dimensional $1$-vector by $\onevec{n} \in \R^n$.
 
 We denote the $k$-th partial derivative of a function $f: \mathbb{R}^n \to \mathbb{R},
-x \mapsto f(x)$ with $\deldel{x_k} f(x)$.
+x \mapsto f(x)$ with $\deldel{x_k} f(x)$, $k=1, \dots, n$.
 
-If $f: \mathbb{R}^{n_1} \to \mathbb{R}^{n_2}$ is a multi-dimensional function
+Given a multi-dimensional function $f: \mathbb{R}^{n_1} \to \mathbb{R}^{n_2}$,
+we denote Jacobian with
+\begin{equation*}
+	\jac{f}{x} \in \R^{n_2 \times n_1}
+	.
+\end{equation*}
+If we want to emphasize that the Jacobian is evaluated at $v \in \R^{n_1}$, we write
+\begin{equation*}
+	\jac{f}{x} \bigg|_{x = v} \in \R^{n_2 \times n_1}
+	.
+\end{equation*}
 
-\todo{"partial derivative" of a vector, Jacobian matrices}
+For a scalar-valued function $f : \R^n \to \R$, we denote the gradient with
+$\grad{f} \in \R^n$ and the Hessian matrix with $\nabla^2 f \in \R^{n \times n}$.
 
-\todo{Gradient}
+We write $\N$ for the set of naturnal numbers without zero, and we write $\N_0$ 
+for the set of naturnal numbers with zero. We denote the set of discrete functions from
+$\mathbb{Z}$ to $\R$ as $\R^{\mathbb{Z}} := \{ f : \mathbb{Z} \to \mathbb{R} \}$.
 
-\todo{Describe special meaning of dimension $d$}
+We write the Kronecker delta as
+\begin{equation*}
+	\delta_{ij} := \begin{cases}
+		1 &: i = j \\
+		0 &: \text{else}
+	\end{cases}
+	.
+\end{equation*}
 
+The number $d \in \N$ will have a special meaning in the context of Hamiltonian systems.
+We reserve the usage of $d$ for this purpose throughout this thesis. We define 
+the skew-symmetric matrix $J \in \R^{2d \times 2d}$ as
 \begin{equation*}
 	J := \begin{pmatrix}
 		0 & I_d \\
@@ -391,16 +431,7 @@ If $f: \mathbb{R}^{n_1} \to \mathbb{R}^{n_2}$ is a multi-dimensional function
 	\end{pmatrix}
 \end{equation*}
 
-vector $v \in \R^n$
-\begin{equation*}
-	v = \begin{pmatrix}
-		v_i
-	\end{pmatrix}_{i=1}^n
-\end{equation*}
-
-We denote the $i$-th entry of a vector $v \in \R^n$ with $v_i$ or $(v)_i$.
-
-For $q,p \in \R^{d}$ and maps $f_{11}, f_{12}, f_{21}, f_{22} : \R^d \to \R^d$
+For $q,p \in \R^{d}$ and maps $f_{11}, f_{12}, f_{21}, f_{22} : \R^d \to \R^d$,
 we define the block operator as
 \begin{equation*}
 	\begin{bmatrix}
@@ -413,24 +444,7 @@ we define the block operator as
 		f_{21}(q) + f_{22}(p)
 	\end{pmatrix} \in \R^{2d}
 \end{equation*}
-
-identity map $id$
-
-$\R^{\mathbb{Z}} := \{ f : \mathbb{Z} \to \mathbb{R} \}$
-
-$\N$ without zero, $\N_0$ with zero.
-
-Kronecker delta
-\begin{equation*}
-	\delta_{ij} := \begin{cases}
-		1 &: i = j \\
-		0 &: \text{else}
-	\end{cases}
-\end{equation*}
-
-\begin{equation*}
-	\norm{f}_{C^r(W,\R^n)} := ...
-\end{equation*}
+We denote the identity map with $id$.
 
 
 %----------------------------------------------------------------------------------------
@@ -728,7 +742,7 @@ The next corollary is useful to construct symplectic unit triangular layers.
 \end{corollary}
 \begin{proof}
 	The Jacobian matrix of $\grad{V}$ corresponds to the Hessian matrix of $V$,
-	i.e. $\jac{(\grad{V})}{p} = HV$. \todo{Notation for Hessian}
+	i.e. $\jac{(\grad{V})}{p} =\nabla^2 V$.
 	The Hessian is everywhere symmetric due to $V \in C^2(\R^d)$ (Lemma of Schwarz),
 	thus the result follows with \cref{jacobi_symmetric}.
 \end{proof}
@@ -934,12 +948,22 @@ $n=d$, $K=I_d$ and $c=0$.
 
 In \cite{Jin2020}, \citeauthor{Jin2020} show approximation theorems for SympNets.
 We repeat the statements here and refer to \cite{Jin2020} for proofs.
+We define the norm on $C^r(W, \R^n)$ for a compact set $W \subset \R^m$ as
+\begin{equation*}
+	\norm{f}_{C^r(W,\R^n)} := \sum_{\abs{\alpha} \leq r}
+	\max_{1 \leq i \leq n} \sup_{x \in W}
+	\abs{\frac{\partial^{\abs{\alpha}}}{\partial x_1^{\alpha_1} \cdots x_m^{\alpha_m}} 
+	f_i(x)}
+	,
+\end{equation*}
+where $f = (f_1, \dots, f_n)^T \in C^r(W,\R^n)$ and $\alpha \in \N_0^m$ denotes a multi-index, i.e. 
+$\abs{\alpha} = \alpha_1 + \cdots + \alpha_m$.
 
 \begin{definition}
 	($r$-finite)
 	Let $r \in \N_0$ be given. The function $\sigma$ is r-finite if $\sigma \in C^r(\R)$
-	and $0 < \int \abs{\frac{\mathrm{d}^r}{\mathrm{d}x^r} \sigma} d\lambda < \infty$. $\lambda$ 
-	is the Lebesgue measure on $\R$.
+	and $0 < \int \abs{\frac{\mathrm{d}^r}{\mathrm{d}x^r} \sigma} d\lambda < \infty$. Here,
+	$\lambda$ is the Lebesgue measure on $\R$.
 \end{definition}
 
 \begin{definition}
@@ -1010,7 +1034,7 @@ under certain conditions.
 
 \citeauthor{Jin2020} have already shown in \cite[Lemma 1]{Jin2020} that the
 sigmoid activation function $\sigma(x) = \frac{1}{1+e^{-x}}$
-is $r$-finite for $r \in \N$. This implies that the $\mathrm{tanh}$ activation function,
+is $r$-finite for $r \in \N$. This implies that the tanh activation function,
 $\mathrm{tanh}(x) = \frac{e^x - e^{-x}}{e^x + e^{-x}}$,
 also is $r$-finite, because with $\mathrm{tanh}(x) = 2\sigma(2x) - 1$, it follows for $r \in \N$
 that $\mathrm{tanh} \in C^r(\R)$ and
@@ -1404,6 +1428,7 @@ parametrization plays an important role how well a neural network learns.
 
 \subsection{Convolution Gradient Layers}\label{sec_conv_gradient_layer}
 
+In this section, we propose convolution for gradient layers.
 For a fixed kernel $k$, valid cross-correlation is a linear map regarding the second argument. 
 Therefore there exists a representation matrix $A_{k}$ with 
 $\star_{\text{v}}(k,p) = A_{k}p$. Transposed valid cross-correlation 
@@ -3445,7 +3470,7 @@ for $r$-finite activation functions.
 Universal approximation theorems for other activation functions, for example
 the continously differentiable ELU activation function, is still an open topic to be explored.
 
-We believe that the idea to intrinsically embed a priori information of a system
+We believe that the idea to intrinsically embed a priori knowledge about a system
 into a machine learning model is very promising and should be further explored
 also in other contexts.
 
