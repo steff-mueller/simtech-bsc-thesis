@@ -219,7 +219,21 @@ Numerical Simulation (IANS)}%
 %
 %----------------------------------------------------------------------------------------
 \section*{Abstract}
-...
+We use physically informed neural networks to learn and predict the dynamics 
+of Hamiltonian systems from data.
+We build on previous work on symplectic networks (SympNets) for
+identifying Hamiltonian systems from data. After recapitulating the 
+architecture of SympNets, we extend SympNets by 
+proposing symplectic variants of batch normalization and convolution. We achieve 
+to improve the baseline performance of SympNets via batch normalization. 
+We empirically verify that SympNets with batch normalization are more robust
+with respect to faster learning rates.
+With convolution,
+we make SympNets suitable for high-dimensional Hamiltonian ODE systems arising from
+semi-discretization in space of Hamiltonian PDEs. In particular, we successfully 
+extrapolate trajectories of the the semi-linear wave equation with SympNets in our 
+numerical experiments. We show how SympNets relate to two conventional geometric 
+integrators commonly used for time integration of Hamiltonian systems.
 \clearpage
 \newpage\thispagestyle{plain}\null
 \newpage\thispagestyle{plain}
@@ -258,12 +272,79 @@ Numerical Simulation (IANS)}%
 %----------------------------------------------------------------------------------------
 \section{Introduction}
 
-In our work, we ...
+Nowadays, neural networks are successfully used in a lot of different contexts and fields, 
+for example in object detection, object classification, speech recognizition, robotics,
+chemistry or medicine \cite{Goodfellow2016}.
+However, most of the time the neural networks, or in general the machine learning models, 
+rely on a large amount of training data to achieve the desired performance. Prior structural
+knowledge is not used beneficially. In the recent field of physically informed machine
+learning, the objective is to embed prior knowledge from physics into the machine 
+learning model, to for example reduce the dependency on a large amount of training data, 
+or to improve the quality of the results.
+In the context of simulations, machine learning models can act as surrogate models,
+where the training data is generated from the original simulation. Often, these 
+simulations are computationally expensive to execute and therefore one can only 
+generate a limited amount of training data. However, most of the time there exists 
+prior knowledge about the simulated system, which could be used beneficially.
+
+In this thesis, we focus on predicting the dynamics of a special class of dynamical
+systems, so-called Hamiltonian (ODE) systems, with neural networks. The neural networks
+are fed from example data of the dynamical behavior of the Hamiltonian system,
+possibly from real-word measurements or simulation results.
+Generally, mechanical systems resulting from physical principles are
+Hamiltonian (ODE) systems as long no dissipative elements are introduced 
+\cite{leimkuhler_reich_2005}. Such conservative systems arise in a lot
+of applications, for example rigid body systems, molecular systems in chemistry or
+astronomicial systems \cite{leimkuhler_reich_2005}. Furthermore, high-dimensional
+Hamiltonian ODE systems arise from so-called Hamiltonian PDEs upon discretization
+in space \cite{leimkuhler_reich_2005}. Hamiltonian systems are fully described
+by a so-called Hamiltonian, which can be interpeted as the total energy of the system.
+Poincaré has shown in 1899 that these Hamiltonian
+systems have an exceptional property: The flow map, which operates on the so-called phase space 
+and which advances the state of a Hamiltonian system by a certain time $t$, is symplectic. 
+Informally, symplecticity is a stronger occurence of volume and orientation preservation
+\cite{leimkuhler_reich_2005}. This property of the flow map led to the development of 
+so-called geometric numerical integrators, which are symplectic themselves. It turns out 
+that these geometric integrators offer much better solutions over long time than their
+non-symplectic counterparts \cite{hairer2006}. We want to learn such a flow map with 
+a neural network. Motivated by the good results of the geometric integrators,
+it suggests itself to intrinsically embed the symplectic property into the structure
+of the neural networks.
+
+\citet{Deco1995} proposed a neural network architecture for the related
+problem of volume-preservation already in \citeyear{Deco1995}. 
+There have already been several neural network-based proposals how to identify 
+Hamiltonian systems from data.
+For example, \citet{Greydanus2019} propose a neural network to learn the Hamiltonian
+of the Hamiltonian system. After the Hamiltonian is learned, conventional numerical
+integrators can be used to predict the dynamics of the Hamiltonian system.
+Their approach involves computing the gradient of the neural network during training
+and during prediction with the numerical integrator. In addition, their approach 
+requires time derivatives for the training data.
+Opposed to this indirect method, \citet{Jin2020} instead learn the flow, 
+which advances the state of a Hamiltonian system by a certain time $t$ based on a
+previous (initial) state, directly with a symplectic neural network (SympNet). 
+SympNets are constructed in a special way such that they are guaranteed to be symplectic.
+The approach by \citeauthor{Jin2020} does not require computing the gradient of the neural
+network during training and prediction, making training and 
+prediction more efficient. Furthermore, the networks proposed by \citeauthor{Jin2020}
+only need examples from phase space instead of time derivatives for the training data.
+
+In this thesis, we extend the SympNets proposed by \citeauthor{Jin2020} by introducing
+the concepts of batch normalization and convolution to SympNets,
+while maintaining their symplectic property. We achieve to
+improve the baseline performance of SympNets by proposing a symplectic
+version of batch normalization. 
+The SympNets as proposed by \citeauthor{Jin2020} are not suitable for high-dimensional 
+Hamiltonian, as the parameter space would explode for
+such high-dimensional systems. By bringing the concept of convolution
+to SympNets, we make SympNets applicaple for high-dimensional
+Hamiltonian systems arising from Hamiltonian PDEs.
 
 \subsection{Outline}
 
 In \cref{sec_problem_setup}, we introduce the necessary theory for Hamiltonian systems
-which is required in the following sections. In particular, we give the
+which is required in the following sections. In particular, we give the exact
 definition of a symplectic map.
 In \cref{sec_architecture_of_sympnets}, after we briefly introduce basic neural network terminology,
 we recapitulate the architecture of SympNets (symplectic networks)
@@ -772,7 +853,7 @@ with $S := S_1 + S_2$ and $b := \begin{pmatrix}
 \begin{definition}
 	(Activation layers)
 	Given an activation function $\activation : \R \to \R$ and coefficients $a \in \mathbb{R}^d$, 
-	we call the upper and lower unit triangular layers and layer transform
+	we call the upper and lower unit triangular layers with layer transform
 	\begin{equation*}
 		\layertf(p) = \lb a_i \activation(p_i) \rb_{i=1}^d
 	\end{equation*}
@@ -3003,7 +3084,7 @@ experiment after $500$ epochs.}\label{fig_loss_linear_wave_eq}
 		\end{groupplot}
 	\end{tikzpicture}
 	\caption{Displacement $q(t,x)$ for $t=0$ (initial values) and $t=3,9$ (extrapolation) for the
-	linear wave equation experiment. The C-SympNet with FD basis is indistinguishable
+	linear wave equation. The C-SympNet with FD basis is indistinguishable
 	from the Störmer-Verlet solution.}\label{fig_linear_wave_eq_displacement}
 \end{figure}
 
