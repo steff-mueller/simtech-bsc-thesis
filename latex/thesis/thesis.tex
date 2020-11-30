@@ -219,7 +219,7 @@ Numerical Simulation (IANS)}%
 %
 %----------------------------------------------------------------------------------------
 \section*{Abstract}
-We use physically informed neural networks to learn and predict the dynamics 
+We use physics-based neural networks to learn and predict the dynamics 
 of Hamiltonian systems from data.
 We build on previous work on symplectic networks (SympNets) for
 identifying Hamiltonian systems from data. After recapitulating the 
@@ -278,7 +278,7 @@ for example in object detection, object classification, speech recognizition, ro
 chemistry or medicine \cite{Goodfellow2016}.
 However, most of the time the neural networks, or in general the machine learning models, 
 rely on a large amount of training data to achieve the desired performance. Prior structural
-knowledge is not used beneficially. In the recent field of physically informed machine
+knowledge is not used beneficially. In the recent field of physics-based machine
 learning, the objective is to embed prior knowledge from physics into the machine 
 learning model, to for example reduce the dependency on a large amount of training data, 
 or to improve the quality of the results.
@@ -293,7 +293,7 @@ systems, so-called Hamiltonian (ODE) systems, with neural networks. The neural n
 are fed from example data of the dynamical behavior of the Hamiltonian system,
 possibly from real-word measurements or simulation results.
 Generally, mechanical systems resulting from physical principles are
-Hamiltonian (ODE) systems as long no dissipative elements are introduced 
+Hamiltonian (ODE) systems as long as no dissipative elements are introduced 
 \cite{leimkuhler_reich_2005}. Such conservative systems arise in a lot
 of applications, for example rigid body systems, molecular systems in chemistry or
 astronomicial systems \cite{leimkuhler_reich_2005}. Furthermore, high-dimensional
@@ -365,6 +365,11 @@ Furthermore, we apply convolutional SympNets to a high-dimensional Hamiltonian s
 arising from the semi-linear wave equation.
 In \cref{sec_resume}, we summarize our results and give an outlook on possible further 
 topics to be explored.
+
+In accordance with the examination regulations from 22th July 2016 of the bachelor's program 
+\emph{Simulation Technology} of the University of Stuttgart, 
+\cref{sec_problem_setup,sec_architecture_of_sympnets,sec_unv_approx_theorem,sec_relation_to_geometric_integrators} 
+belong to the propaedeuticum. The remaining sections belong to the bachelor thesis.
 
 \subsection{Notation}
 
@@ -3467,7 +3472,7 @@ which typically arise from semi-discretized partial differential equations.
 
 We have successfully reproduced the good performance of the LA-SympNets 
 observed by \citeauthor{Jin2020} for the simple pendulum swinging case.
-Furthermore, we have managed to
+Furthermore, we managed to
 make the G-SympNet competitive with the LA-SympNet for the simple pendulum swinging case
 by proposing a method to add batch normalization to SympNets while preserving symplecticity.
 We have seen that the good performance of the LA-SympNet does not
@@ -3480,10 +3485,10 @@ structure.
 \citeauthor{batchnorm-ioffe15} observed that batch normalization leads to more robustness
 with respect to faster learning rates. We reproduced this observation with our special
 batch normalization variant for SympNets.
-We have empirically noted that embedding physical knowledge into the structure of the model
+We empirically noted that embedding physical knowledge into the structure of the model
 (like in our case symplecticity) reduces overfitting.
 
-We have applied SympNets with convolution to the semi-linear wave
+We applied SympNets with convolution to the semi-linear wave
 equation and successfully extrapolated single trajectories of the resulting Hamiltonian ODE.
 
 We conclude that in our case
@@ -3549,14 +3554,14 @@ also in other contexts.
 \addtocontents{toc}{\protect\setcounter{tocdepth}{1}}
 \section{Implementation}
 
-The symplectic neural network has been implemented in Python via the PyTorch neural network
-library \cite{PyTorch2019}. The PyTorch Tensorboard extension has been used to get 
+The symplectic neural network was implemented in Python via the PyTorch neural network
+library \cite{PyTorch2019}. We used the PyTorch Tensorboard extension to get 
 live monitoring of the neural networks during training and for experiment tracking 
 and comparison (\url{https://pytorch.org/docs/stable/tensorboard.html}). 
-Docker containers have been used for a reproducible
+We used Docker containers for a reproducible
 development and execution environment. The source code has been managed with Git
-version control and hosted in GitLab. The Visual Studio Code Remote SSH extension
-has been used for comfortable editing of source code files on
+version control and hosted in GitLab. We used the Visual Studio Code Remote SSH extension
+for comfortable editing of source code files on
 a remote cluster from the local development machine
 (\url{https://code.visualstudio.com/docs/remote/ssh}). We refer to the supplemented
 source code for instructions how to run the experiments.
