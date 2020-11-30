@@ -1,4 +1,6 @@
 {
+    "python.pythonPath": "/home/vscode/venv/bin/python", // change to your path
+    "python.linting.pylintPath": "/home/vscode/venv/bin/pylint", // change to your path
     "python.linting.pylintEnabled": true,
     "python.linting.pylintArgs": [
         "--errors-only",
