@@ -14,7 +14,6 @@ from models.integrators.stormer_verlet import SeparableStormerVerletIntegrator
 from nn.models import integrate
 from nn.linearsymplectic import *
 from nn.nonlinearsymplectic import *
-from nn.training_data import scale_training_data
 
 from utils.plot2d import plot_hamiltonian
 from utils.plot_wave import *

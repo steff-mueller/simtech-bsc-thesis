@@ -7,6 +7,10 @@ from collections import OrderedDict
 from abc import ABC, abstractmethod
 
 class SymplecticTriangularUnit(nn.Module, ABC):
+    """
+    Base class for all unit triangular layers.
+    """
+
     def __init__(self, dim, bias=True, reset_params=True):
         assert dim%2 == 0, 'Dimension of phase space must be even.'
         super(SymplecticTriangularUnit, self).__init__()
@@ -48,6 +52,10 @@ class SymplecticTriangularUnit(nn.Module, ABC):
         pass
 
 class UpperLinearSymplectic(SymplecticTriangularUnit):
+    """
+    Upper linear symplectic layer
+    """
+
     def __init__(self, dim, bias=True):
         super(UpperLinearSymplectic, self).__init__(dim, bias, reset_params=False)
         self.S = nn.Parameter(torch.Tensor(int(dim/2), int(dim/2)))
@@ -69,13 +77,22 @@ class UpperLinearSymplectic(SymplecticTriangularUnit):
         return x_bottom
 
 class LowerLinearSymplectic(UpperLinearSymplectic):
-   def _matrix_calc_top(self, x_top, x_bottom):
-       return x_top
-   
-   def _matrix_calc_bottom(self, x_top, x_bottom):
-       return x_top.mm(self.symmetric_matrix) + x_bottom
+    """
+    Lower linear symplectic layer
+    """
+
+    def _matrix_calc_top(self, x_top, x_bottom):
+        return x_top
+    
+    def _matrix_calc_bottom(self, x_top, x_bottom):
+        return x_top.mm(self.symmetric_matrix) + x_bottom
 
 class LinearSymplectic(nn.Sequential):
+    """
+    Composition layer which alternately composes multiple upper
+    and lower linear layers.
+    """
+
     def __init__(self, n, dim, bias=True):
         dict = OrderedDict()
 
@@ -141,6 +158,10 @@ class FDSymmetricKernelBasis(KernelBasis):
         return iter(basis)
 
 class UpperSymplecticConv1d(SymplecticTriangularUnit):
+    """
+    Upper (symplectic) convoution layer
+    """
+
     def __init__(self, dim, 
         kernel_basis=CanonicalSymmetricKernelBasis(3),
         padding_mode: Union[Literal['constant'], Literal['replicate']] = 'constant',
@@ -186,26 +207,12 @@ class UpperSymplecticConv1d(SymplecticTriangularUnit):
         return x_bottom
 
 class LowerSymplecticConv1d(UpperSymplecticConv1d):
+    """
+    Lower (symplectic) convoution layer
+    """
+
     def _matrix_calc_top(self, x_top, x_bottom):
         return x_top
    
     def _matrix_calc_bottom(self, x_top, x_bottom):
         return self.conv1d_(x_top) + x_bottom
-
-class SymplecticScaling(SymplecticTriangularUnit):
-    def __init__(self, dim, a_init):
-        super(SymplecticScaling, self).__init__(dim, bias=False, reset_params=False)
-        self.a_init = a_init
-        self.a = nn.Parameter(torch.Tensor(self.dim_half))
-        self.reset_parameters()
-
-    def reset_parameters(self):
-        super().reset_parameters()
-        with torch.no_grad():
-            self.a.data = self.a_init
-
-    def _matrix_calc_top(self, x_top, x_bottom):
-        return x_top.mul(self.a)
-   
-    def _matrix_calc_bottom(self, x_top, x_bottom):
-        return x_bottom.div(self.a)

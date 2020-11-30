@@ -2,6 +2,14 @@ import torch
 
 # TODO only works for 2D systems for now
 def symplectic_mse_loss(x, y1, retain_graph=False, device=None):
+    """
+    Computes a "symplectic" L2 loss:
+
+    L = 1/N * sum(norm{ Jacobian^T * J * Jacobian - J })
+
+    Only works for 2D Hamiltonian systems.
+    """
+
     N = x.size(0)
 
     grad_outputs = torch.zeros(y1.size())

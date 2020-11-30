@@ -9,6 +9,10 @@ from nn.nonlinearsymplectic import LowerNonlinearSymplectic, UpperNonlinearSympl
 from models.vectors import NumpyPhaseSpace, PhaseSpaceVectorList
 
 def integrate(model, q0, p0, t_start, t_end, dt, device=None, custom_phase_space=None):
+    """
+    Helper method to use neural networks as numerical time integrators.
+    """
+
     dim_half = np.size(q0)
     dim = 2*dim_half
 
@@ -36,38 +40,3 @@ def integrate(model, q0, p0, t_start, t_end, dt, device=None, custom_phase_space
         result.append(t_curr, phase_space.new_vector(q_curr, p_curr))  
 
     return result
-
-class StepIntegrator:
-    def integrate(self, q0, p0, t_start, t_end, dt, device=None, custom_phase_space=None):
-        return integrate(self, q0, p0, t_start, t_end, dt, device, custom_phase_space)
-
-class SympNet(nn.Sequential, StepIntegrator):
-    def __init__(self, layers, sub_layers, dim, activation_fn=torch.sigmoid):
-        modules = []
-
-        # Add upper and lower nonlinear symplectic unit alternately
-        # and a linear symplectic unit in-between
-        for k in range(layers):
-            modules.append(LinearSymplectic(sub_layers, dim))
-            if k % 2 == 0:
-                modules.append(LowerNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn))
-            else:
-                modules.append(UpperNonlinearSymplectic(dim, bias=False, activation_fn=activation_fn))
-        
-        modules.append(LinearSymplectic(sub_layers, dim))
-        super(SympNet, self).__init__(*modules)
-
-class LinearSympNet(LinearSymplectic, StepIntegrator):
-    pass
-
-class ConvLinearSympNet(nn.Sequential, StepIntegrator):
-    def __init__(self, layers, dim):
-        dict = OrderedDict()
-
-        for k in range(layers):
-            if k % 2 == 0:
-                dict['upper_conv1d_{}'.format(k)] = UpperSymplecticConv1d(dim, bias=False)
-            else:
-                dict['lower_conv1d_{}'.format(k)] = LowerSymplecticConv1d(dim, bias=False)
-
-        super(ConvLinearSympNet, self).__init__(dict)

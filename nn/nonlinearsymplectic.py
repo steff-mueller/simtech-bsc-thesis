@@ -4,6 +4,10 @@ from torch import nn
 import math
 
 class UpperNonlinearSymplectic(SymplecticTriangularUnit):
+    """
+    Upper (symplectic) activation layer
+    """
+
     def __init__(self, dim, bias=False, activation_fn = torch.sigmoid, scalar_weight = False):
         super(UpperNonlinearSymplectic, self).__init__(dim, bias, reset_params=False)
         self.activation_fn = activation_fn
@@ -22,6 +26,10 @@ class UpperNonlinearSymplectic(SymplecticTriangularUnit):
         return x_bottom
 
 class LowerNonlinearSymplectic(UpperNonlinearSymplectic):
+    """
+    Lower (symplectic) activation layer
+    """
+
     def _matrix_calc_top(self, x_top, x_bottom):
         return x_top
    
@@ -29,6 +37,10 @@ class LowerNonlinearSymplectic(UpperNonlinearSymplectic):
         return self.a*self.activation_fn(x_top) + x_bottom
 
 class UpperGradientModule(SymplecticTriangularUnit):
+    """
+    Upper gradient layer
+    """
+
     def __init__(self, dim:int, n:int, bias=False, activation_fn = torch.sigmoid):
         super(UpperGradientModule, self).__init__(dim, bias, reset_params=False)
         self.activation_fn = activation_fn
@@ -51,6 +63,10 @@ class UpperGradientModule(SymplecticTriangularUnit):
         return x_bottom
 
 class LowerGradientModule(UpperGradientModule):
+    """
+    Lower gradient layer
+    """
+
     def _matrix_calc_top(self, x_top, x_bottom):
         return x_top
 
@@ -58,6 +74,10 @@ class LowerGradientModule(UpperGradientModule):
         return x_bottom + (self.activation_fn(x_top.mm(self.K.t()) + self.b)*self.a).mm(self.K)
 
 class _NormBase(SymplecticTriangularUnit):
+    """
+    Base class for all layers with built-in batch normalization.
+    """
+
     norm_dim: int
 
     def __init__(self, dim: int, bias: bool, norm_dim: int, reset_params: bool, ignore_factor: bool):
