@@ -331,7 +331,7 @@ network during training and prediction, making training and
 prediction more efficient. Furthermore, the networks proposed by \citeauthor{Jin2020}
 only need examples from phase space instead of time derivatives for the training data.
 
-In this thesis, we extend the SympNets by introducing
+In this thesis, we extend SympNets by introducing
 the concepts of batch normalization and convolution to SympNets,
 while maintaining their symplectic property. We achieve to
 improve the baseline performance of SympNets by proposing a symplectic
@@ -393,13 +393,13 @@ Given some matrices $A,B,C,D \in \R^{n_1 \times n_2}$, we write
 for the matrix consisting of the blocks $A,B,C$ and $D$.
 The $n$-by-$n$ identity matrix is denoted by $I_n \in \R^{n \times n}$. 
 If the dimension $n$ can be inferred from context we may just write $I$.
-We denote the $n$-dimensional $1$-vector by $\onevec{n} \in \R^n$.
+We denote the $n$-dimensional $1$-vector with $\onevec{n} \in \R^n$.
 
 We denote the $k$-th partial derivative of a function $f: \mathbb{R}^n \to \mathbb{R},
 x \mapsto f(x)$ with $\deldel{x_k} f(x)$, $k=1, \dots, n$.
 
 Given a multi-dimensional function $f: \mathbb{R}^{n_1} \to \mathbb{R}^{n_2}$,
-we denote Jacobian with
+$x \mapsto f(x)$, we denote the Jacobian with
 \begin{equation*}
 	\jac{f}{x} \in \R^{n_2 \times n_1}
 	.
@@ -565,7 +565,7 @@ network concepts.
 \end{definition}
 
 A common layer is the so-called (fully-connected) linear layer
-$\phi(x) = Wx +b$ with parameters $W \in \R^{n_2 \times n_1},\, b \in \R^{n_2}$,
+$\phi(x) = Wx +b$ with parameters $W \in \R^{n_2 \times n_1}$ and $b \in \R^{n_2}$,
 i.e. $\theta = (vec(W)^T, b^T)^T \in \R^{n_2 n_1 + n_2}$.
 
 In our special case we will always have $n_1 = n_2 = 2d$.
@@ -628,7 +628,7 @@ The iteration index $i \in \N$ denotes the so-called epoch.
 
 The algorithm for computing the gradient is called backpropagation, which
 is a special case of reverse-mode automatic differentation.
-Basically, the backpropagatin algorithm first computes the loss value 
+Basically, the backpropagation algorithm first computes the loss value 
 in a so-called forward pass
 and keeps the intermediate values in a computational graph.
 Afterwards, in the so-called backward pass, the chain rule is applied programmatically
@@ -664,7 +664,7 @@ to be symplectic.
 	\end{equation*}
 	If we do not explicitly specify the bias parameter $b$, we assume
 	that $b$ is a non-learnable constant with value $b=0$. The layer transform
-	also depends on parameters $\theta \in \R^{n_\theta}$, i.e.
+	also depends on (learnable) parameters $\theta \in \R^{n_\theta}$, i.e.
 	$\layertf(p) = \layertf(p;\theta)$, 
 	but we suppress the dependency on the parameters for shorter notation.
 \end{definition}
@@ -765,7 +765,7 @@ The next corollary is useful to construct symplectic unit triangular layers.
 
 \subsection{Linear layers}
 In this section, we introduce symplectic linear layers. These linear layers can be interpreted 
-as the symplectic analogon to the fully-connected linear layers used in a fully-connected
+as the symplectic version of the fully-connected linear layers used in a fully-connected
 neural network (FNN).
 
 \begin{definition}\label{def_linear_layer}
@@ -850,9 +850,8 @@ can parametrize every symplectic linear map. In other words,
 the set of all possible $\mathcal{L}^{9}_{\up}$ is equal to the set of all symplectic linear maps.
 
 It does not make sense to put two upper linear layers or two lower linear layers after each other,
-because this reduces to a single upper or lower linear layer:
-
-We briefly show the statement for two upper linear layers $\ell_{up,2}$ and $\ell_{up,1}$.
+because this reduces to a single upper or lower linear layer.
+We briefly show this statement for two upper linear layers $\ell_{up,2}$ and $\ell_{up,1}$:
 \begin{align*}
 	\lb \ell_{up,2} \circ \ell_{up,1} \rb \qpvec &=
 	\begin{pmatrix}
@@ -879,6 +878,7 @@ We briefly show the statement for two upper linear layers $\ell_{up,2}$ and $\el
 		I && S \\
 		0 && I
 	\end{pmatrix} \qpvec + b
+	,
 \end{align*}
 with $S := S_1 + S_2$ and $b := \begin{pmatrix}
 	I && S_2 \\
@@ -887,10 +887,10 @@ with $S := S_1 + S_2$ and $b := \begin{pmatrix}
 + b_2$.
 
 \subsection{Activation layers}
-In this section, we introduce the symplectic analogon
-to activation layers in fully-connected neural networks.
+In this section, we introduce symplectic activation layers, which play the same role
+as the activation layers in fully-connected neural networks.
 In contrast to the linear layers introduced in the previous section,
-the activation layers are nonlinear as long the activation
+the activation layers are nonlinear as long as the chosen activation
 function $\activation : \R \to \R$ is nonlinear.
 
 \begin{definition}
@@ -938,9 +938,9 @@ by the symmetric layer in \citet{Ruthotto2020}.
 
 \begin{definition}
 	(Gradient layers)
-	Given width $n \in \N$, $K \in \mathbb{R}^{n \times d}$, $a,c \in \mathbb{R}^n$ and
+	Given a width $n \in \N$, $K \in \mathbb{R}^{n \times d}$, $a,c \in \mathbb{R}^n$ and
 	an activation function $\activation : \R \to \R$,
-	we call the upper and lower triangular layers layer transform
+	we call the upper and lower triangular layers with layer transform
 	\begin{equation*}
 		\layertf(p) = K^T \bigg( a_j \activation \lb (Kp)_j + c_j \rb \bigg)_{j=1}^n
 	\end{equation*}
@@ -952,7 +952,7 @@ The number $n \in \mathbb{N}$ denotes the width of the gradient layer and can be
 In practice, we choose $n \gg d$ for large expressivity.
 
 \begin{corollary}
-	Given an activation function $\sigma \in C^1$ the gradient layers $\mathcal{G}_{up}$
+	Given an activation function $\sigma \in C^1$, the gradient layers $\mathcal{G}_{up}$
 	and $\mathcal{G}_{low}$ are symplectic.
 \end{corollary}
 \begin{proof}
@@ -1004,7 +1004,7 @@ $\abs{\alpha} = \alpha_1 + \cdots + \alpha_m$.
 	Let $m,n \in \N, \, r \in \N_0$ be given, $U \subset \R^m$ an open set,
 	and $S_1 \subset C^r(U,\R^n)$. Then we say $S_2$ is $r$-uniformly dense
 	on compacta in $S_1$ if $S_2 \subset S_1$ and for all $f \in S_1$, compact
-	$W \subset U$ and every $\epsilon > 0$, there exists $g \in S_2$ such that
+	$W \subset U$ and every $\epsilon > 0$, there exists a $g \in S_2$ such that
 	$\norm{f-g}_{C^r(W,\R^n)} < \epsilon$.
 \end{definition}
 
@@ -1069,7 +1069,8 @@ under certain conditions.
 sigmoid activation function $\sigma(x) = \frac{1}{1+e^{-x}}$
 is $r$-finite for $r \in \N$. This implies that the tanh activation function,
 $\mathrm{tanh}(x) = \frac{e^x - e^{-x}}{e^x + e^{-x}}$,
-also is $r$-finite, because with $\mathrm{tanh}(x) = 2\sigma(2x) - 1$, it follows for $r \in \N$
+also is $r$-finite for $r \in \N$, 
+because with $\mathrm{tanh}(x) = 2\sigma(2x) - 1$, it follows for $r \in \N$
 that $\mathrm{tanh} \in C^r(\R)$ and
 \begin{equation*}
 	\frac{\mathrm{d}^r}{\mathrm{d}x^r} \mathrm{tanh}(x) = 
@@ -1105,13 +1106,13 @@ for non-$r$-finite activation functions is an open topic to be explored.
 
 In this section we introduce new extensions to SympNets. In particular, we bring the concept
 of convolution to SympNets and we propose a possibility how to embed normalization into SympNets while
-maintaining symplecticity.
+maintaining their symplecticity.
 
 \subsection{Introduction to Convolution}
 
 Convolution in neural networks has been successfully used in a variety of 
 applications, because it enables parameter sharing and leads to 
-sparse-connectivity compared to for example a fully-connected layer \cite{Goodfellow2016}.
+sparse-connectivity, opposed to a fully-connected layer \cite{Goodfellow2016}.
 Basically, in convolutional neural networks, matrix multiplication is 
 replaced by convolution, which also is a linear operation.
 
@@ -1136,7 +1137,7 @@ Cross-correlation is a flipped convolution and is defined as
 	.
 \end{equation*}
 Because most popular neural network libraries implement cross correlation and call it convolution,
-we stick to the same convention and use cross-correlation from now on.
+we stick to the same convention and only use cross-correlation from now on.
 Still, the choice is arbitrary, as the following statements could be constructed analogously with convolution.
 
 We work with finite-dimensional vectors in neural networks. Therefore, we define a bijective mapping between
@@ -1218,7 +1219,7 @@ before passing it to the valid
 cross-correlation. The padding operation increases the dimension of $p$ in order
 that the composition of padding and cross-correlation keeps the overall dimension.
 Let $c \in \mathbb{N}$ denote the number by which the padding operator increases 
-the input dimension, such that dimension is $n_x = d+c$. 
+the input dimension, such that the input dimension for the cross-correlation is $n_x = d+c$. 
 In order that the composition of padding and cross-correlation keeps the dimension, it must hold
 \begin{equation*}
 	n_x - n_k + 1 = \underbrace{(d+c)}_{\substack{
@@ -1311,7 +1312,8 @@ cross-convolution.
 	\end{equation*}
 	the (symplectic) convolution layers $\mathcal{C}_{up}$ and $\mathcal{C}_{low}$.
 \end{definition}
-The symmetric kernel $k \in \mathbb{R}^{2m+1}$ is a learnable parameter.
+The symmetric kernel $k \in \mathbb{R}^{2m+1}$ is parametrized by $m$ learnable parameters, 
+see \cref{sec_param_symmetric_kernel} later.
 If $\chi_{\text{pad},m} = c_{\text{pad},m}$, the padding values $l,r \in \R^m$ can either
 be learnable parameters or constant. The convolution layers can be used without any bias ($b=0$), a
 constant non-learnable bias ($b \neq 0 =$ const), or with a learnable bias parameter 
@@ -1337,12 +1339,14 @@ we can write the layer transform as
 	\begin{equation*}
 		\lb \jac{f}{x} \bigg|_{x = v} \rb w = f(w) \quad \forall v,w \in \mathbb{R}^d
 	\end{equation*}
+	.
 \end{lemma}
 \begin{proof}
 	$f$ is linear $\implies$ There exists a matrix representation $f(x) = Ax$ with
 	$A \in \mathbb{R}^{d \times d}$ \\
 	$\implies \jac{f}{x} \big|_{x=v} = A = \text{const.} \quad \forall v \in \mathbb{R}^d$
 	$\implies \lb \jac{f}{x} \big|_{x=v} \rb w = Aw = f(w) \quad \forall v,w \in \mathbb{R}^d$
+	.
 \end{proof}
 As the Jacobian matrix for a linear map is constant, we omit the evaluation point, i.e.
 $\jac{f}{x} \big|_{x=v} = \jac{f}{x}$.
@@ -1416,7 +1420,7 @@ $\jac{f}{x} \big|_{x=v} = \jac{f}{x}$.
 	The kernel $k$ is symmetric, thus $\hat{k}(j-i) = \hat{k}(i-j) \implies b(e_i, e_j) = b(e_j,e_i)$.
 \end{proof}
 
-\subsubsection*{Parametrization of a symmetric kernel}
+\subsubsection{Parametrization of a symmetric kernel}\label{sec_param_symmetric_kernel}
 
 Let $\{b_1, b_2, \dots b_m \} \subset \mathbb{R}^{2m+1}$ be a basis of the space 
 $\{ k \in \mathbb{R}^{2m+1} : k \text{ is a symmetric kernel} \}$.
@@ -1433,6 +1437,7 @@ One choice is the canonical basis with basis vectors $b_1, \dots, b_m \in \mathb
 		0 &:else
 	\end{cases} 
 	\quad (j=-m, \dots, m)
+	.
 \end{equation*}
 
 Another possible basis choice inspired by finite differences is:
@@ -1461,7 +1466,7 @@ Thus we have
 \begin{equation*}
 	\binom{2(i-1)}{(-j)+i-1} = \binom{2(i-1)}{j+i-1}
 \end{equation*}
-and for $i=1, \dots, m$ and $j= 0, \dots, m$
+and for $i=1, \dots, m$ and $j= 0, \dots, m$ holds
 \begin{align*}
 	\hat{k}(b_i^{FD})(-j) &= \begin{dcases}
 		(-1)^{-j} \binom{2(i-1)}{(-j)+i-1} : \abs{-j} < i \\
@@ -1509,7 +1514,7 @@ A gradient layer with width $n \in \mathbb{N}$ can be implemented by
 using valid cross-correlation (with stride) for $K^T \in \mathbb{R}^{d \times n}$ and the
 corresponding transposed valid cross-correlation (with stride) for $K \in \mathbb{R}^{n \times d}$.
 The choice of transpose is intentional, because we want to upscale the input $p \in \mathbb{R}^d$ ($n >> d$). 
-Cross-correlation without padding decreases the dimension. Therefore we first apply 
+Cross-correlation (without padding) decreases the dimension. Therefore we first apply 
 transposed cross-correlation on $p$, because the transpose increases the dimension.
 A large kernel size $n_k$ and a large stride number $s$ allow for significant upscaling.
 We emphasize that the kernel $k$ has not to be symmetric in this setting. 
@@ -1547,7 +1552,7 @@ because they are a special parametrization of gradient layers.
 
 Batch normalization is a standard method to accelerate training initially proposed by
 \citeauthor{batchnorm-ioffe15} in \cite{batchnorm-ioffe15}.
-One motivation for batch normalization comes from that the sigmoid activation function saturates 
+One motivation for batch normalization is that the sigmoid activation function saturates 
 for large absolute values, which in turn results in vanishing gradients. The motivation of batch
 normalization then is to prevent getting into the saturating regime of the sigmoid function
 by normalizing the input. In a more general remark, \citet{Santurkar2018} argue that
@@ -1567,7 +1572,7 @@ with size $n_{\mathcal{B}}$, we define the batch normalization transformation as
 where $n$ is the input dimension of the input $x \in \mathbb{R}^n$ and $\gamma, \beta \in \mathbb{R}^{n}$ 
 are learnable parameters.
 The scalar $\epsilon \in \mathbb{R}$ is a small positive value to avoid division by zero.
-$\sigma^2_\mathcal{B} \in \mathbb{R}^{n}$ refers to the mini-batch variance and
+Here, $\sigma^2_\mathcal{B} \in \mathbb{R}^{n}$ refers to the mini-batch variance and
 $\mu_\mathcal{B} \in \mathbb{R}^{n}$ refers to the mini-batch mean. The batch normalization results 
 in zero mean and unit variance of the whole mini-batch input.
 
@@ -1617,7 +1622,7 @@ refers to the collective output of the previous layer.
 
 The batch normalization transform can be implemented in a straightforward way with modern
 neural network libraries, as during training the Jacobian $\jac{\eta_{\gamma, \beta}}{(\gamma, \beta)}$ 
-is obtained via automatic differentiation.
+is obtained via automatic differentiation of the batch normalization transform.
 
 If the training data is small enough, so that splitting the data into multiple mini batches
 is not necessary, the mean and variance are calculated for the whole training data set. This is the
@@ -1629,7 +1634,7 @@ In this section, we incorporate the batch normalization transform into gradient 
 
 \begin{definition}\label{def_norm_gradient_layers_1}
 	(Normalized gradient layers - Variant 1)
-	Given width $n \in \N$, $K \in \mathbb{R}^{n \times d}$, $a,c \in \mathbb{R}^n$ and
+	Given a width $n \in \N$, $K \in \mathbb{R}^{n \times d}$, $a,c \in \mathbb{R}^n$ and
 	an activation function $\activation : \R \to \R$,
 	we call the upper and lower triangular layers with layer transform
 	\begin{equation*}
@@ -1643,7 +1648,7 @@ In this section, we incorporate the batch normalization transform into gradient 
 
 \begin{definition}\label{def_norm_gradient_layers_2}
 	(Normalized gradient layers - Variant 2)
-	Given width $n \in \N$, $K \in \mathbb{R}^{n \times d}$, $a,c \in \mathbb{R}^n$ and
+	Given a width $n \in \N$, $K \in \mathbb{R}^{n \times d}$, $a,c \in \mathbb{R}^n$ and
 	an activation function $\activation : \R \to \R$,
 	we call the upper and lower triangular layers with layer transform
 	\begin{equation*}
@@ -1735,7 +1740,8 @@ batch normalization transform, can be expressed as
 So the transposed cross-correlation results in a upscaled vector $\tilde{p} \in \R^{n_k d}$ with blocks of size $n_k$.
 Therefore, we implement the batch normalization transform 
 $\overline{p} = \eta_{\gamma, \beta}(\tilde{p})$ in such a way that $\tilde{p}_i$ is
-normalized the same as $\tilde{p}_{i+n_k}$ for all $i = 1, \dots, n_k (d-1)$. In particular, this means that
+normalized the same as $\tilde{p}_{i+n_k}$ is constructed for all $i = 1, \dots, n_k (d-1)$. 
+In particular, this means that
 $\lb \mu_\mathcal{B} \rb_i = \lb \mu_\mathcal{B} \rb_{i+n_k}$, 
 $\lb \sigma^2_\mathcal{B} \rb_i = \lb \sigma^2_\mathcal{B} \rb_{i+n_k}$, 
 $\gamma_i = \gamma_{i+n_k}$ and $\beta_i = \beta_{i+n_k}$ for $i = 1, \dots, n_k (d-1)$
@@ -1964,7 +1970,7 @@ We denote the size of the training data set with $n_{\text{train}} \in \N$ and t
 the test data set with $n_{\text{test}} \in \N$.
 The training data
 $\mathcal{T}_{\text{train}}$ and test data $\mathcal{T}_{\text{test}}$ are used to 
-calculate the training and test loss.
+calculate the respective training and test loss.
 
 \subsection{Low-dimensional systems}
 
@@ -2533,15 +2539,15 @@ structure of the G-SympNets. With G-SympNets, a single gradient layer is able to
 the sine function on a compact set (see \citet[Lemma 4]{Jin2020}), whereas with the LA-SympNets 
 the linear layers need to work together with the nonlinear activation layers to do so.
 Furthermore, intuitively, the large values of $q$ in the rotating case could mask the swinging case, 
-where $\abs{q} \leq \pi/2$. This might be an explanation for why normalization does not lead to a 
-similar performance improvement for the swinging plus rotating case,
-as with the swinging-only case. This issue needs further investigation.
-We comment this issue in the Outlook (\cref{sec_outlook}).
+where $\abs{q} \leq \pi/2$. This might explain why normalization does not 
+lead to a similar performance improvement with 
+training data from $\mathcal{D}_{\text{swing+rotate}}$ instead of $\mathcal{D}_{\text{swing}}$. 
+This issue needs further investigation. We comment this issue in the Outlook (\cref{sec_outlook}).
 
 For almost all experiments, the first variant of the normalization layers (N1) performs better or equally good
 to the second variant of the normalization layers (N2). There are only two cases where the N2 normalization variant
 has a slightly better final test loss than the N1 normalization variant 
-(see \cref{fig_pend_exp2_loss}, right plot in first row and mid plot in second row).
+(see \cref{fig_pend_exp2_loss}, right plot in the first row and mid plot in the second row).
 
 \begin{figure}
 \centering
@@ -2887,11 +2893,11 @@ Test losses bigger than $10^{-2}$ and architectures that diverged during trainin
 	\caption{
 	Training and test data generated from $\mathcal{D}_{\text{swing+rotate}}$.
 	The learning rate is set to $\gamma = 0.01$.
-	Total energy and position over time for simple pendulum for $q_0 = \frac{\pi}{2},\, p_0 = 0$.
+	The plots show the total energy and position over time for the simple pendulum for 
+	$q_0 = \frac{\pi}{2},\, p_0 = 0$
 	(first row) and $q_0 = \pi,\, p_0=1$ (second row).
 	The total energy is better maintained with the SympNet for $q_0 = \frac{\pi}{2},\, p_0 = 0$.
-	The prediction of the position over long time is better with the SympNet than with the FNN
-	in both cases.}
+	The prediction of the position over long time is better with the SympNet.}
 \end{figure}
 
 \FloatBarrier
@@ -2962,8 +2968,9 @@ on values on a neighborhood around $x$.
 This motivates why we set the kernel size and stride number
 to the same value for the convolution gradient layers in 
 the CG-SympNets (see \cref{table_high_dim_arch}).
-If the kernel size is equal to the stride number, the (transposed) cross-correlation
-has no overlap, which implies that the grid points do not influence each other.
+This means that the (transposed) cross-correlation
+has no overlap, which implies that the spatial grid points do not influence each other
+inside the convolution gradient layers.
 So the intuition behind the 
 proposed CG-Sympnet architecture is that the (linear) convolution layers learn the
 linear part, while the nonlinear convolution gradient layers learn the nonlinear part.
@@ -2976,7 +2983,7 @@ for the fixed time $t = 0.01$ in all experiments.
 The first $n_{\text{train}}$ samples go to the training data, the remaining samples
 to the test data. In that sense, the test loss is an indicator how well 
 the model extrapolates in time. The training size
-$n_{\text{train}} \in \N$ is chosen such that it contains all data up to
+$n_{\text{train}} \in \N$ is chosen such that it contains all data up to the
 total accumulated time $T=1$, i.e. $n_{\text{train}} = 100$. The test data
 contains the trajectory samples for total accumulated time $T=1$ to $T=10$.
 All experiments are conducted with the learning rate $\gamma = 0.1$.
@@ -3024,7 +3031,8 @@ All experiments are conducted with the learning rate $\gamma = 0.1$.
 	\end{tabular}
 	\caption{Table of all neural network architectures for the
 	high-dimensional experiments. The activation function used inside the nonlinear activation layers
-	and the convolution gradient layers is either sigmoid, tanh or ELU and is explicitly stated.
+	and the convolution gradient layers is either sigmoid, tanh or ELU and is explicitly stated
+	in the respective experiment.
 	If not stated otherwise, we use the FD basis to parametrize the symmetric kernels 
 	inside the symplectic convolution layers.}\label{table_high_dim_arch}
 \end{table}
@@ -3045,16 +3053,16 @@ The initial values are set to a bump function
 \end{align*}
 with $w = l/4$, see first plot in \cref{fig_linear_wave_eq_displacement}.
 The Dirichlet boundary values are set to $u_{\text{left}} = u_{\text{right}} = 0$.
-So this corresponds to the linear wave equation transport problem with fixed ends.
+This corresponds to the linear wave equation transport problem with fixed ends.
 As with the Harmonic Oscillator, the resulting Hamiltonian ODE is linear and thus the
-flow is linear. Therefore, a linear model as the CNN
+flow is linear. Therefore, a linear model like the CNN
 and C-Sympnet architectures (see \cref{table_high_dim_arch}) should be able to represent the flow.
 The Dirichlet boundary values are encoded in the convolution layers of the
 C-SympNet via constant zero-padding.
 
 The test losses for the CNN and C-SympNet architectures are depicted in
 \cref{fig_loss_linear_wave_eq}. We parametrize the symmetric kernels of C-SympNet
-with the canonical basis and the finite-difference inspired (FD) basis. As it turns out,
+with the canonical basis and with the finite-difference inspired (FD) basis. As it turns out,
 the C-SympNet with FD basis has a much lower test loss and converges much faster
 than the C-SympNet with the canonical basis.
 The naive non-physically informed linear CNN architecture performs worst as expected. 
@@ -3063,13 +3071,13 @@ layer of the CNN architecture uses the same kernel for the whole input $(q,p)$.
 
 The extrapolation performance of all architectures can be seen in
 \cref{fig_linear_wave_eq_displacement} (second and third plot). The C-SympNet with FD basis
-is indistinguishable from the Störmer-Verlet solution.The extrapolation performance of the C-SympNet
-with the canonical basis is still quite good, although the test loss
+is indistinguishable from the Störmer-Verlet solution. The extrapolation performance of the C-SympNet
+with the canonical basis is still quite good, although its test loss
 is much larger than the test loss for the C-SympNet with the FD basis.
 The CNN solution gets unstable after a few time iterations.
 
-The FD basis gives interpretability in terms of finite differences in our context,
-which might make it a favorable choice in our context.
+The FD basis gives interpretability in terms of finite differences,
+which makes it a favorable choice in our context.
 
 \begin{figure}
 \centering
@@ -3213,7 +3221,7 @@ on the time domain in which we are interested.
 
 The training and test losses for the LARGE-CNN and CG-SympNets for different activation functions
 are shown in \cref{fig_losses_sine_gordon} and \cref{table_losses_sine_gordon}.
-Again, the non-physically-informed naive LARGE-CNN performs worst as expected, 
+Again, the naive LARGE-CNN performs worst as expected, 
 because it applies the same kernels on the whole input vector $(q,p)$. 
 In this experiment, N1 normalization always outperforms N2 normalization by a great margin.
 The N1-CG-SympNet and the CG-SympNet (without normalization) perform nearly the same.
@@ -3466,7 +3474,7 @@ whereas the CG-SympNet and the N1-CG-SympNet still give a reasonable solution at
 \subsection{Summary and conclusion}
 
 The main contribution of our work is to transfer the concepts of
-convolution and batch normalization to SympNets, while preserving symplecticity.
+convolution and batch normalization to SympNets, while preserving their symplecticity.
 Adding convolution makes SympNets applicaple for high-dimensional Hamiltonian systems,
 which typically arise from semi-discretized partial differential equations. 
 
@@ -3477,8 +3485,8 @@ make the G-SympNet competitive with the LA-SympNet for the simple pendulum swing
 by proposing a method to add batch normalization to SympNets while preserving symplecticity.
 We have seen that the good performance of the LA-SympNet does not
 transfer to the rotating case of the simple pendulum, at least if no further logic
-is added to prevent the angular coordinate to increase monotonically.
-We have seen that SympNets preserve the total energy in the simple pendulum swinging case and
+is added to prevent the angular coordinate to increase monotonically in the rotating case.
+We saw that SympNets preserve the total energy in the simple pendulum swinging case and
 offer good long-term predictions compared to models which do not preserve the symplectic
 structure.
 
@@ -3532,7 +3540,7 @@ We have only worked with one-dimensional convolution so far. It could be investi
 how to generalize our proposal for two and three dimensions. This would add
 even more application areas, as it would allow to predict the
 flow for two and three dimensional systems in space. Besides, it could be investigated
-how to allow discretizations with non-equidistant grids.
+how to enable discretizations with non-equidistant grids.
 
 So far, there only exists universal approximation theorems for SympNets 
 for $r$-finite activation functions.
