@@ -1312,7 +1312,7 @@ cross-convolution.
 	\end{equation*}
 	the (symplectic) convolution layers $\mathcal{C}_{up}$ and $\mathcal{C}_{low}$.
 \end{definition}
-The symmetric kernel $k \in \mathbb{R}^{2m+1}$ is parametrized by $m$ learnable parameters, 
+The symmetric kernel $k \in \mathbb{R}^{2m+1}$ is parametrized by $m+1$ learnable parameters, 
 see \cref{sec_param_symmetric_kernel} later.
 If $\chi_{\text{pad},m} = c_{\text{pad},m}$, the padding values $l,r \in \R^m$ can either
 be learnable parameters or constant. The convolution layers can be used without any bias ($b=0$), a
@@ -1422,15 +1422,15 @@ $\jac{f}{x} \big|_{x=v} = \jac{f}{x}$.
 
 \subsubsection{Parametrization of a symmetric kernel}\label{sec_param_symmetric_kernel}
 
-Let $\{b_1, b_2, \dots b_m \} \subset \mathbb{R}^{2m+1}$ be a basis of the space 
+Let $\{b_1, b_2, \dots b_{m+1} \} \subset \mathbb{R}^{2m+1}$ be a basis of the space 
 $\{ k \in \mathbb{R}^{2m+1} : k \text{ is a symmetric kernel} \}$.
-The symmetric kernel $k$ is then parametrized by the coefficients $\beta \in \mathbb{R}^m$ via
+The symmetric kernel $k$ is then parametrized by the coefficients $\beta \in \mathbb{R}^{m+1}$ via
 \begin{equation*}
-	k = (b_1, b_2, \dots, b_m) \beta = \beta_1 b_1 + \beta_2 b_2 + \dots + \beta_m b_m
+	k = (b_1, b_2, \dots, b_{m+1}) \beta = \beta_1 b_1 + \beta_2 b_2 + \dots + \beta_{m+1} b_{m+1}
 	.
 \end{equation*}
 
-One choice is the canonical basis with basis vectors $b_1, \dots, b_m \in \mathbb{R}^{2m+1}$ given by
+One choice is the canonical basis with basis vectors $b_1, \dots, b_{m+1} \in \mathbb{R}^{2m+1}$ given by
 \begin{equation*}
 	(b_i)_{j+m+1} = \hat{k}(b_i)(j) = \begin{cases}
 		1 &: \abs{j} = i-1 \\
@@ -1479,7 +1479,7 @@ and for $i=1, \dots, m$ and $j= 0, \dots, m$ holds
 	&= \hat{k}(b_i^{FD})(j)
 	.
 \end{align*}
-So $\{ b_i^{FD} \}_{i=1}^m$ is a valid basis of
+So $\{ b_i^{FD} \}_{i=1}^{m+1}$ is a valid basis of
 the space $\{ k \in \mathbb{R}^{2m+1} : k \text{ is a symmetric kernel} \}$.
 
 \citet{Ruthotto2020} discuss similar parametrizations for
