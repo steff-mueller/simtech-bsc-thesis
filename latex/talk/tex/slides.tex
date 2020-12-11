@@ -99,7 +99,7 @@
   \end{definition}
 \end{frame}
 
-\begin{frame}[c]{Total energy}
+\begin{frame}[c]{Conservation of the total energy}
   \centering
   \begin{equation*}
     \ddt H(y(t)) = \lsb \grad{H}(y(t)) \rsb^T \dot{y}(t) = 
@@ -227,6 +227,139 @@
 \end{frame}
 
 \section{Convolution for ~\newline SympNets}
+
+\begin{frame}[c]{Convolution vs. Cross-correlation}
+  Given two discrete functions $f,g \in \mathbb{R}^\mathbb{Z}$, 
+  \bemph{convolution} is defined as 
+  \begin{equation*}
+    *: \mathbb{R}^{\mathbb{Z}} \times \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
+    \quad (f*g)(\tau) = \sum^{\infty}_{a=-\infty} f(a) g(\tau - a)
+    .
+  \end{equation*}
+
+  \bemph{Cross-correlation} is defined as
+  \begin{equation*}
+    \star: \mathbb{R}^{\mathbb{Z}} \times \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
+    \quad (f \star g)(\tau) = \sum^{\infty}_{a=-\infty} f(a) g(\tau + a)
+    .
+  \end{equation*}
+\end{frame}
+
+\begin{frame}[c]{Valid cross-correlation}
+  \begin{definition}[Valid cross-correlation]
+    We define the valid cross-correlation of a finite-dimensional kernel $k \in \mathbb{R}^{n_k}$ and 
+    a finite-dimensional input $x \in \mathbb{R}^{n_x}$ with $n_x \geq n_k$ as
+    \begin{equation*}
+      \star_{\text{v}} : \mathbb{R}^{n_k} \times \mathbb{R}^{n_x} \to \mathbb{R}^{n_x-n_k+1},
+      \quad \star_{\text{v}}(k,x) := \mathcal{I}_{n_x-n_k+1}^{\text{inv}} (
+        \mathcal{S}_{-1}( \mathcal{I}_{n_k}(k)) \star \mathcal{I}_{n_x}(x)
+      )
+      .
+    \end{equation*}
+  \end{definition}
+
+  Example:
+  $k \in \R^3$,
+  $x \in \R^6$,
+  $y := \star_{\text{v}}(k,x) \in \R^4$
+
+  \vspace{0.3cm}
+  \centering
+  \begin{tikzpicture}
+    \foreach \i in {1,2,3,4,5,6} {
+      \node (x\i) [draw, minimum width=1cm] at (\i-1, 0) {$x_\i$};
+    }
+    \foreach \i in {1,2,3,4} {
+      \node (y\i) [draw, minimum width=1cm] at (\i, -2) {$y_\i$};
+    }
+
+    \onslide<1> {
+      \draw [->] (x1) edge node[left,pos=0.4]{$\cdot k_1$} (y1) ;
+      \draw [->] (x2) edge node[fill=white,pos=0.4]{$\cdot k_2$} (y1);
+      \draw [->] (x3) edge node[right,pos=0.4]{$\cdot k_3$} (y1);
+    }
+
+    \onslide<2> {
+      \draw [->] (x2) edge node[left,pos=0.4]{$\cdot k_1$} (y2) ;
+      \draw [->] (x3) edge node[fill=white,pos=0.4]{$\cdot k_2$} (y2);
+      \draw [->] (x4) edge node[right,pos=0.4]{$\cdot k_3$} (y2);
+    }
+
+    \onslide<3> {
+      \draw [->] (x4) edge node[left,pos=0.4]{$\cdot k_1$} (y4) ;
+      \draw [->] (x5) edge node[fill=white,pos=0.4]{$\cdot k_2$} (y4);
+      \draw [->] (x6) edge node[right,pos=0.4]{$\cdot k_3$} (y4);
+    }
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Padding}
+  \begin{definition}[Constant padding]
+    Given the padding values $l,r \in \mathbb{R}^m$, we define constant padding 
+    $c_{\text{pad},m}$ as
+    \begin{equation*}
+      c_{\text{pad},m} : \mathbb{R}^d \to \mathbb{R}^{d+2m},
+      \quad c_{\text{pad},m}(x) = c_{\text{pad},m}(x;l,r) := \lb l^T, x^T, r^T \rb^T
+      .
+    \end{equation*}
+  \end{definition}
+
+  \vspace{0.3cm}
+  Example:
+  $l,r \in \R^3$,
+  $x \in \R^6$
+
+  \vspace{0.3cm}
+  \centering
+  \begin{tikzpicture}
+    \node [draw, minimum width=1cm,fill=lightgray] at (0, 0) {\scriptsize$l_1$};
+    \node [draw, minimum width=1cm,fill=lightgray] at (1, 0) {\scriptsize$l_2$};
+    \node [draw, minimum width=1cm,fill=lightgray] at (2, 0) {\scriptsize$l_3$};
+    \foreach \i in {1,2,3,4,5,6} {
+      \node [draw, minimum width=1cm] at (\i+2, 0) {$x_\i$};
+    }
+    \node [draw, minimum width=1cm,fill=lightgray] at (9, 0) {$r_1$};
+    \node [draw, minimum width=1cm,fill=lightgray] at (10, 0) {$r_2$};
+    \node [draw, minimum width=1cm,fill=lightgray] at (11, 0) {$r_3$};
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Padding}
+  \begin{definition}[Symmetric padding]
+    We define symmetric padding as
+    \begin{equation*}
+      s_{\text{pad},m} : \mathbb{R}^d \to \mathbb{R}^{d+2m},
+      \quad s_{\text{pad},m}(x) := (
+        \underbrace{x_m, x_{m-1} \dots, x_1}_{m \text{ values}}, \,
+        \underbrace{x_1, x_2 \dots, x_d}_{d \text{ values}}, \,
+        \underbrace{x_d, x_{d-1} \dots, x_{d-m+1}}_{m \text{ values}}
+      )^T
+      .
+    \end{equation*}
+  \end{definition}
+
+  \vspace{0.3cm}
+  Example:
+  $x \in \R^6$
+
+  \vspace{0.3cm}
+  \centering
+  \begin{tikzpicture}
+    \node [draw, minimum width=1cm,fill=lightgray] at (0, 0) {$x_3$};
+    \node [draw, minimum width=1cm,fill=lightgray] at (1, 0) {$x_2$};
+    \node [draw, minimum width=1cm,fill=lightgray] at (2, 0) {$x_1$};
+    \foreach \i in {1,2,3,4,5,6} {
+      \node [draw, minimum width=1cm] at (\i+2, 0) {$x_\i$};
+    }
+    \node [draw, minimum width=1cm,fill=lightgray] at (9, 0) {$x_6$};
+    \node [draw, minimum width=1cm,fill=lightgray] at (10, 0) {$x_5$};
+    \node [draw, minimum width=1cm,fill=lightgray] at (11, 0) {$x_4$};
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Convolution layers}
+  
+\end{frame}
 
 \section{Normalization for ~\newline SympNets}
 

@@ -243,3 +243,5 @@ TSWLatexianTemp*
 
 # Distribution / packaging
 *.egg-info/
+
+.DS_Store
