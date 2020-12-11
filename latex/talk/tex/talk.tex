@@ -17,7 +17,7 @@ aspectratio=169,% for widescreen (16:9) presentations
 \pgfdeclareimage[height=.92cm]{institutelogow}{../gfx/logos/ians_w.pdf} % (white) institute logo for final slide
 \pgfdeclareimage[height=.7cm]{simtechlogow}{../gfx/logos/simtech_w.pdf} % (white) SimTech logo for final slide
 \pgfdeclareimage[height=1cm]{unilogow}{../gfx/logos/unilogo_eng_w.pdf} % (white) UniS logo for final slide
-\pgfdeclareimage[width=2.5cm]{speaker}{../gfx/finalslide/speaker.png} % speaker photo for final slide
+\pgfdeclareimage[width=2.5cm]{speaker}{../gfx/finalslide/speaker.jpeg} % speaker photo for final slide
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% misc stuff %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -77,13 +77,16 @@ aspectratio=169,% for widescreen (16:9) presentations
  {\endaligned$\par\vspace*{\mspace}}
 
 % Own definitions
-\input{../shortcuts/default_abbrev.tex}
-\input{../shortcuts/specific_abbrev.tex}
+\input{../../thesis/common/default_abbrev.tex}
+\input{../../thesis/common/specific_abbrev.tex}
+
+\newcommand{\tabitem}{%
+  \usebeamertemplate{itemize item}\hspace*{\labelsep}}
  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% setup %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\title[Short Title]{Long Title}
-\author[AUTHIOR NAME]{AUTHIOR\\ NAME}
+\title[Symplectic Neural Networks]{Symplectic\\ Neural Networks}
+\author[Steffen Müller]{Steffen\\ Müller}
 \institute[IANS]{Institute of Applied Analysis and Numerical Simulation}
 \def\university{University of Stuttgart, Germany}
 \def\shortuniversity{Univ. of Stuttgart}
@@ -100,7 +103,7 @@ aspectratio=169,% for widescreen (16:9) presentations
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% final slide %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %\finalslide{<<email>>}{<<tel>>}
-\finalslide{MAIL}{PHONE}
+\finalslide{steffen.mueller@mathematik.uni-stuttgart.de}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% appendix %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %\appendix

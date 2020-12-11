@@ -18,12 +18,13 @@
 
 %% REMOVE THIS BLOCK IF THERE ARE FONT PROBLEMS AND USE \usepackage{helvet} INSEAD
 % set up fonts
-\usepackage{lmodern}
-\usepackage{fontspec}
-\setsansfont{Arial}[
-  Scale = MatchUppercase,
-]
+% \usepackage{lmodern}
+% \usepackage{fontspec}
+% \setsansfont{Arial}[
+%   Scale = MatchUppercase,
+% ]
 %% REMOVE THIS BLOCK IF THERE ARE FONT PROBLEMS AND USE HELVET INSTEAD
+\usepackage{helvet}
 
 \renewcommand{\familydefault}{\sfdefault}
 
@@ -120,11 +121,11 @@
           {palette tertiary}
           \begin{tabular}{p{1cm}L{\textwidth}}
             \multicolumn{2}{l}{\insertshortauthor}\\
-            \multicolumn{2}{L{\textwidth}}{\insertinstitute~(\insertshortinstitute)}\\
-            \multicolumn{2}{l}{\university}\\
+            %\multicolumn{2}{L{\textwidth}}{\insertinstitute~(\insertshortinstitute)}\\
+            %\multicolumn{2}{l}{\university}\\
             \rule{0pt}{4ex}\\
             eMail & \href{mailto:#1}{#1}\\
-            phone  & #2
+            %phone  & #2
           \end{tabular}
         \end{beamercolorbox}
       \end{column}
