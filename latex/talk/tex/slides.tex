@@ -357,8 +357,38 @@
   \end{tikzpicture}
 \end{frame}
 
-\begin{frame}{Convolution layers}
-  
+\begin{frame}[c]{Convolution layers}
+  The (symplectic) \bemph{convolution layers} are given by the layer transform
+  \begin{equation*}
+    \layertf(p) := \star_{\text{v}}(k,\chi_{\text{pad},m}(p))
+  \end{equation*}
+
+  with:
+  \begin{itemize}
+    \item a symmetric kernel $k \in \R^{2m+1}$, 
+    parametrized by $m+1$ learnable parameters
+    \item padding
+    $\chi_{\text{pad},m} = c_{\text{pad},m}$ or $\chi_{\text{pad},m} = s_{\text{pad},m}$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Symmetric kernel}
+  \todo{Parametrization, canonical and FD basis}
+\end{frame}
+
+\begin{frame}[c]{Convolution Gradient layers}
+  The (symplectic) \bemph{gradient convolution layers} are given by the layer transform
+  \begin{equation*}
+    T(p) = \star_{\text{v}} \lb k, \, 
+    \lb a_j \activation \lb \lb \star_{\text{v}}^T(k,p) \rb_j + c_j \rb \rb_{j=1}^n \rb,
+		\quad c = \star_{\text{v}}^T(\tilde{c},1_d) 
+		\text{ and } a = \star_{\text{v}}^T(\tilde{a},1_d)
+  \end{equation*}
+
+  with:
+  \begin{itemize}
+    \item TODO
+  \end{itemize}
 \end{frame}
 
 \section{Normalization for ~\newline SympNets}
@@ -368,3 +398,257 @@
 \end{frame}
 
 \section{Numerical experiments}
+
+\begin{frame}[c]{Simple pendulum}
+  \centering
+  \todo{fix no convolution}
+  \begin{tikzpicture}[node distance=0.3cm]
+    \node (c1) [draw,text width=5cm,align=center,rotate=90]
+      {Lower Convolution layer\\ $T(p) = \star_{\text{v}}(k,c_{\text{pad},m}(p))$};
+
+    \node (c2) [draw,text width=5cm,align=center,rotate=90,right=of c1.south east,anchor=north east]
+      {Upper Convolution layer\\ $T(p) = \star_{\text{v}}(k,c_{\text{pad},m}(p))$};
+
+    \node (c3) [draw,text width=5cm,align=center,rotate=90,right=of c2.south east,anchor=north east]
+      {Lower Convolution layer\\ $T(p) = \star_{\text{v}}(k,c_{\text{pad},m}(p))$};
+
+    \node (c4) [draw,text width=5cm,align=center,rotate=90,right=of c3.south east,anchor=north east]
+      {Upper Convolution layer\\ $T(p) = \star_{\text{v}}(k,c_{\text{pad},m}(p))$};
+
+    \node (lin) [fit=(c1) (c2) (c3) (c4)] {};
+    \node (lin_title) [below=0cm of lin] {\bemph{Linear block}};
+    \node (lin_block) [draw,fit=(lin) (lin_title)] {};
+
+    \node (x) [left=of lin] {$x = \qpvec$};
+
+    \node (a1) [draw,text width=5cm,align=center,rotate=90,right=of c4.south east,anchor=north east,
+      yshift=-0.2cm,fill=uniSlightblue]
+      {Lower Activation layer\\ $\layertf(p) = \lb a_i \activation(p_i) \rb_{i=1}^d$};
+
+    \node (lin_block2) [draw,text width=5cm,align=center,rotate=90,right=of a1.south east,anchor=north east]
+      {\bemph{Linear block}};
+
+    \node (a2) [draw,text width=5cm,align=center,rotate=90,right=of lin_block2.south east,anchor=north east,
+      fill=uniSlightblue]
+      {Upper Activation layer};
+
+    \node (lin_block3) [draw,text width=5cm,align=center,rotate=90,right=of a2.south east,anchor=north east]
+      {\bemph{Linear block}};
+
+    \node (a3) [draw,text width=5cm,align=center,rotate=90,right=of lin_block3.south east,anchor=north east,
+      fill=uniSlightblue]
+      {Lower Activation layer};
+
+    \node (lin_block4) [draw,text width=5cm,align=center,rotate=90,right=of a3.south east,anchor=north east]
+      {\bemph{Linear block}};
+
+    \node (a4) [draw,text width=5cm,align=center,rotate=90,right=of lin_block4.south east,anchor=north east,
+      fill=uniSlightblue]
+      {Upper Activation layer};
+
+    \node (y) [right=of a4.south] {$y$};
+
+    \draw[->] (x) -- (c1);
+    \draw[->] (c1) -- (c2);
+    \draw[->] (c2) -- (c3);
+    \draw[->] (c3) -- (c4);
+    \draw[->] (c4) -- (a1);
+    \draw[->] (a1) -- (lin_block2);
+    \draw[->] (lin_block2) -- (a2);
+    \draw[->] (a2) -- (lin_block3);
+    \draw[->] (lin_block3) -- (a3);
+    \draw[->] (a3) -- (lin_block4);
+    \draw[->] (lin_block4) -- (a4);
+    \draw[->] (a4) -- (y);
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}[c]{Linear wave equation}
+  \centering
+  \begin{tikzpicture}
+    \node (x) at (0,0) {$x = \qpvec$};
+
+    \node (c1) [draw,text width=6cm,align=center,rotate=90] at (1.5,0) 
+      {Lower Convolution layer\\ $T(p) = \star_{\text{v}}(k,c_{\text{pad},m}(p))$};
+
+    \node (c2) [draw,text width=6cm,align=center,rotate=90] at (2.75,0) 
+      {Upper Convolution layer\\ $T(p) = \star_{\text{v}}(k,c_{\text{pad},m}(p))$};
+
+    \node (c3) [draw,text width=6cm,align=center,rotate=90] at (4,0) 
+      {Lower Convolution layer\\ $T(p) = \star_{\text{v}}(k,c_{\text{pad},m}(p))$};
+
+    \node (c4) [draw,text width=6cm,align=center,rotate=90] at (5.25,0) 
+      {Upper Convolution layer\\ $T(p) = \star_{\text{v}}(k,c_{\text{pad},m}(p))$};
+
+    \node (y) at (6.5,0) {$y$};
+
+    \draw[->] (x) -- (c1);
+    \draw[->] (c1) -- (c2);
+    \draw[->] (c2) -- (c3);
+    \draw[->] (c3) -- (c4);
+    \draw[->] (c4) -- (y);
+  \end{tikzpicture}
+
+  \vspace{0.3cm}
+  all layers with kernel size $3$, constant zero-padding
+\end{frame}
+
+\begin{frame}{Linear wave equation}
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      ymode=log,
+      no markers,
+      title={Test loss (Linear wave equation)},
+      xlabel={Epoch}, xmin=0, xmax=500,
+      ylabel={Test loss},
+      legend style={nodes={scale=0.75, transform shape}},
+      legend cell align=left,
+      legend entries={
+        CNN,
+        C-SympNet (canonical basis),
+        C-SympNet (FD basis)
+      }
+    ]
+  
+    \addplot[
+      color=green
+    ] table[x=epoch,y=loss,col sep=comma] {../../data-wave/transport/linear_cnn/sigmoid/test_loss.csv};
+  
+    \addplot[
+      color=blue
+    ] table[x=epoch,y=loss,col sep=comma] {../../data-wave/transport/linear_canonical/sigmoid/test_loss.csv};
+  
+    \addplot[
+      color=purple
+    ] table[x=epoch,y=loss,col sep=comma] {../../data-wave/transport/linear_fd/sigmoid/test_loss.csv};
+      
+    \end{axis}
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Linear wave equation}
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      title={Displacement $q(t=0,x)$}, ylabel={$q(t=0,x)$},
+			legend entries={
+				Initial value
+      },
+      width=0.8*\linewidth, height=\axisdefaultheight,
+			xlabel={$x$}, xmin=-0.5, xmax=0.5,
+			ymin=-0.3, ymax=0.55, restrict y to domain=-2:2
+    ]
+      \addplot[
+				color=darkgray
+			] table[x=x,y=q,col sep=comma] {../../data-wave/transport/exact/q_t0.csv};
+    \end{axis}
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Linear wave equation}
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      width=0.8*\linewidth, height=\axisdefaultheight,
+			xlabel={$x$}, xmin=-0.5, xmax=0.5,
+			ymin=-0.3, ymax=0.55, restrict y to domain=-2:2,
+      title={Displacement $q(t=3,x)$}, ylabel={$q(t=3,x)$},
+			legend style={
+				nodes={scale=0.8, transform shape},
+				legend cell align=left,
+				%legend pos=outer north east
+			},
+			legend entries={
+				CNN,
+				C-SympNet (canonical basis),
+				C-SympNet (FD basis),
+				Störmer-Verlet,
+			}
+    ]
+      \addplot[
+        color=green
+      ] table[x=x,y=q,col sep=comma] {../../data-wave/transport/linear_cnn/sigmoid/q_t3.csv};
+    
+      \addplot[
+        color=blue
+      ] table[x=x,y=q,col sep=comma] {../../data-wave/transport/linear_canonical/sigmoid/q_t3.csv};
+    
+      \addplot[
+        color=purple
+      ] table[x=x,y=q,col sep=comma] {../../data-wave/transport/linear_fd/sigmoid/q_t3.csv};
+
+      \addplot[
+        color=darkgray
+      ] table[x=x,y=q,col sep=comma] {../../data-wave/transport/exact/q_t3.csv};
+    \end{axis}
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Linear wave equation}
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      width=0.8*\linewidth, height=\axisdefaultheight,
+			xlabel={$x$}, xmin=-0.5, xmax=0.5,
+			ymin=-0.3, ymax=0.55, restrict y to domain=-2:2,
+      title={Displacement $q(t=9,x)$}, ylabel={$q(t=9,x)$},
+			legend style={
+				nodes={scale=0.8, transform shape},
+				legend cell align=left,
+				%legend pos=outer north east
+			},
+			legend entries={
+				CNN,
+				C-SympNet (canonical basis),
+				C-SympNet (FD basis),
+				Störmer-Verlet,
+			}
+    ]
+      \addplot[
+        color=green
+      ] table[x=x,y=q,col sep=comma] {../../data-wave/transport/linear_cnn/sigmoid/q_t9.csv};
+    
+      \addplot[
+        color=blue
+      ] table[x=x,y=q,col sep=comma] {../../data-wave/transport/linear_canonical/sigmoid/q_t9.csv};
+    
+      \addplot[
+        color=purple
+      ] table[x=x,y=q,col sep=comma] {../../data-wave/transport/linear_fd/sigmoid/q_t9.csv};
+
+      \addplot[
+        color=darkgray
+      ] table[x=x,y=q,col sep=comma] {../../data-wave/transport/exact/q_t9.csv};
+    \end{axis}
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}[c]{Sine-Gordon}
+  \centering
+  \begin{tikzpicture}
+    \node [draw,text width=6cm,align=center] at (0,0) 
+      {Lower Convolution layer\\ $T(p) = \star_{\text{v}}(k,\chi_{\text{pad},m}(p))$};
+
+    \node [draw,text width=6cm,align=center] at (0,-1.5) 
+      {Lower Gradient Convolution layer\\ $T(p) = ...$};
+
+    \node [draw,text width=6cm,align=center] at (0,-3) 
+      {Upper Convolution layer\\ $T(p) = \star_{\text{v}}(k,\chi_{\text{pad},m}(p))$};
+
+    \node [draw,text width=6cm,align=center] at (0,-4.5) 
+      {Upper Gradient Convolution layer\\ $T(p) = ...$};
+
+      \node [draw,text width=6cm,align=center] at (8,0) 
+      {Lower Convolution layer\\ $T(p) = \star_{\text{v}}(k,\chi_{\text{pad},m}(p))$};
+
+    \node [draw,text width=6cm,align=center] at (8,-1.5) 
+      {Lower Gradient Convolution layer\\ $T(p) = ...$};
+
+    \node [draw,text width=6cm,align=center] at (8,-3) 
+      {Upper Convolution layer\\ $T(p) = \star_{\text{v}}(k,\chi_{\text{pad},m}(p))$};
+
+    \node [draw,text width=6cm,align=center] at (8,-4.5) 
+      {Upper Gradient Convolution layer\\ $T(p) = ...$};
+  \end{tikzpicture}
+\end{frame}
