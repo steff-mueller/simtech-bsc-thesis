@@ -379,7 +379,7 @@
 \begin{frame}[c]{Convolution Gradient layers}
   The (symplectic) \bemph{gradient convolution layers} are given by the layer transform
   \begin{equation*}
-    T(p) = \star_{\text{v}} \lb k, \, 
+    \layertf(p) = \star_{\text{v}} \lb k, \, 
     \lb a_j \activation \lb \lb \star_{\text{v}}^T(k,p) \rb_j + c_j \rb \rb_{j=1}^n \rb,
 		\quad c = \star_{\text{v}}^T(\tilde{c},1_d) 
 		\text{ and } a = \star_{\text{v}}^T(\tilde{a},1_d)
@@ -388,109 +388,153 @@
   with:
   \begin{itemize}
     \item TODO
+    \item \todo{transposed cross-correlation}
   \end{itemize}
 \end{frame}
 
 \section{Normalization for ~\newline SympNets}
 
-\begin{frame}{Overview}
-  \todo{TODO add table of all layer transforms?}
-\end{frame}
-
 \section{Numerical experiments}
 
-\begin{frame}[c]{Simple pendulum}
-  \centering
-  \todo{fix no convolution}
-  \begin{tikzpicture}[node distance=0.3cm]
-    \node (c1) [draw,text width=5cm,align=center,rotate=90]
-      {Lower Convolution layer\\ $T(p) = \star_{\text{v}}(k,c_{\text{pad},m}(p))$};
-
-    \node (c2) [draw,text width=5cm,align=center,rotate=90,right=of c1.south east,anchor=north east]
-      {Upper Convolution layer\\ $T(p) = \star_{\text{v}}(k,c_{\text{pad},m}(p))$};
-
-    \node (c3) [draw,text width=5cm,align=center,rotate=90,right=of c2.south east,anchor=north east]
-      {Lower Convolution layer\\ $T(p) = \star_{\text{v}}(k,c_{\text{pad},m}(p))$};
-
-    \node (c4) [draw,text width=5cm,align=center,rotate=90,right=of c3.south east,anchor=north east]
-      {Upper Convolution layer\\ $T(p) = \star_{\text{v}}(k,c_{\text{pad},m}(p))$};
-
-    \node (lin) [fit=(c1) (c2) (c3) (c4)] {};
-    \node (lin_title) [below=0cm of lin] {\bemph{Linear block}};
-    \node (lin_block) [draw,fit=(lin) (lin_title)] {};
-
-    \node (x) [left=of lin] {$x = \qpvec$};
-
-    \node (a1) [draw,text width=5cm,align=center,rotate=90,right=of c4.south east,anchor=north east,
-      yshift=-0.2cm,fill=uniSlightblue]
-      {Lower Activation layer\\ $\layertf(p) = \lb a_i \activation(p_i) \rb_{i=1}^d$};
-
-    \node (lin_block2) [draw,text width=5cm,align=center,rotate=90,right=of a1.south east,anchor=north east]
-      {\bemph{Linear block}};
-
-    \node (a2) [draw,text width=5cm,align=center,rotate=90,right=of lin_block2.south east,anchor=north east,
-      fill=uniSlightblue]
-      {Upper Activation layer};
-
-    \node (lin_block3) [draw,text width=5cm,align=center,rotate=90,right=of a2.south east,anchor=north east]
-      {\bemph{Linear block}};
-
-    \node (a3) [draw,text width=5cm,align=center,rotate=90,right=of lin_block3.south east,anchor=north east,
-      fill=uniSlightblue]
-      {Lower Activation layer};
-
-    \node (lin_block4) [draw,text width=5cm,align=center,rotate=90,right=of a3.south east,anchor=north east]
-      {\bemph{Linear block}};
-
-    \node (a4) [draw,text width=5cm,align=center,rotate=90,right=of lin_block4.south east,anchor=north east,
-      fill=uniSlightblue]
-      {Upper Activation layer};
-
-    \node (y) [right=of a4.south] {$y$};
-
-    \draw[->] (x) -- (c1);
-    \draw[->] (c1) -- (c2);
-    \draw[->] (c2) -- (c3);
-    \draw[->] (c3) -- (c4);
-    \draw[->] (c4) -- (a1);
-    \draw[->] (a1) -- (lin_block2);
-    \draw[->] (lin_block2) -- (a2);
-    \draw[->] (a2) -- (lin_block3);
-    \draw[->] (lin_block3) -- (a3);
-    \draw[->] (a3) -- (lin_block4);
-    \draw[->] (lin_block4) -- (a4);
-    \draw[->] (a4) -- (y);
-  \end{tikzpicture}
+\begin{frame}{Training and test data, loss}
+  \todo{Activation function}
 \end{frame}
 
-\begin{frame}[c]{Linear wave equation}
-  \centering
-  \begin{tikzpicture}
-    \node (x) at (0,0) {$x = \qpvec$};
+\begin{frame}{Simple Pendulum}
+  
+\end{frame}
 
-    \node (c1) [draw,text width=6cm,align=center,rotate=90] at (1.5,0) 
-      {Lower Convolution layer\\ $T(p) = \star_{\text{v}}(k,c_{\text{pad},m}(p))$};
+\begin{frame}[c]
+  \begin{figure}
+    \begin{tikzpicture}[node distance=0.3cm]
+      \node (c1) [draw,text width=5cm,align=center,rotate=90]
+        {\textbf{Lower} Linear layer\\ $\layertf(p) = Sp$};
 
-    \node (c2) [draw,text width=6cm,align=center,rotate=90] at (2.75,0) 
-      {Upper Convolution layer\\ $T(p) = \star_{\text{v}}(k,c_{\text{pad},m}(p))$};
+      \node (c2) [draw,text width=5cm,align=center,rotate=90,right=of c1.south east,anchor=north east]
+        {\textbf{Upper} Linear layer};
 
-    \node (c3) [draw,text width=6cm,align=center,rotate=90] at (4,0) 
-      {Lower Convolution layer\\ $T(p) = \star_{\text{v}}(k,c_{\text{pad},m}(p))$};
+      \node (c3) [draw,text width=5cm,align=center,rotate=90,right=of c2.south east,anchor=north east]
+        {\textbf{Lower} Linear layer};
 
-    \node (c4) [draw,text width=6cm,align=center,rotate=90] at (5.25,0) 
-      {Upper Convolution layer\\ $T(p) = \star_{\text{v}}(k,c_{\text{pad},m}(p))$};
+      \node (c4) [draw,text width=5cm,align=center,rotate=90,right=of c3.south east,anchor=north east]
+        {\textbf{Upper} Linear layer};
 
-    \node (y) at (6.5,0) {$y$};
+      \node (lin) [fit=(c1) (c2) (c3) (c4)] {};
+      \node (lin_title) [below=0cm of lin] {\bemph{Linear block}};
+      \node (lin_block) [draw,fit=(lin) (lin_title)] {};
 
-    \draw[->] (x) -- (c1);
-    \draw[->] (c1) -- (c2);
-    \draw[->] (c2) -- (c3);
-    \draw[->] (c3) -- (c4);
-    \draw[->] (c4) -- (y);
-  \end{tikzpicture}
+      \node (x) [left=of lin] {$x = \qpvec$};
 
-  \vspace{0.3cm}
-  all layers with kernel size $3$, constant zero-padding
+      \node (a1) [draw,text width=5cm,align=center,rotate=90,right=of c4.south east,anchor=north east,
+        yshift=-0.2cm,fill=uniSlightblue]
+        {\textbf{Lower} Activation layer\\ $\layertf(p) = \lb a_i \activation(p_i) \rb_{i=1}^d$};
+
+      \node (lin_block2) [draw,text width=5cm,align=center,rotate=90,right=of a1.south east,anchor=north east]
+        {\bemph{Linear block}};
+
+      \node (a2) [draw,text width=5cm,align=center,rotate=90,right=of lin_block2.south east,anchor=north east,
+        fill=uniSlightblue]
+        {\textbf{Upper} Activation layer};
+
+      \node (lin_block3) [draw,text width=5cm,align=center,rotate=90,right=of a2.south east,anchor=north east]
+        {\bemph{Linear block}};
+
+      \node (a3) [draw,text width=5cm,align=center,rotate=90,right=of lin_block3.south east,anchor=north east,
+        fill=uniSlightblue]
+        {\textbf{Lower} Activation layer};
+
+      \node (lin_block4) [draw,text width=5cm,align=center,rotate=90,right=of a3.south east,anchor=north east]
+        {\bemph{Linear block}};
+
+      \node (a4) [draw,text width=5cm,align=center,rotate=90,right=of lin_block4.south east,anchor=north east,
+        fill=uniSlightblue]
+        {\textbf{Upper} Activation layer};
+
+      \node (y) [right=of a4.south] {$y$};
+
+      \draw[->] (x) -- (c1);
+      \draw[->] (c1) -- (c2);
+      \draw[->] (c2) -- (c3);
+      \draw[->] (c3) -- (c4);
+      \draw[->] (c4) -- (a1);
+      \draw[->] (a1) -- (lin_block2);
+      \draw[->] (lin_block2) -- (a2);
+      \draw[->] (a2) -- (lin_block3);
+      \draw[->] (lin_block3) -- (a3);
+      \draw[->] (a3) -- (lin_block4);
+      \draw[->] (lin_block4) -- (a4);
+      \draw[->] (a4) -- (y);
+    \end{tikzpicture}
+
+    \caption{\bemph{LA-SympNet architecture.}}
+  \end{figure}
+\end{frame}
+
+\begin{frame}[c]
+  \begin{figure}
+    \begin{tikzpicture}[node distance=0.3cm]
+      \node (g1) [draw,text width=6cm,align=center,rotate=90,fill=uniSyellow]
+        {\textbf{Lower} Gradient layer (width $n=30$)\\ $\layertf(p) = K^T \bigg( a_j \activation \lb (Kp)_j + c_j \rb \bigg)_{j=1}^n$};
+
+      \node (g2) [draw,text width=6cm,align=center,rotate=90,
+        right=of g1.south east,anchor=north east,fill=uniSyellow]
+        {\textbf{Upper} Gradient layer (width $n=30$)};
+
+      \node (g3) [draw,text width=6cm,align=center,rotate=90,
+        right=of g2.south east,anchor=north east,fill=uniSyellow]
+        {\textbf{Lower} Gradient layer (width $n=30$)};
+
+      \node (g4) [draw,text width=6cm,align=center,rotate=90,
+        right=of g3.south east,anchor=north east,fill=uniSyellow]
+        {\textbf{Upper} Gradient layer (width $n=30$)};
+
+      \node (x) [left=of g1.north] {$x = \qpvec$};
+      \node (y) [right=of g4.south] {$y$};
+
+      \draw[->] (x) -- (g1);
+      \draw[->] (g1) -- (g2);
+      \draw[->] (g2) -- (g3);
+      \draw[->] (g3) -- (g4);
+      \draw[->] (g4) -- (y);
+    \end{tikzpicture}
+
+    \caption{\bemph{G-SympNet architecture.}}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Linear wave equation}
+  
+\end{frame}
+
+\begin{frame}[c]
+  \begin{figure}
+    \begin{tikzpicture}
+      \node (x) at (0,0) {$x = \qpvec$};
+
+      \node (c1) [draw,text width=6cm,align=center,rotate=90] at (1.5,0) 
+        {\textbf{Lower} Convolution layer\\ $\layertf(p) = \star_{\text{v}}(k,c_{\text{pad},m}(p))$};
+
+      \node (c2) [draw,text width=6cm,align=center,rotate=90] at (2.75,0) 
+        {\textbf{Upper} Convolution layer};
+
+      \node (c3) [draw,text width=6cm,align=center,rotate=90] at (4,0) 
+        {\textbf{Lower} Convolution layer};
+
+      \node (c4) [draw,text width=6cm,align=center,rotate=90] at (5.25,0) 
+        {\textbf{Upper} Convolution layer};
+
+      \node (y) at (6.5,0) {$y$};
+
+      \draw[->] (x) -- (c1);
+      \draw[->] (c1) -- (c2);
+      \draw[->] (c2) -- (c3);
+      \draw[->] (c3) -- (c4);
+      \draw[->] (c4) -- (y);
+    \end{tikzpicture}
+
+    \caption{\bemph{C-SympNet architecture.} 
+    All layers with kernel size $3$, constant zero-padding.}
+  \end{figure}
 \end{frame}
 
 \begin{frame}{Linear wave equation}
@@ -624,31 +668,62 @@
   \end{tikzpicture}
 \end{frame}
 
-\begin{frame}[c]{Sine-Gordon}
-  \centering
-  \begin{tikzpicture}
-    \node [draw,text width=6cm,align=center] at (0,0) 
-      {Lower Convolution layer\\ $T(p) = \star_{\text{v}}(k,\chi_{\text{pad},m}(p))$};
+\begin{frame}{Sine-Gordon}
+  
+\end{frame}
 
-    \node [draw,text width=6cm,align=center] at (0,-1.5) 
-      {Lower Gradient Convolution layer\\ $T(p) = ...$};
+\begin{frame}[c]
+  \begin{figure}
+    \begin{tikzpicture}[node distance=0.3cm]
+      \node (c1) [draw,text width=6.5cm,align=center,rotate=90]
+        {\textbf{Lower} Convolution layer\\ $T(p) = \star_{\text{v}}(k,\chi_{\text{pad},m}(p))$};
 
-    \node [draw,text width=6cm,align=center] at (0,-3) 
-      {Upper Convolution layer\\ $T(p) = \star_{\text{v}}(k,\chi_{\text{pad},m}(p))$};
+      \node (g1) [draw,text width=6.5cm,align=center,rotate=90,
+        right=of c1.south east,anchor=north east,fill=uniSyellow]
+        {\textbf{Lower} Convolution Gradient layer\\ 
+        \small$\layertf(p) = \star_{\text{v}} \lb k, \, 
+        \lb a_j \activation \lb \lb \star_{\text{v}}^T(k,p) \rb_j + c_j \rb \rb_{j=1}^n \rb$};
 
-    \node [draw,text width=6cm,align=center] at (0,-4.5) 
-      {Upper Gradient Convolution layer\\ $T(p) = ...$};
+      \node (c2) [draw,text width=6.5cm,align=center,rotate=90,
+        right=of g1.south east,anchor=north east]
+        {\textbf{Upper} Convolution layer};
 
-      \node [draw,text width=6cm,align=center] at (8,0) 
-      {Lower Convolution layer\\ $T(p) = \star_{\text{v}}(k,\chi_{\text{pad},m}(p))$};
+      \node (g2) [draw,text width=6.5cm,align=center,rotate=90,
+        right=of c2.south east,anchor=north east,fill=uniSyellow]
+        {\textbf{Upper} Convolution Gradient layer};
+      
+      \node (c3) [draw,text width=6.5cm,align=center,rotate=90,
+        right=of g2.south east,anchor=north east]
+        {\textbf{Lower} Convolution layer};
 
-    \node [draw,text width=6cm,align=center] at (8,-1.5) 
-      {Lower Gradient Convolution layer\\ $T(p) = ...$};
+      \node (g3) [draw,text width=6.5cm,align=center,rotate=90,
+        right=of c3.south east,anchor=north east,fill=uniSyellow]
+        {\textbf{Lower} Convolution Gradient layer};
 
-    \node [draw,text width=6cm,align=center] at (8,-3) 
-      {Upper Convolution layer\\ $T(p) = \star_{\text{v}}(k,\chi_{\text{pad},m}(p))$};
+      \node (c4) [draw,text width=6.5cm,align=center,rotate=90,
+        right=of g3.south east,anchor=north east]
+        {\textbf{Upper} Convolution layer};
 
-    \node [draw,text width=6cm,align=center] at (8,-4.5) 
-      {Upper Gradient Convolution layer\\ $T(p) = ...$};
-  \end{tikzpicture}
+      \node (g4) [draw,text width=6.5cm,align=center,rotate=90,
+        right=of c4.south east,anchor=north east,fill=uniSyellow]
+        {\textbf{Upper} Convolution Gradient layer};
+
+      \node (x) [left=of c1.north] {$x = \qpvec$};
+      \node (y) [right=of g4.south] {$y$};
+
+      \draw[->] (x) -- (c1);
+      \draw[->] (c1) -- (g1);
+      \draw[->] (g1) -- (c2);
+      \draw[->] (g2) -- (c3);
+      \draw[->] (c3) -- (g3);
+      \draw[->] (g3) -- (c4);
+      \draw[->] (c4) -- (g4);
+      \draw[->] (g4) -- (y);
+    \end{tikzpicture}
+
+    \caption{
+      \bemph{CG-SympNet architecture.} Convolution layers with kernel size $3$ and FD basis.
+      Convolution Gradient layers with kernel size $100$ and stride $100$.
+    }
+  \end{figure}
 \end{frame}
