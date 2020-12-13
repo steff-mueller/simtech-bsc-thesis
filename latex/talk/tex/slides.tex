@@ -207,7 +207,7 @@
 
   with:
   \begin{itemize}
-    \item an activation function $\activation$
+    \item an activation function $\activation : \R \to \R$
     \item coefficients $a \in \R^d$ 
   \end{itemize}
 \end{frame}
@@ -220,7 +220,7 @@
 
   with:
   \begin{itemize}
-    \item an activation function $\activation$
+    \item an activation function $\activation : \R \to \R$
     \item width $n \in \N$ ($n \gg d$)
     \item parameters $a,c \in \R^n$ and $K \in \R^{n \times d}$
   \end{itemize}
@@ -265,7 +265,7 @@
 
   with:
   \begin{itemize}
-    \item an activation function $\activation$
+    \item an activation function $\activation : \R \to \R$
     \item parameters $a,\gamma, \beta \in \R^d$ 
   \end{itemize}
 \end{frame}
@@ -280,7 +280,7 @@
 
   with:
   \begin{itemize}
-    \item an activation function $\activation$
+    \item an activation function $\activation : \R \to \R$
     \item width $n \in \N$ ($n \gg d$)
     \item parameters $a,c,\gamma, \beta \in \R^n$ and $K \in \R^{n \times d}$
   \end{itemize}
@@ -521,7 +521,7 @@
 \end{frame}
 
 \begin{frame}[c]{Convolution Gradient layers}
-  The (symplectic) \bemph{gradient convolution layers} are given by the layer transform
+  The (symplectic) \bemph{convolution gradient layers} are given by the layer transform
   \begin{equation*}
     \layertf(p) = \star_{\text{v}} \lb k, \, 
     \lb a_j \activation \lb \lb \star_{\text{v}}^T(k,p) \rb_j + c_j \rb \rb_{j=1}^n \rb,
@@ -531,9 +531,15 @@
 
   with:
   \begin{itemize}
-    \item TODO
-    \item \todo{transposed cross-correlation}
+    \item activation function $\activation : \R \to \R$
+    \item kernel size $n_k \in \N$
+    \item stride number $s \in N$
+    \item kernel parameters $k,\tilde{a},\tilde{c} \in \R^{n_k}$
   \end{itemize}
+
+  Here, $\star_{\text{v}}^T$ refers to the transposed valid-cross
+  correlation, and $n \in \N$ refers to the output dimension of the
+  transposed valid cross-correlation.
 \end{frame}
 
 \section{Numerical experiments}
