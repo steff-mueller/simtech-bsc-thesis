@@ -226,6 +226,66 @@
   \end{itemize}
 \end{frame}
 
+\section{Normalization for ~\newline SympNets}
+
+\begin{frame}[c]{Batch normalization}
+  Initially proposed by \todo{REF}.
+  \bemph{Goal:} Normalize layer input 
+  to zero-mean and unit variance (with respect to the current mini-batch).
+
+  \begin{algorithm}[H]
+    \caption{Batch normalization transform $\eta_{\gamma, \beta}$}
+    \textbf{Input:} mini batch $\mathcal{B} = \{x_1, x_2, \dots, x_{n_\mathcal{B}}\} \subset \R^n$ 
+    and $x_k \in \mathcal{B}$ \\
+    \textbf{Output:} $\eta_{\gamma, \beta}(x_k) \in \R^n$
+    %\setstretch{1.5}
+    \begin{algorithmic}
+      \If{training\_mode} \Comment{Update mean and variance if training, otherwise
+      keep previous values}
+        \State $\displaystyle
+        \mu_\mathcal{B} \gets \frac{1}{n_\mathcal{B}} \sum_{i=1}^{n_\mathcal{B}} x_i$
+        \State $\displaystyle
+        \sigma^2_\mathcal{B} \gets \frac{1}{n_\mathcal{B}} \sum_{i=1}^{n_\mathcal{B}} 
+        (x_i - \mu_\mathcal{B})^2$
+      \EndIf
+      \State \Return 
+      $\displaystyle \lb \frac{\gamma_j}{(\sigma^2_\mathcal{B})_j + \epsilon} 
+      \lb (x_k)_j - \lb \mu_\mathcal{B} \rb_j \rb + \beta_j \rb_{j=1}^n$
+      \Comment{Here, $\gamma, \beta \in \mathbb{R}^{n}$ are learnable parameters.}
+    \end{algorithmic}
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}[c]{Normalized Activation layers}
+  The \bemph{normalized activation layers} are given by the layer transform
+  \begin{equation*}
+		\layertf(p) = \lb a_i \activation(\overline{p}_i) \rb_{i=1}^d
+		\quad \text{with } \overline{p} = \eta_{\gamma, \beta} \lb p \rb \in \R^d
+	\end{equation*}
+
+  with:
+  \begin{itemize}
+    \item an activation function $\activation$
+    \item parameters $a,\gamma, \beta \in \R^d$ 
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[c]{Normalized Gradient layers}
+  The \bemph{normalized gradient layers} are given by the layer transform
+  \begin{equation*}
+		\layertf(p) = K^T \bigg( a_j \activation
+		\lb \overline{p}_j \rb \bigg)_{j=1}^n
+		\quad \text{with } \, \overline{p} = \eta_{\gamma, \beta} \lb Kp + c \rb \in \R^n
+	\end{equation*}
+
+  with:
+  \begin{itemize}
+    \item an activation function $\activation$
+    \item width $n \in \N$ ($n \gg d$)
+    \item parameters $a,c,\gamma, \beta \in \R^n$ and $K \in \R^{n \times d}$
+  \end{itemize}
+\end{frame}
+
 \section{Convolution for ~\newline SympNets}
 
 \begin{frame}[c]{Convolution vs. Cross-correlation}
@@ -426,7 +486,38 @@
 \end{frame}
 
 \begin{frame}{Valid cross-correlation with stride}
-  
+  Like valid cross-correlation as defined before,\\
+  but skip every $s$-th output entry
+  for a stride number $s \in \N$.
+
+  \vspace{0.6cm}
+  Example:
+  $k \in \R^3$,
+  $x \in \R^6$,
+  $y := \star_{\text{v}}(k,x) \in \R^4$ with stride $s=3$
+
+  \vspace{0.3cm}
+  \centering
+  \begin{tikzpicture}
+    \foreach \i in {1,2,3,4,5,6} {
+      \node (x\i) [draw, minimum width=1cm] at (\i-2, 0) {$x_\i$};
+    }
+    \foreach \i in {1,2} {
+      \node (y\i) [draw, minimum width=1cm] at (\i, -2) {$y_\i$};
+    }
+
+    \onslide<1> {
+      \draw [->] (x1) edge node[left,pos=0.4]{$\cdot k_1$} (y1) ;
+      \draw [->] (x2) edge node[fill=white,pos=0.4]{$\cdot k_2$} (y1);
+      \draw [->] (x3) edge node[right,pos=0.4]{$\cdot k_3$} (y1);
+    }
+
+    \onslide<2> {
+      \draw [->] (x4) edge node[left,pos=0.4]{$\cdot k_1$} (y2) ;
+      \draw [->] (x5) edge node[fill=white,pos=0.4]{$\cdot k_2$} (y2);
+      \draw [->] (x6) edge node[right,pos=0.4]{$\cdot k_3$} (y2);
+    }
+  \end{tikzpicture}
 \end{frame}
 
 \begin{frame}[c]{Convolution Gradient layers}
@@ -444,8 +535,6 @@
     \item \todo{transposed cross-correlation}
   \end{itemize}
 \end{frame}
-
-\section{Normalization for ~\newline SympNets}
 
 \section{Numerical experiments}
 
