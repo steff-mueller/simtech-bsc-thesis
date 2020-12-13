@@ -373,7 +373,56 @@
 \end{frame}
 
 \begin{frame}{Symmetric kernel}
-  \todo{Parametrization, canonical and FD basis}
+  Given an odd kernel $k \in \mathbb{R}^{2m+1}$, we set
+  \begin{equation*}
+    \hat{k} = \hat{k}(k) := \mathcal{S}_{-m-1}(\mathcal{I}_{2m+1}(k))
+    .
+  \end{equation*}
+  Then $\hat{k}(-m) = k_1, \, \dots,\, \hat{k}(m) = k_{2m+1}$ and
+  $\hat{k}(\tau)=0$ for $\abs{\tau} > m$.
+  \begin{definition}[Symmetric kernel]
+    We call an odd kernel $k \in \mathbb{R}^{2m+1}$ symmetric if
+    \begin{equation*}
+      \hat{k}(\tau) = \hat{k}(-\tau)
+    \end{equation*}
+    for all $\tau \in \mathbb{Z}$.
+  \end{definition}
+
+  For example, $k = (a,b,c,b,a) \in \R^5$ is a symmetric kernel.
+\end{frame}
+
+\begin{frame}{Parametrization of a symmetric kernel}
+  Let $\{b_1, b_2, \dots b_{m+1} \} \subset \mathbb{R}^{2m+1}$ be a basis of the space 
+  $\{ k \in \mathbb{R}^{2m+1} : k \text{ is a symmetric kernel} \}$.
+  The symmetric kernel $k$ is then parametrized by the coefficients $\beta \in \mathbb{R}^{m+1}$ via
+  \begin{equation*}
+    k = (b_1, b_2, \dots, b_{m+1}) \beta = \beta_1 b_1 + \beta_2 b_2 + \dots + \beta_{m+1} b_{m+1}
+    .
+  \end{equation*}
+
+  \bemph{Possible basis choices:}
+  \vspace{0.3cm}
+  \begin{columns}
+    \column{.45\textwidth}
+    \centering
+    Canonical basis
+    \begin{align*}
+      b_1^{FD} = (\dots, 0,& 1,0, \dots)^T \in \mathbb{R}^{2m+1},\\
+      b_2^{FD} = (\dots, 0, 1,&0,1, 0, \dots)^T \in \mathbb{R}^{2m+1},\\
+      b_3^{FD} = (\dots, 0, 1,0,& 0,0,1, 0, \dots)^T \in \mathbb{R}^{2m+1} \\
+      &\vdots
+    \end{align*}
+
+    \column{.45\textwidth}
+    \centering
+    Finite-difference inspired basis
+    \begin{align*}
+      b_1^{FD} = (\dots, 0,& 1,0, \dots)^T \in \mathbb{R}^{2m+1},\\
+      b_2^{FD} = (\dots, 0, 1,-&2,1, 0, \dots)^T \in \mathbb{R}^{2m+1},\\
+      b_3^{FD} = (\dots, 0, 1,-4,& 6,-4,1, 0, \dots)^T \in \mathbb{R}^{2m+1} \\
+      &\vdots
+    \end{align*}
+  \end{columns}
 \end{frame}
 
 \begin{frame}{Valid cross-correlation with stride}
