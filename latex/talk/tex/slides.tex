@@ -417,21 +417,6 @@
   \end{tikzpicture}
 \end{frame}
 
-\begin{frame}[c]{Convolution layers}
-  The (symplectic) \bemph{convolution layers} are given by the layer transform
-  \begin{equation*}
-    \layertf(p) := \star_{\text{v}}(k,\chi_{\text{pad},m}(p))
-  \end{equation*}
-
-  with:
-  \begin{itemize}
-    \item a symmetric kernel $k \in \R^{2m+1}$, 
-    parametrized by $m+1$ learnable parameters
-    \item padding
-    $\chi_{\text{pad},m} = c_{\text{pad},m}$ or $\chi_{\text{pad},m} = s_{\text{pad},m}$
-  \end{itemize}
-\end{frame}
-
 \begin{frame}{Symmetric kernel}
   Given an odd kernel $k \in \mathbb{R}^{2m+1}$, we set
   \begin{equation*}
@@ -485,6 +470,21 @@
   \end{columns}
 \end{frame}
 
+\begin{frame}[c]{Convolution layers}
+  The (symplectic) \bemph{convolution layers} are given by the layer transform
+  \begin{equation*}
+    \layertf(p) := \star_{\text{v}}(k,\chi_{\text{pad},m}(p))
+  \end{equation*}
+
+  with:
+  \begin{itemize}
+    \item a symmetric kernel $k \in \R^{2m+1}$, 
+    parametrized by $m+1$ learnable parameters
+    \item padding
+    $\chi_{\text{pad},m} = c_{\text{pad},m}$ or $\chi_{\text{pad},m} = s_{\text{pad},m}$
+  \end{itemize}
+\end{frame}
+
 \begin{frame}{Valid cross-correlation with stride}
   Like valid cross-correlation as defined before,\\
   but skip every $s$-th output entry
@@ -520,6 +520,18 @@
   \end{tikzpicture}
 \end{frame}
 
+\begin{frame}[c]{Transposed valid cross-correlation}
+  \begin{itemize}
+    \item For a fixed kernel $k$, valid cross-correlation (with or without stride) 
+    is a linear map regarding the second argument. 
+    \item Therefore there exists a representation matrix $A_{k}$ with 
+    $\star_{\text{v}}(k,p) = A_{k}p$.
+    \item \bemph{Transposed valid cross-correlation}
+    is defined as the linear map associated with the transpose $A_{k}^T$ of $A_{k}$.
+    \item We denote the transposed valid cross-correlation by $\star_{\text{v}}^T$.
+  \end{itemize}
+\end{frame}
+
 \begin{frame}[c]{Convolution Gradient layers}
   The (symplectic) \bemph{convolution gradient layers} are given by the layer transform
   \begin{equation*}
@@ -537,8 +549,7 @@
     \item kernel parameters $k,\tilde{a},\tilde{c} \in \R^{n_k}$
   \end{itemize}
 
-  Here, $\star_{\text{v}}^T$ refers to the transposed valid-cross
-  correlation, and $n \in \N$ refers to the output dimension of the
+  Here, $n \in \N$ refers to the output dimension of the
   transposed valid cross-correlation.
 \end{frame}
 
