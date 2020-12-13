@@ -376,6 +376,10 @@
   \todo{Parametrization, canonical and FD basis}
 \end{frame}
 
+\begin{frame}{Valid cross-correlation with stride}
+  
+\end{frame}
+
 \begin{frame}[c]{Convolution Gradient layers}
   The (symplectic) \bemph{gradient convolution layers} are given by the layer transform
   \begin{equation*}
@@ -396,12 +400,46 @@
 
 \section{Numerical experiments}
 
-\begin{frame}{Training and test data, loss}
-  \todo{Activation function}
+\begin{frame}{Experiment setup}
+  Given some phase space samples $x_1, \dots, x_n \in \mathcal{V}$, we generate data samples 
+  \begin{equation*}
+    \mathcal{T} = \{ (x_i, \phi^{\text{h}}_{t,H}(x_i)) \}_{i=1}^{n}
+    \subset \mathcal{V} \times \mathcal{V}
+  \end{equation*}
+  for fixed time $t$.
+
+  \vspace{0.3cm}
+  The data samples $\mathcal{T}$ are split into a training data set 
+  $\mathcal{T}_{\text{train}}$ and test data set $\mathcal{T}_{\text{test}}$,\\
+  i.e. $\mathcal{T}_{\text{train}} \cup \mathcal{T}_{\text{test}} = \mathcal{T}$
+  and $\mathcal{T}_{\text{train}} \cap \mathcal{T}_{\text{test}} = \emptyset$.
+
+  \vspace{0.6cm}
+  In all our experiments, we use the mean-square error (MSE) loss defined by
+  \begin{equation*}
+    L(\mathcal{B}, \Theta) = \sum_{(x_i, y_i) \in \mathcal{B}} \norm{\Phi(x_i; \Theta) - y_i}^2_2
+    ,
+  \end{equation*}
+
+  \bemph{Goal:} The trained neural network is used as a numerical integrator
+  to predict a trajectory of the Hamiltonian ODE system given some initial values.
 \end{frame}
 
-\begin{frame}{Simple Pendulum}
-  
+\begin{frame}[c]{Simple Pendulum}
+  For $q,p \in \R$, the Hamiltonian for the Simple Pendulum is given by
+  \begin{equation*}
+    H(q,p) = \frac{p^2}{2ml^2} + mgl (1-\cos(q))
+    .
+  \end{equation*}
+  For the experiment, we choose $m=1, g=1$ and $l=1$.
+
+  \vspace{0.6cm}
+  Training and test data uniformly sampled from
+  \begin{equation*}
+    \mathcal{D} = [-\frac{\pi}{2}, \frac{\pi}{2}] \times [-\sqrt{2}, \sqrt{2}]
+  \end{equation*}
+  with fixed time $t = 0.1$,\\
+  $n_{\text{train}} = 40$ and $n_{\text{test}} = 400$.
 \end{frame}
 
 \begin{frame}[c]
@@ -466,7 +504,8 @@
       \draw[->] (a4) -- (y);
     \end{tikzpicture}
 
-    \caption{\bemph{LA-SympNet architecture.}}
+    \caption{\bemph{LA-SympNet architecture.} For the activation layers,\\
+    $\tanh$ is used as the activation function.}
   \end{figure}
 \end{frame}
 
@@ -498,11 +537,194 @@
       \draw[->] (g4) -- (y);
     \end{tikzpicture}
 
-    \caption{\bemph{G-SympNet architecture.}}
+    \caption{\bemph{G-SympNet architecture.}
+    $\tanh$ is used as the activation function.}
   \end{figure}
 \end{frame}
 
-\begin{frame}{Linear wave equation}
+\begin{frame}{Simple pendulum}
+  \begin{tikzpicture}
+    \begin{groupplot}[	
+      group style={
+        group size=2 by 1,
+        y descriptions at=edge left,
+        horizontal sep=0.1cm,
+        vertical sep=2.2cm,
+      },
+      xlabel=Epoch, ylabel=Loss,
+      width=0.9*\axisdefaultwidth, height=7cm,
+      no markers,
+      ymax=1e-1, ymin=5e-10, ymode=log,
+      legend style={nodes={scale=0.75, transform shape}},
+      legend entries={
+        FNN,
+        LA-SympNet,
+        N1-LA-SympNet,
+        G-SympNet,
+        N1-G-SympNet,
+      }
+    ]
+    \nextgroupplot[title={Training loss (tanh activation)}]
+      \addplot[
+        color=green
+      ] table[x=epoch,y=loss,col sep=comma] {../../data/simple_pendulum_swing/fnn/tanh/loss.csv};
+
+      \addplot[
+        color=red
+      ] table[x=epoch,y=loss,col sep=comma] {../../data/simple_pendulum_swing/la-sympnet/tanh/loss.csv};
+
+      \addplot[
+        color=purple, densely dashed
+      ] table[x=epoch,y=loss,col sep=comma] {../../data/simple_pendulum_swing/n1-la-sympnet/tanh/loss.csv};
+
+      \addplot[
+        color=blue
+      ] table[x=epoch,y=loss,col sep=comma] {../../data/simple_pendulum_swing/g-sympnet/tanh/loss.csv};
+
+      \addplot[
+        color=olive, densely dashed
+      ] table[x=epoch,y=loss,col sep=comma] {../../data/simple_pendulum_swing/n1-g-sympnet/tanh/loss.csv};
+
+    \nextgroupplot[title={Test loss (tanh activation)}]
+      \addplot[
+        color=green
+      ] table[x=epoch,y=loss,col sep=comma] {../../data/simple_pendulum_swing/fnn/tanh/test_loss.csv};
+
+      \addplot[
+        color=red
+      ] table[x=epoch,y=loss,col sep=comma] {../../data/simple_pendulum_swing/la-sympnet/tanh/test_loss.csv};
+
+      \addplot[
+        color=purple, densely dashed
+      ] table[x=epoch,y=loss,col sep=comma] {../../data/simple_pendulum_swing/n1-la-sympnet/tanh/test_loss.csv};
+
+      \addplot[
+        color=blue
+      ] table[x=epoch,y=loss,col sep=comma] {../../data/simple_pendulum_swing/g-sympnet/tanh/test_loss.csv};
+
+      \addplot[
+        color=olive, densely dashed
+      ] table[x=epoch,y=loss,col sep=comma] {../../data/simple_pendulum_swing/n1-g-sympnet/tanh/test_loss.csv};
+
+    \end{groupplot}
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}
+  \begin{figure}
+    \centering
+    \begin{tikzpicture}
+      \begin{groupplot}[
+        group style={
+          group size=2 by 1,
+          horizontal sep=2cm
+        },
+        no markers,
+        xlabel={t},
+        width=0.9*\axisdefaultwidth, height=7cm,
+        legend style={nodes={scale=0.75, transform shape}},
+        legend entries={
+          Ground truth,
+          FNN (tanh),
+          N1-LA-SympNet (tanh),
+          N1-G-SympNet (tanh)
+        }
+      ]
+  
+      \nextgroupplot[title={Total energy $H$}, ylabel={$H(t)$}, xmin=0, xmax=100]
+        \addplot[
+          color=darkgray
+        ] table[x=t,y=E,col sep=comma] {../../data/simple_pendulum_swing/exact/swinging_case/total_energy.csv};
+  
+        \addplot[
+          color=green
+        ] table[x=t,y=E,col sep=comma] {../../data/simple_pendulum_swing/fnn/tanh/swinging_case/total_energy.csv};
+  
+        \addplot[
+          color=purple,densely dashed
+        ] table[x=t,y=E,col sep=comma] {../../data/simple_pendulum_swing/n1-la-sympnet/tanh/swinging_case/total_energy.csv};
+  
+        \addplot[
+          color=olive,densely dashed
+        ] table[x=t,y=E,col sep=comma] {../../data/simple_pendulum_swing/n1-g-sympnet/tanh/swinging_case/total_energy.csv};
+  
+      \nextgroupplot[title={Predicted position $q$}, ylabel={$q(t)$}, xmin=91, xmax=97, legend pos=north west]
+        \addplot[
+          color=darkgray
+        ] table[x=t,y=q,col sep=comma] {../../data/simple_pendulum_swing/exact/swinging_case/q.csv};
+  
+        \addplot[
+          color=green
+        ] table[x=t,y=q,col sep=comma] {../../data/simple_pendulum_swing/fnn/tanh/swinging_case/q.csv};
+  
+        \addplot[
+          color=purple,densely dashed
+        ] table[x=t,y=q,col sep=comma] {../../data/simple_pendulum_swing/n1-la-sympnet/tanh/swinging_case/q.csv};
+  
+        \addplot[
+          color=olive,densely dashed
+        ] table[x=t,y=q,col sep=comma] {../../data/simple_pendulum_swing/n1-g-sympnet/tanh/swinging_case/q.csv};
+        
+      \end{groupplot}
+    \end{tikzpicture}
+    \caption{Total energy and position over time for simple pendulum for $q_0 = \frac{\pi}{2},\, p_0 = 0$.}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Semi-linear wave equation}
+  One-dimensional semi-linear wave equation with constant speed $c \in \R$, nonlinear term 
+  $g : \R \to \R$, domain length $l \in \R$ and domain $\Omega = [-l/2, l/2]$:
+  \begin{equation*}
+    \frac{\partial^2}{\partial t^2} u(t,x) = 
+    c^2 \frac{\partial^2}{\partial x^2} u(t,x) - g(u(t,x)) 
+    \quad \forall x \in \Omega, 
+    \, t \in I \subset \R
+  \end{equation*}
+  Initial conditions:
+  \begin{align*}
+    u(t_0,x) &= u_0(x) \\
+    \deldelt u(t_0,x) &= w_0(x) \quad \forall x \in \Omega
+  \end{align*}
+  Dirichlet boundary conditions:
+  \begin{equation*}
+    u(t,-l/2) = u_{\text{left}}, \, u(t,l/2) = u_{\text{right}} \quad \forall t \in I \subset \R
+  \end{equation*}
+\end{frame}
+
+\begin{frame}{Semi-linear wave equation as Hamiltonian ODE}
+  Given an equally-spaced grid $\{ x_i \}_{n=0}^{n+1} \subset \Omega$, $x_0 = -l/2$, $x_{n+1} = l/2$,
+  with grid width $\Delta x$,\\
+  initial values $y_0 = (\bar{q}_0^T, \bar{p}_0^T)^T \in \R^{2n}$, $\bar{q}_0 = \lb u_0(x_i) \rb_{i=1}^n \in \R^n$, 
+  $\bar{p}_0 = \lb w_0(x_i) \rb_{i=1}^n \in \R^n$,
+  the resulting \bemph{Hamiltonian system} is given by
+  \begin{align*}
+    \dot{y}(t) &= \frac{J_{2n}}{\Delta x} \grad{H}(y(t)) \quad \text{for } t \in I \subset \mathbb{R} \\
+    y(t_0) &= y_0
+  \end{align*}
+  with Hamiltonian
+  \begin{equation*}
+    H(q,p) = \sum_{i=1}^n \Delta x \lb 
+    \frac{1}{2} p_i^2 + \frac{c^2 (q_{i+1} - q_i)^2}{4 \Delta x^2} 
+    + \frac{c^2 (q_i - q_{i-1})^2}{4 \Delta x^2} + G(q_i)
+    \rb
+    \quad (q,p \in \R^n)
+    ,
+  \end{equation*}
+  where $G'(u) = \int_0^u g(v) dv$, $q_0 := u_{\text{left}}$ and $q_{n+1} := u_{\text{right}}$.
+  The generalized coordinates $q_i(t)$ then refer to $u(t,x_i)$ and 
+  the conjugate momenta $p_i(t)$ then refer to $\deldelt u(t,x_i)$.
+\end{frame}
+
+\begin{frame}[c]{Linear wave equation}
+  $G(u) = g(u) =0$. We set $c=1, l=1$ and use $100$ grid points for the discretization.
+
+  \vspace{0.3cm}
+  \begin{itemize}
+    \item Training and test data originate from a single trajectory and\\
+    are generated with fixed time $t = 0.01$.
+    \item Training data corresponds to trajectory for total time $T=0$ to $T=1$.
+    \item Test data corresponds to trajectory for total time $T=1$ to $T=10$ (extrapolation).
+  \end{itemize}
   
 \end{frame}
 
@@ -607,7 +829,7 @@
 				CNN,
 				C-SympNet (canonical basis),
 				C-SympNet (FD basis),
-				Störmer-Verlet,
+				Ground truth,
 			}
     ]
       \addplot[
@@ -646,7 +868,7 @@
 				CNN,
 				C-SympNet (canonical basis),
 				C-SympNet (FD basis),
-				Störmer-Verlet,
+				Ground truth,
 			}
     ]
       \addplot[
@@ -668,8 +890,17 @@
   \end{tikzpicture}
 \end{frame}
 
-\begin{frame}{Sine-Gordon}
-  
+\begin{frame}[c]{Sine-Gordon}
+  Semi-linear wave equation with $G(u) = 1 - \cos(u)$, $g(u) = \sin(u)$ and $c=1$.
+
+  We use $2000$ grid points for the discretization.
+
+  \vspace{0.3cm}
+  \begin{itemize}
+    \item Training and test data originate from a single trajectory and\\
+    are generated with fixed time $t = 0.01$.
+    \item Training data corresponds to trajectory for total time $T=0$ to $T=1$.
+  \end{itemize}
 \end{frame}
 
 \begin{frame}[c]
@@ -723,7 +954,98 @@
 
     \caption{
       \bemph{CG-SympNet architecture.} Convolution layers with kernel size $3$ and FD basis.
-      Convolution Gradient layers with kernel size $100$ and stride $100$.
+      Convolution Gradient layers with kernel size $100$, stride $100$ and $\tanh$ activation
+      function.
     }
   \end{figure}
+\end{frame}
+
+\begin{frame}{Sine-Gordon}
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      width=0.8*\linewidth, height=\axisdefaultheight,
+      no markers,
+      xlabel={$x$}, xmin=-25, xmax=25,
+			ymin=-1, ymax=10, restrict y to domain=-5:10,
+      title={Displacement $q(t=0,x)$}, ylabel={$q(t=0,x)$},
+			legend entries={
+				Initial value
+			}
+    ]
+      
+      \addplot[
+          color=darkgray
+        ] table[x=x,y=q,col sep=comma] {../../data-wave/sine_gordon/exact/q_t0.csv};
+      
+    \end{axis}
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Sine-Gordon}
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      width=0.8*\linewidth, height=\axisdefaultheight,
+      no markers,
+      xlabel={$x$}, xmin=-25, xmax=25,
+			ymin=-1, ymax=10, restrict y to domain=-5:10,
+      title={Displacement $q(t=3,x)$}, ylabel={$q(t=3,x)$},
+			legend entries={
+				CNN,
+				CG-SympNet (tanh),
+			  Ground truth,
+			}
+    ]
+      
+      \addplot[
+        color=green
+      ] table[x=x,y=q,col sep=comma] {../../data-wave/sine_gordon/cnn/elu/q_t3.csv};
+    
+      \addplot[
+        color=red
+      ] table[x=x,y=q,col sep=comma] {../../data-wave/sine_gordon/gradient/tanh/q_t3.csv};
+
+      \addplot[
+        color=darkgray
+      ] table[x=x,y=q,col sep=comma] {../../data-wave/sine_gordon/exact/q_t3.csv};
+      
+    \end{axis}
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Sine-Gordon}
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      width=0.8*\linewidth, height=\axisdefaultheight,
+      no markers,
+      xlabel={$x$}, xmin=-25, xmax=25,
+			ymin=-1, ymax=10, restrict y to domain=-5:10,
+      title={Displacement $q(t=9,x)$}, ylabel={$q(t=9,x)$},
+			legend entries={
+				CNN,
+				CG-SympNet (tanh),
+			  Ground truth,
+			}
+    ]
+      
+      \addplot[
+        color=green
+      ] table[x=x,y=q,col sep=comma] {../../data-wave/sine_gordon/cnn/elu/q_t9.csv};
+    
+      \addplot[
+        color=red
+      ] table[x=x,y=q,col sep=comma] {../../data-wave/sine_gordon/gradient/tanh/q_t9.csv};
+
+      \addplot[
+        color=darkgray
+      ] table[x=x,y=q,col sep=comma] {../../data-wave/sine_gordon/exact/q_t9.csv};
+      
+    \end{axis}
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{References}
+  \todo{Add references}
 \end{frame}
