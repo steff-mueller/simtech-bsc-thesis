@@ -5,8 +5,7 @@
 \section{Neural network ~\newline basics}
 
 \begin{frame}{Neural network}
-  \begin{definition}
-    (Neural Network)
+  \begin{definition}[Neural network]
     A neural network $\Phi$ is a composition of one or multiple layers $\phi$ 
     with compatible input and ouput dimensions:
     \begin{equation*}
@@ -15,7 +14,7 @@
       \phi_1(x;\theta_1); \theta_2 ) \cdots \rb ; \theta_{n_L-1} \rb ; \theta_{n_L} \rb
     \end{equation*}
     We denote the vector of
-    \bemph{all layer parameters} with $\Theta = (\theta_1^T, \dots, \theta_{n_L}^T)^T$.
+    \bemph{all layer parameters} with $\Theta = (\theta_1^\top, \dots, \theta_{n_L}^\top)^\top$.
   \end{definition}
   
   Example: (fully-connected) linear layer
@@ -24,7 +23,7 @@
   \end{equation*}
   with parameters $W \in \R^{n_2 \times n_1}$ 
   and $b \in \R^{n_2}$,\\
-  i.e. $\theta = (vec(W)^T, b^T)^T \in \R^{n_2 n_1 + n_2}$.
+  i.e. $\theta = (vec(W)^\top, b^\top)^\top \in \R^{n_2 n_1 + n_2}$.
 \end{frame}
 
 \begin{frame}{Training data and loss}
@@ -36,7 +35,8 @@
   \end{block}
 
   \begin{block}{Mini-batches}
-    disjoint subsets $\mathcal{B}_1, \dots, \mathcal{B}_{n_{\text{b}}}$
+    disjoint subsets $\mathcal{B}_1, \dots, \mathcal{B}_{n_{\text{b}}}
+    \subset \mathcal{T}$
     with $\mathcal{T} = \mathcal{B}_1 \cup \cdots \cup \mathcal{B}_{n_{\text{b}}}$
   \end{block}
 
@@ -75,22 +75,22 @@
 
 \begin{frame}{Hamiltonian system}
   \begin{equation*}
-    J := \begin{pmatrix}
+    \text{Poisson matrix } J := \begin{pmatrix}
       0 & I_d \\
       -I_d & 0
     \end{pmatrix}, \,
     d \in \N
   \end{equation*}
 
-  \begin{definition}
-    A \bemph{Hamiltonian (ODE) system} can be written in canonical form as
+  \begin{definition}[Hamiltonian (ODE) system]
+    Find solution $y: I \subset \mathbb{R} \to \mathbb{R}^{2d},\, t \mapsto y(t) = (q(t),p(t))$
+    such that
     \begin{align*}
       \dot{y}(t) &= J \grad{H}(y(t)) \quad \text{for } t \in I \subset \mathbb{R} \\
       y(t_0) &= y_0
       ,
     \end{align*}
-    where $y: I \subset \mathbb{R} \to \mathbb{R}^{2d},\, t \mapsto y(t) = (q(t),p(t))$ and 
-    $y_0 = (q_0, p_0) \in \mathbb{R}^{2d}$ the initial value at $t_0 \in I$.
+    where $y_0 = (q_0, p_0) \in \mathbb{R}^{2d}$ the initial value at $t_0 \in I$.
     The function $H: \mathbb{R}^{2d} \to \mathbb{R}$ is called the \bemph{Hamiltonian}
     or the \bemph{total energy}. The entries of $q = q(t) \in \mathbb{R}^d$ are called 
     \bemph{generalized coordinates}
@@ -152,13 +152,13 @@
 \end{frame}
 
 \begin{frame}{The building block}
-  \begin{definition}
-    (Unit Triangular Layer) A layer $\phi : \mathbb{R}^{2d} \to \mathbb{R}^{2d}$ 
+  \begin{definition}[Unit Triangular Layer]
+    A layer $\phi : \mathbb{R}^{2d} \to \mathbb{R}^{2d}$ 
     is called a unit triangular layer with \bemph{layer transform}
     \begin{equation*}
       \layertf : \mathbb{R}^d \to \mathbb{R}^d,\, p \mapsto \layertf(p)
     \end{equation*}
-    and bias parameter $b \in \R^{2d}$, if $\phi$ can be expressed as
+    and bias parameter $b \in \R^{2d}$, if the layer $\phi$ can be expressed as
     \begin{equation*}
       \phi_\up \qpvec = \uppersympop{\layertf} + b
       = \begin{pmatrix}
@@ -181,7 +181,7 @@
 \end{frame}
 
 \begin{frame}[c]{Linear layers}
-  The \bemph{linear layers} are given by the layer transform
+  The (symplectic) \bemph{linear layers} are defined by the layer transform
   \begin{equation*}
     \layertf(p) = Sp
   \end{equation*}
@@ -200,7 +200,7 @@
 \end{frame}
 
 \begin{frame}[c]{Activation layers}
-  The \bemph{activation layers} are given by the layer transform
+  The (symplectic) \bemph{activation layers} are defined by the layer transform
   \begin{equation*}
     \layertf(p) = \lb a_i \activation(p_i) \rb_{i=1}^d
   \end{equation*}
@@ -213,9 +213,9 @@
 \end{frame}
 
 \begin{frame}[c]{Gradient layers}
-  The \bemph{gradient layers} are given by the layer transform
+  The (symplectic) \bemph{gradient layers} are defined by the layer transform
   \begin{equation*}
-    \layertf(p) = K^T \bigg( a_j \activation \lb (Kp)_j + c_j \rb \bigg)_{j=1}^n
+    \layertf(p) = K^\top \bigg( a_j \activation \lb (Kp)_j + c_j \rb \bigg)_{j=1}^n
   \end{equation*}
 
   with:
@@ -257,7 +257,7 @@
 \end{frame}
 
 \begin{frame}[c]{Normalized Activation layers}
-  The \bemph{normalized activation layers} are given by the layer transform
+  The (symplectic) \bemph{normalized activation layers} are defined by the layer transform
   \begin{equation*}
 		\layertf(p) = \lb a_i \activation(\overline{p}_i) \rb_{i=1}^d
 		\quad \text{with } \overline{p} = \eta_{\gamma, \beta} \lb p \rb \in \R^d
@@ -271,9 +271,9 @@
 \end{frame}
 
 \begin{frame}[c]{Normalized Gradient layers}
-  The \bemph{normalized gradient layers} are given by the layer transform
+  The (symplectic) \bemph{normalized gradient layers} are defined by the layer transform
   \begin{equation*}
-		\layertf(p) = K^T \bigg( a_j \activation
+		\layertf(p) = K^\top \bigg( a_j \activation
 		\lb \overline{p}_j \rb \bigg)_{j=1}^n
 		\quad \text{with } \, \overline{p} = \eta_{\gamma, \beta} \lb Kp + c \rb \in \R^n
 	\end{equation*}
@@ -471,7 +471,7 @@
 \end{frame}
 
 \begin{frame}[c]{Convolution layers}
-  The (symplectic) \bemph{convolution layers} are given by the layer transform
+  The (symplectic) \bemph{convolution layers} are defined by the layer transform
   \begin{equation*}
     \layertf(p) := \star_{\text{v}}(k,\chi_{\text{pad},m}(p))
   \end{equation*}
@@ -556,38 +556,50 @@
 \section{Numerical experiments}
 
 \begin{frame}{Experiment setup}
+  \onslide<1-> {
   Given some phase space samples $x_1, \dots, x_n \in \mathcal{V}$, we generate data samples 
   \begin{equation*}
     \mathcal{T} = \{ (x_i, \phi^{\text{h}}_{t,H}(x_i)) \}_{i=1}^{n}
     \subset \mathcal{V} \times \mathcal{V}
   \end{equation*}
   for fixed time $t$.
+  }
 
+  \onslide<2-> {
   \vspace{0.3cm}
   The data samples $\mathcal{T}$ are split into a training data set 
   $\mathcal{T}_{\text{train}}$ and test data set $\mathcal{T}_{\text{test}}$,\\
   i.e. $\mathcal{T}_{\text{train}} \cup \mathcal{T}_{\text{test}} = \mathcal{T}$
   and $\mathcal{T}_{\text{train}} \cap \mathcal{T}_{\text{test}} = \emptyset$.
+  }
 
+  \onslide<3-> {
   \vspace{0.6cm}
   In all our experiments, we use the mean-square error (MSE) loss defined by
   \begin{equation*}
     L(\mathcal{B}, \Theta) = \sum_{(x_i, y_i) \in \mathcal{B}} \norm{\Phi(x_i; \Theta) - y_i}^2_2
     ,
   \end{equation*}
+  }
 
-  \bemph{Goal:} The trained neural network is used as a numerical integrator
-  to predict a trajectory of the Hamiltonian ODE system given some initial values.
+  \onslide<4-> {
+  \bemph{Goal:} Given some initial values,
+  the trained neural network is used as a numerical integrator
+  to predict a trajectory of the Hamiltonian ODE system.
+  }
 \end{frame}
 
 \begin{frame}[c]{Simple Pendulum}
+  \onslide<1-> {
   For $q,p \in \R$, the Hamiltonian for the Simple Pendulum is given by
   \begin{equation*}
     H(q,p) = \frac{p^2}{2ml^2} + mgl (1-\cos(q))
     .
   \end{equation*}
   For the experiment, we choose $m=1, g=1$ and $l=1$.
+  }
 
+  \onslide<2-> {
   \vspace{0.6cm}
   Training and test data uniformly sampled from
   \begin{equation*}
@@ -595,6 +607,7 @@
   \end{equation*}
   with fixed time $t = 0.1$,\\
   $n_{\text{train}} = 40$ and $n_{\text{test}} = 400$.
+  }
 \end{frame}
 
 \begin{frame}[c]
@@ -1108,7 +1121,8 @@
     \end{tikzpicture}
 
     \caption{
-      \bemph{CG-SympNet architecture.} Convolution layers with kernel size $3$ and FD basis.
+      \bemph{CG-SympNet architecture.} Convolution layers with kernel size $3$, FD basis
+      and symmetric padding.
       Convolution Gradient layers with kernel size $100$, stride $100$ and $\tanh$ activation
       function.
     }
