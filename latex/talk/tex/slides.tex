@@ -16,7 +16,7 @@
     \end{tikzpicture}
 
     \vspace{0.3cm}
-    \bemph{Idea:} Use symplectic neural networks 
+    \bemph{Idea:} Use symplectic neural networks as
     proposed by \citeauthor{Jin2020}\footcite{Jin2020}
   \end{center}
 
@@ -49,7 +49,7 @@
     \bemph{all layer parameters} with $\Theta = (\theta_1^\top, \dots, \theta_{n_L}^\top)^\top$.
   \end{definition}
   
-  Example: (fully-connected) linear layer
+  Example: so-called (fully-connected) linear layer
   \begin{equation*}
     \phi(x) = Wx +b
   \end{equation*}
@@ -66,37 +66,27 @@
    \subset \R^{n_x} \times \R^{n_y}$
   \end{block}
 
-  \begin{block}{Mini-batches}
-    disjoint subsets $\mathcal{B}_1, \dots, \mathcal{B}_{n_{\text{b}}}
-    \subset \mathcal{T}$
-    with $\mathcal{T} = \mathcal{B}_1 \cup \cdots \cup \mathcal{B}_{n_{\text{b}}}$
-  \end{block}
-
   \begin{block}{Loss}
     \begin{equation*}
-      L(\mathcal{B}; \Theta) = \sum_{(x_i,y_i) \in \mathcal{B}} l(\Phi(x_i; \Theta), y_i),
+      L(\mathcal{T}, \Theta) = 
+      \sum_{(x_i, y_i) \in \mathcal{T}} \norm{\Phi(x_i; \Theta) - y_i}^2_2
     \end{equation*}
-    where $l : \R^{n_y} \times \R^{n_y} \to \R$ gives the loss for an 
-    individual training sample.
   \end{block} 
+
+  \vspace{0.3cm}
+  \bemph{Goal:} Solve optimization problem $\min_\Theta L(\mathcal{T}; \Theta)$
 \end{frame}
 
-\begin{frame}{Gradient descent}
+\begin{frame}[c]{Gradient descent}
+  \bemph{Goal:} Solve optimization problem $\min_\Theta L(\mathcal{T}; \Theta)$
+  \vspace{0.3cm}
+
   learning rate $\gamma \in  \R$
 
   epoch $i \in \N$
   \begin{block}{Gradient descent}
     \begin{equation*}
       \Theta_{i+1} = \Theta_i - \gamma \grad[\Theta]{L(\mathcal{T};\Theta_{i})}
-    \end{equation*}
-  \end{block}
-
-  If the training data is split into mini-batches:
-  \begin{block}{Stochastic Gradient descent}
-    \begin{equation*}
-      \Theta_{i+1} = \Theta_i - \gamma \grad[\Theta]{L(
-        \mathcal{B}_{((i \textrm{ mod } n_{\text{b}}) + 1)};
-        \Theta_{i})}
     \end{equation*}
   \end{block}
 
@@ -107,27 +97,40 @@
 
 \begin{frame}{Hamiltonian system}
   \begin{equation*}
-    \text{Poisson matrix } J := \begin{pmatrix}
+    \text{Phase space } \R^{2d},\,
+    \text{Poisson matrix } J = \begin{pmatrix}
       0 & I_d \\
       -I_d & 0
-    \end{pmatrix}, \,
-    d \in \N
+    \end{pmatrix}
+  \end{equation*}
+  \begin{equation*}
+    \text{\bemph{Hamiltonian} or \bemph{total energy} }
+    H: \mathbb{R}^{2d} \to \mathbb{R}
   \end{equation*}
 
   \begin{definition}[Hamiltonian (ODE) system]
-    Find solution $y: I \subset \mathbb{R} \to \mathbb{R}^{2d},\, t \mapsto y(t) = (q(t),p(t))$
+    Given $(\R^{2d}, J, H)$ and initial values
+    $y_0 = (q_0, p_0) \in \mathbb{R}^{2d}$ for time $t_0 \in I$, 
+    find a solution 
+    \begin{equation*}
+      y: I \subset \mathbb{R} \to \mathbb{R}^{2d},\, t \mapsto y(t) =
+      \left(
+      \begin{array}{c}
+        q(t)\\
+        p(t)
+      \end{array}
+      \right)\hspace{-5pt}
+      \begin{array}{l}
+        \text{coordinates}\\
+        \text{momenta}\\
+      \end{array}
+    \end{equation*}
     such that
     \begin{align*}
       \dot{y}(t) &= J \grad{H}(y(t)) \quad \text{for } t \in I \subset \mathbb{R} \\
       y(t_0) &= y_0
-      ,
+      .
     \end{align*}
-    where $y_0 = (q_0, p_0) \in \mathbb{R}^{2d}$ the initial value at $t_0 \in I$.
-    The function $H: \mathbb{R}^{2d} \to \mathbb{R}$ is called the \bemph{Hamiltonian}
-    or the \bemph{total energy}. The entries of $q = q(t) \in \mathbb{R}^d$ are called 
-    \bemph{generalized coordinates}
-    and the entries of $p=p(t) \in \mathbb{R}^d$ are called \bemph{conjugate momenta}. 
-    The \bemph{phase space} $\mathcal{V} = \mathbb{R}^{2d}$ has even dimension for Hamiltonian systems.
   \end{definition}
 \end{frame}
 
@@ -154,7 +157,7 @@
 
   \begin{definition}
     A differentiable map $\phi : U \to \mathbb{R}^{2d}$ (where $U \subset \mathbb{R}^{2d}$ is an open set)
-    is called symplectic if the Jacobian matrix $\jac{\phi}{x}$ is symplectic everywhere, i.e.
+    is called symplectic if for the Jacobian matrix $\jac{\phi}{x}$ holds everywhere that
     \begin{equation*}
       \lb \jac{\phi}{x} \rb^T J \lb \jac{\phi}{x} \rb = J
       .
@@ -166,23 +169,6 @@
 
 \section{SympNets: ~\newline Symplectic networks}
 
-\begin{frame}[c]{Block operator}
-  For $q,p \in \R^{d}$ and maps $f_{11}, f_{12}, f_{21}, f_{22} : \R^d \to \R^d$,
-  we define the block operator as
-  \begin{equation*}
-    \begin{bmatrix}
-      f_{11} & f_{12} \\
-      f_{21} & f_{22}
-    \end{bmatrix}
-    \qpvec
-    := \begin{pmatrix}
-      f_{11}(q) + f_{12}(p) \\
-      f_{21}(q) + f_{22}(p)
-    \end{pmatrix} \in \R^{2d}
-    .
-  \end{equation*}
-\end{frame}
-
 \begin{frame}{The building block}
   \begin{definition}[Unit Triangular Layer]
     A layer $\phi : \mathbb{R}^{2d} \to \mathbb{R}^{2d}$ 
@@ -192,7 +178,7 @@
     \end{equation*}
     and bias parameter $b \in \R^{2d}$, if the layer $\phi$ can be expressed as
     \begin{equation*}
-      \phi_\up \qpvec = \uppersympop{\layertf} + b
+      \phi_\up \qpvec
       = \begin{pmatrix}
         q + \layertf(p) \\
         p
@@ -200,7 +186,7 @@
     \end{equation*}
     or
     \begin{equation*}
-      \phi_\low \qpvec = \lowersympop{\layertf} + b
+      \phi_\low \qpvec
       = \begin{pmatrix}
         q \\
         \layertf(q) + p
@@ -321,7 +307,7 @@
 \section{Convolution for ~\newline SympNets}
 
 \begin{frame}[c]{Convolution vs. Cross-correlation}
-  Given two discrete functions $f,g \in \mathbb{R}^\mathbb{Z}$, 
+  Given two discrete functions $f,g \in \mathbb{R}^\mathbb{Z}$, discrete
   \bemph{convolution} is defined as 
   \begin{equation*}
     *: \mathbb{R}^{\mathbb{Z}} \times \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
@@ -329,7 +315,7 @@
     .
   \end{equation*}
 
-  \bemph{Cross-correlation} is defined as
+  Discrete \bemph{cross-correlation} is defined as
   \begin{equation*}
     \star: \mathbb{R}^{\mathbb{Z}} \times \mathbb{R}^{\mathbb{Z}} \to \mathbb{R}^{\mathbb{Z}},
     \quad (f \star g)(\tau) = \sum^{\infty}_{a=-\infty} f(a) g(\tau + a)
@@ -338,19 +324,15 @@
 \end{frame}
 
 \begin{frame}[c]{Valid cross-correlation}
-  \begin{definition}[Valid cross-correlation]
-    We define the valid cross-correlation of a finite-dimensional kernel $k \in \mathbb{R}^{n_k}$ and 
-    a finite-dimensional input $x \in \mathbb{R}^{n_x}$ with $n_x \geq n_k$ as
-    \begin{equation*}
-      \star_{\text{v}} : \mathbb{R}^{n_k} \times \mathbb{R}^{n_x} \to \mathbb{R}^{n_x-n_k+1},
-      \quad \star_{\text{v}}(k,x) := \mathcal{I}_{n_x-n_k+1}^{\text{inv}} (
-        \mathcal{S}_{-1}( \mathcal{I}_{n_k}(k)) \star \mathcal{I}_{n_x}(x)
-      )
-      .
-    \end{equation*}
-  \end{definition}
+  For two discrete functions with finite support (i.e. vectors $\R^n$ for a $n \in \N$), 
+  only evaluate the cross-correlation where the support of both 
+  discrete functions fully overlaps.
+  \begin{equation*}
+    \star_{\text{v}} : \mathbb{R}^{n_k} \times \mathbb{R}^{n_x} \to \mathbb{R}^{n_x-n_k+1}
+  \end{equation*}
 
-  Example:
+  \vspace{0.3cm}
+  \bemph{Example:}
   $k \in \R^3$,
   $x \in \R^6$,
   $y := \star_{\text{v}}(k,x) \in \R^4$
@@ -449,34 +431,22 @@
   \end{tikzpicture}
 \end{frame}
 
-\begin{frame}{Symmetric kernel}
-  Given an odd kernel $k \in \mathbb{R}^{2m+1}$, we set
+\begin{frame}[c]{Symmetric kernel}
   \begin{equation*}
-    \hat{k} = \hat{k}(k) := \mathcal{S}_{-m-1}(\mathcal{I}_{2m+1}(k))
-    .
+    k = \begin{pmatrix}
+      a_{-m} \\
+      \vdots \\
+      a_{-1} \\
+      a_0 \\
+      a_1 \\
+      \vdots \\
+      a_m
+    \end{pmatrix} \in \R^{2m+1}, \,\,
+    a_{i} \overset{!}{=} a_{-i} \, \forall i = 1, \dots, m
   \end{equation*}
-  Then $\hat{k}(-m) = k_1, \, \dots,\, \hat{k}(m) = k_{2m+1}$ and
-  $\hat{k}(\tau)=0$ for $\abs{\tau} > m$.
-  \begin{definition}[Symmetric kernel]
-    We call an odd kernel $k \in \mathbb{R}^{2m+1}$ symmetric if
-    \begin{equation*}
-      \hat{k}(\tau) = \hat{k}(-\tau)
-    \end{equation*}
-    for all $\tau \in \mathbb{Z}$.
-  \end{definition}
-
-  For example, $k = (a,b,c,b,a) \in \R^5$ is a symmetric kernel.
 \end{frame}
 
-\begin{frame}{Parametrization of a symmetric kernel}
-  Let $\{b_1, b_2, \dots b_{m+1} \} \subset \mathbb{R}^{2m+1}$ be a basis of the space 
-  $\{ k \in \mathbb{R}^{2m+1} : k \text{ is a symmetric kernel} \}$.
-  The symmetric kernel $k$ is then parametrized by the coefficients $\beta \in \mathbb{R}^{m+1}$ via
-  \begin{equation*}
-    k = (b_1, b_2, \dots, b_{m+1}) \beta = \beta_1 b_1 + \beta_2 b_2 + \dots + \beta_{m+1} b_{m+1}
-    .
-  \end{equation*}
-
+\begin{frame}[c]{Parametrization of a symmetric kernel}
   \bemph{Possible basis choices:}
   \vspace{0.3cm}
   \begin{columns}
@@ -484,9 +454,9 @@
     \centering
     Canonical basis
     \begin{align*}
-      b_1^{FD} = (\dots, 0,& 1,0, \dots)^T \in \mathbb{R}^{2m+1},\\
-      b_2^{FD} = (\dots, 0, 1,&0,1, 0, \dots)^T \in \mathbb{R}^{2m+1},\\
-      b_3^{FD} = (\dots, 0, 1,0,& 0,0,1, 0, \dots)^T \in \mathbb{R}^{2m+1} \\
+      b_1^{FD} = (\dots, 0,& 1,0, \dots)^\top \in \mathbb{R}^{2m+1},\\
+      b_2^{FD} = (\dots, 0, 1,&0,1, 0, \dots)^\top \in \mathbb{R}^{2m+1},\\
+      b_3^{FD} = (\dots, 0, 1,0,& 0,0,1, 0, \dots)^\top \in \mathbb{R}^{2m+1} \\
       &\vdots
     \end{align*}
 
@@ -494,9 +464,9 @@
     \centering
     Finite-difference inspired basis
     \begin{align*}
-      b_1^{FD} = (\dots, 0,& 1,0, \dots)^T \in \mathbb{R}^{2m+1},\\
-      b_2^{FD} = (\dots, 0, 1,-&2,1, 0, \dots)^T \in \mathbb{R}^{2m+1},\\
-      b_3^{FD} = (\dots, 0, 1,-4,& 6,-4,1, 0, \dots)^T \in \mathbb{R}^{2m+1} \\
+      b_1^{FD} = (\dots, 0,& 1,0, \dots)^\top \in \mathbb{R}^{2m+1},\\
+      b_2^{FD} = (\dots, 0, 1,-&2,1, 0, \dots)^\top \in \mathbb{R}^{2m+1},\\
+      b_3^{FD} = (\dots, 0, 1,-4,& 6,-4,1, 0, \dots)^\top \in \mathbb{R}^{2m+1} \\
       &\vdots
     \end{align*}
   \end{columns}
@@ -517,82 +487,14 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Valid cross-correlation with stride}
-  Like valid cross-correlation as defined before,\\
-  but skip every $s$-th output entry
-  for a stride number $s \in \N$.
-
-  \vspace{0.6cm}
-  Example:
-  $k \in \R^3$,
-  $x \in \R^6$,
-  $y := \star_{\text{v}}(k,x) \in \R^4$ with stride $s=3$
-
-  \vspace{0.3cm}
-  \centering
-  \begin{tikzpicture}
-    \foreach \i in {1,2,3,4,5,6} {
-      \node (x\i) [draw, minimum width=1cm] at (\i-2, 0) {$x_\i$};
-    }
-    \foreach \i in {1,2} {
-      \node (y\i) [draw, minimum width=1cm] at (\i, -2) {$y_\i$};
-    }
-
-    \onslide<1> {
-      \draw [->] (x1) edge node[left,pos=0.4]{$\cdot k_1$} (y1) ;
-      \draw [->] (x2) edge node[fill=white,pos=0.4]{$\cdot k_2$} (y1);
-      \draw [->] (x3) edge node[right,pos=0.4]{$\cdot k_3$} (y1);
-    }
-
-    \onslide<2> {
-      \draw [->] (x4) edge node[left,pos=0.4]{$\cdot k_1$} (y2) ;
-      \draw [->] (x5) edge node[fill=white,pos=0.4]{$\cdot k_2$} (y2);
-      \draw [->] (x6) edge node[right,pos=0.4]{$\cdot k_3$} (y2);
-    }
-  \end{tikzpicture}
-\end{frame}
-
-\begin{frame}[c]{Transposed valid cross-correlation}
-  \begin{itemize}
-    \item For a fixed kernel $k$, valid cross-correlation (with or without stride) 
-    is a linear map regarding the second argument. 
-    \item Therefore there exists a representation matrix $A_{k}$ with 
-    $\star_{\text{v}}(k,p) = A_{k}p$.
-    \item \bemph{Transposed valid cross-correlation}
-    is defined as the linear map associated with the transpose $A_{k}^T$ of $A_{k}$.
-    \item We denote the transposed valid cross-correlation by $\star_{\text{v}}^T$.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}[c]{Convolution Gradient layers}
-  The (symplectic) \bemph{convolution gradient layers} are given by the layer transform
-  \begin{equation*}
-    \layertf(p) = \star_{\text{v}} \lb k, \, 
-    \lb a_j \activation \lb \lb \star_{\text{v}}^T(k,p) \rb_j + c_j \rb \rb_{j=1}^n \rb,
-		\quad c = \star_{\text{v}}^T(\tilde{c},1_d) 
-		\text{ and } a = \star_{\text{v}}^T(\tilde{a},1_d)
-  \end{equation*}
-
-  with:
-  \begin{itemize}
-    \item activation function $\activation : \R \to \R$
-    \item kernel size $n_k \in \N$
-    \item stride number $s \in N$
-    \item kernel parameters $k,\tilde{a},\tilde{c} \in \R^{n_k}$
-  \end{itemize}
-
-  Here, $n \in \N$ refers to the output dimension of the
-  transposed valid cross-correlation.
-\end{frame}
-
 \section{Numerical experiments}
 
 \begin{frame}{Experiment setup}
   \onslide<1-> {
-  Given some phase space samples $x_1, \dots, x_n \in \mathcal{V}$, we generate data samples 
+  Given some phase space samples $x_1, \dots, x_n \in \R^{2d}$, we generate data samples 
   \begin{equation*}
     \mathcal{T} = \{ (x_i, \phi^{\text{h}}_{t,H}(x_i)) \}_{i=1}^{n}
-    \subset \mathcal{V} \times \mathcal{V}
+    \subset \R^{2d} \times \R^{2d}
   \end{equation*}
   for fixed time $t$.
   }
@@ -607,14 +509,6 @@
 
   \onslide<3-> {
   \vspace{0.6cm}
-  In all our experiments, we use the mean-square error (MSE) loss defined by
-  \begin{equation*}
-    L(\mathcal{B}, \Theta) = \sum_{(x_i, y_i) \in \mathcal{B}} \norm{\Phi(x_i; \Theta) - y_i}^2_2
-    ,
-  \end{equation*}
-  }
-
-  \onslide<4-> {
   \bemph{Goal:} Given some initial values,
   the trained neural network is used as a numerical integrator
   to predict a trajectory of the Hamiltonian ODE system.
@@ -871,48 +765,23 @@
   \end{figure}
 \end{frame}
 
-\begin{frame}{Semi-linear wave equation}
-  One-dimensional semi-linear wave equation with constant speed $c \in \R$, nonlinear term 
-  $g : \R \to \R$, domain length $l \in \R$ and domain $\Omega = [-l/2, l/2]$:
-  \begin{equation*}
-    \frac{\partial^2}{\partial t^2} u(t,x) = 
-    c^2 \frac{\partial^2}{\partial x^2} u(t,x) - g(u(t,x)) 
-    \quad \forall x \in \Omega, 
-    \, t \in I \subset \R
-  \end{equation*}
-  Initial conditions:
-  \begin{align*}
-    u(t_0,x) &= u_0(x) \\
-    \deldelt u(t_0,x) &= w_0(x) \quad \forall x \in \Omega
-  \end{align*}
-  Dirichlet boundary conditions:
-  \begin{equation*}
-    u(t,-l/2) = u_{\text{left}}, \, u(t,l/2) = u_{\text{right}} \quad \forall t \in I \subset \R
-  \end{equation*}
-\end{frame}
+\begin{frame}[c]{Semi-linear wave equation}
+  \centering
+  \begin{tikzpicture}
+    \node (wave_eq) [draw,text width=4.5cm,align=center] at (0,0)
+        {Wave equation\\ 
+        $\frac{\partial^2}{\partial t^2} u = 
+        c^2 \frac{\partial^2}{\partial x^2} u - g(u)$};
 
-\begin{frame}{Semi-linear wave equation as Hamiltonian ODE}
-  Given an equally-spaced grid $\{ x_i \}_{n=0}^{n+1} \subset \Omega$, $x_0 = -l/2$, $x_{n+1} = l/2$,
-  with grid width $\Delta x$,\\
-  initial values $y_0 = (\bar{q}_0^T, \bar{p}_0^T)^T \in \R^{2n}$, $\bar{q}_0 = \lb u_0(x_i) \rb_{i=1}^n \in \R^n$, 
-  $\bar{p}_0 = \lb w_0(x_i) \rb_{i=1}^n \in \R^n$,
-  the resulting \bemph{Hamiltonian system} is given by
-  \begin{align*}
-    \dot{y}(t) &= \frac{J_{2n}}{\Delta x} \grad{H}(y(t)) \quad \text{for } t \in I \subset \mathbb{R} \\
-    y(t_0) &= y_0
-  \end{align*}
-  with Hamiltonian
-  \begin{equation*}
-    H(q,p) = \sum_{i=1}^n \Delta x \lb 
-    \frac{1}{2} p_i^2 + \frac{c^2 (q_{i+1} - q_i)^2}{4 \Delta x^2} 
-    + \frac{c^2 (q_i - q_{i-1})^2}{4 \Delta x^2} + G(q_i)
-    \rb
-    \quad (q,p \in \R^n)
-    ,
-  \end{equation*}
-  where $G'(u) = \int_0^u g(v) dv$, $q_0 := u_{\text{left}}$ and $q_{n+1} := u_{\text{right}}$.
-  The generalized coordinates $q_i(t)$ then refer to $u(t,x_i)$ and 
-  the conjugate momenta $p_i(t)$ then refer to $\deldelt u(t,x_i)$.
+    \node (ham_sys) [draw,text width=6.5cm,align=center] at (8,0)
+        {Hamiltonian System $(\R^{2d}, J, H)$\\
+        $\dot{y}(t) = J \grad{H}(y(t)) \in \R^{2d}$};
+
+    \node [text width=6.5cm,align=center] at (8,-1)
+        {$d$: number of (spatial) grid points};
+
+    \draw [->] (wave_eq) -- (ham_sys);
+  \end{tikzpicture}
 \end{frame}
 
 \begin{frame}[c]{Linear wave equation}
@@ -1111,9 +980,7 @@
 
       \node (g1) [draw,text width=6.5cm,align=center,rotate=90,
         right=of c1.south east,anchor=north east,fill=uniSyellow]
-        {\textbf{Lower} Convolution Gradient layer\\ 
-        \small$\layertf(p) = \star_{\text{v}} \lb k, \, 
-        \lb a_j \activation \lb \lb \star_{\text{v}}^T(k,p) \rb_j + c_j \rb \rb_{j=1}^n \rb$};
+        {\textbf{Lower} Convolution Gradient layer};
 
       \node (c2) [draw,text width=6.5cm,align=center,rotate=90,
         right=of g1.south east,anchor=north east]
@@ -1245,8 +1112,4 @@
       
     \end{axis}
   \end{tikzpicture}
-\end{frame}
-
-\begin{frame}{References}
-  \todo{Add references}
 \end{frame}

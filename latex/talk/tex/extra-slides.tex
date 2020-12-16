@@ -1,0 +1,43 @@
+\begin{frame}{Semi-linear wave equation}
+    One-dimensional semi-linear wave equation with constant speed $c \in \R$, nonlinear term 
+    $g : \R \to \R$, domain length $l \in \R$ and domain $\Omega = [-l/2, l/2]$:
+    \begin{equation*}
+      \frac{\partial^2}{\partial t^2} u(t,x) = 
+      c^2 \frac{\partial^2}{\partial x^2} u(t,x) - g(u(t,x)) 
+      \quad \forall x \in \Omega, 
+      \, t \in I \subset \R
+    \end{equation*}
+    Initial conditions:
+    \begin{align*}
+      u(t_0,x) &= u_0(x) \\
+      \deldelt u(t_0,x) &= w_0(x) \quad \forall x \in \Omega
+    \end{align*}
+    Dirichlet boundary conditions:
+    \begin{equation*}
+      u(t,-l/2) = u_{\text{left}}, \, u(t,l/2) = u_{\text{right}} \quad \forall t \in I \subset \R
+    \end{equation*}
+  \end{frame}
+  
+  \begin{frame}{Semi-linear wave equation as Hamiltonian ODE}
+    Given an equally-spaced grid $\{ x_i \}_{n=0}^{n+1} \subset \Omega$, $x_0 = -l/2$, $x_{n+1} = l/2$,
+    with grid width $\Delta x$,\\
+    initial values $y_0 = (\bar{q}_0^T, \bar{p}_0^T)^T \in \R^{2n}$, $\bar{q}_0 = \lb u_0(x_i) \rb_{i=1}^n \in \R^n$, 
+    $\bar{p}_0 = \lb w_0(x_i) \rb_{i=1}^n \in \R^n$,
+    the resulting \bemph{Hamiltonian system} is given by
+    \begin{align*}
+      \dot{y}(t) &= \frac{J_{2n}}{\Delta x} \grad{H}(y(t)) \quad \text{for } t \in I \subset \mathbb{R} \\
+      y(t_0) &= y_0
+    \end{align*}
+    with Hamiltonian
+    \begin{equation*}
+      H(q,p) = \sum_{i=1}^n \Delta x \lb 
+      \frac{1}{2} p_i^2 + \frac{c^2 (q_{i+1} - q_i)^2}{4 \Delta x^2} 
+      + \frac{c^2 (q_i - q_{i-1})^2}{4 \Delta x^2} + G(q_i)
+      \rb
+      \quad (q,p \in \R^n)
+      ,
+    \end{equation*}
+    where $G'(u) = \int_0^u g(v) dv$, $q_0 := u_{\text{left}}$ and $q_{n+1} := u_{\text{right}}$.
+    The generalized coordinates $q_i(t)$ then refer to $u(t,x_i)$ and 
+    the conjugate momenta $p_i(t)$ then refer to $\deldelt u(t,x_i)$.
+  \end{frame}
