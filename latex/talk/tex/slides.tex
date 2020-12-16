@@ -1,3 +1,35 @@
+\begin{frame}[c]{Motivation}
+  \begin{center}
+    \begin{tikzpicture}
+      \node [draw,text width=4.5cm,align=center] at (0,-0.5)
+          {Hamiltonian System\\ $(\R^{2d}, J, H)$};
+
+      \node (y0) at (4,0) {$y_0$};
+      \node (yt) at (10,0) {$y(t; y_0)$};
+
+      \draw [->] (y0) edge node[above]{flow map $\phi_{t,H} : \R^{2d} \to \R^{2d}$} (yt);
+
+      \node (y01) at (4,-1) {$y_0$};
+      \node (yt1) at (10,-1) {$y(t; y_0)$};
+
+      \draw [->] (y01) edge node[above]{neural network $\Phi : \R^{2d} \to \R^{2d}$} (yt1) ;
+    \end{tikzpicture}
+
+    \vspace{0.3cm}
+    \bemph{Idea:} Use symplectic neural networks 
+    proposed by \citeauthor{Jin2020}\footcite{Jin2020}
+  \end{center}
+
+  \vspace{0.3cm}
+  \bemph{Own work:}
+  \begin{itemize}
+    \item Extension to high-dimensional Hamiltonian systems 
+    (discretized PDEs) via convolution.
+    \item Improve performance with batch normalization.
+    \item Implementation.
+  \end{itemize}
+\end{frame}
+
 \begin{frame}{Structure}
   \tableofcontents
 \end{frame}
