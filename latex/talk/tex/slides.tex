@@ -708,10 +708,11 @@
   \begin{figure}
     \centering
     \begin{tikzpicture}
+      \hspace{-0.3cm}
       \begin{groupplot}[
         group style={
           group size=2 by 1,
-          horizontal sep=2cm
+          horizontal sep=1.7cm
         },
         no markers,
         xlabel={t},
@@ -1112,4 +1113,20 @@
       
     \end{axis}
   \end{tikzpicture}
+\end{frame}
+
+\begin{frame}[c]{Summary and Outlook}
+  \bemph{Summary:}
+  \begin{itemize}
+    \item We successfully improved performance of SympNets with batch normalization.
+    \item With convolution, we made SympNets applicable for high-dimensional systems
+    arising from PDEs.
+  \end{itemize}
+
+  \vspace{0.3cm}
+  \bemph{Outlook:}
+  \begin{itemize}
+    \item Convolution in 2D or 3D
+    \item Recurrent neural network
+  \end{itemize}
 \end{frame}
