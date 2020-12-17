@@ -16,17 +16,17 @@
     \end{tikzpicture}
 
     \vspace{0.3cm}
-    \bemph{Idea:} Use symplectic neural networks as
-    proposed by \citeauthor{Jin2020}\footcite{Jin2020}
+    \bemph{Idea:} Use symplectic neural networks.
   \end{center}
 
   \vspace{0.3cm}
+  One possible architecture recently proposed by \citeauthor{Jin2020}\footcite{Jin2020}
   \bemph{Own work:}
   \begin{itemize}
+    \item Implementation in PyTorch.
     \item Extension to high-dimensional Hamiltonian systems 
     (discretized PDEs) via convolution.
     \item Improve performance with batch normalization.
-    \item Implementation.
   \end{itemize}
 \end{frame}
 
@@ -132,13 +132,14 @@
       .
     \end{align*}
   \end{definition}
+  \nocite{hairer2006}
 \end{frame}
 
 \begin{frame}[c]{Conservation of the total energy}
   \centering
   \begin{equation*}
-    \ddt H(y(t)) = \lsb \grad{H}(y(t)) \rsb^T \dot{y}(t) = 
-    \lsb \grad{H}(y(t)) \rsb^T J \grad{H}(y(t)) = 0
+    \ddt H(y(t)) = \lsb \grad{H}(y(t)) \rsb^\top \dot{y}(t) = 
+    \lsb \grad{H}(y(t)) \rsb^\top J \grad{H}(y(t)) = 0
   \end{equation*}
 \end{frame}
 
@@ -206,15 +207,6 @@
   with a symmetric matrix $S \in \R^{d \times d}$ parametrized\\
   by $A \in \R^{d \times d}$ via $S=A^T+A$.
   \vspace{1cm}
-
-  A linear layer can be expressed with matrix-vector multiplication:
-  \begin{equation*}
-    \phi_\up \qpvec = \begin{pmatrix}
-      I & S \\
-      0 & I
-    \end{pmatrix} \qpvec + b
-    .
-  \end{equation*}
 \end{frame}
 
 \begin{frame}[c]{Activation layers}
@@ -242,71 +234,31 @@
     \item width $n \in \N$ ($n \gg d$)
     \item parameters $a,c \in \R^n$ and $K \in \R^{n \times d}$
   \end{itemize}
+
+  \vspace{0.3cm}
+  The layer transform $\layertf$ can approximate a gradient of an arbitrary
+  differentiable real-valued function.\footcite{Jin2020}
 \end{frame}
 
-\section{Normalization for ~\newline SympNets}
+\section{Normalization and ~\newline Convolution for ~\newline SympNets}
 
-\begin{frame}[c]{Batch normalization}
-  Initially proposed by \todo{REF}.
-  \bemph{Goal:} Normalize layer input 
-  to zero-mean and unit variance (with respect to the current mini-batch).
+\begin{frame}[c]{Batch Normalization}
+  Initially proposed by \textcite{batchnorm-ioffe15}.
 
-  \begin{algorithm}[H]
-    \caption{Batch normalization transform $\eta_{\gamma, \beta}$}
-    \textbf{Input:} mini batch $\mathcal{B} = \{x_1, x_2, \dots, x_{n_\mathcal{B}}\} \subset \R^n$ 
-    and $x_k \in \mathcal{B}$ \\
-    \textbf{Output:} $\eta_{\gamma, \beta}(x_k) \in \R^n$
-    %\setstretch{1.5}
-    \begin{algorithmic}
-      \If{training\_mode} \Comment{Update mean and variance if training, otherwise
-      keep previous values}
-        \State $\displaystyle
-        \mu_\mathcal{B} \gets \frac{1}{n_\mathcal{B}} \sum_{i=1}^{n_\mathcal{B}} x_i$
-        \State $\displaystyle
-        \sigma^2_\mathcal{B} \gets \frac{1}{n_\mathcal{B}} \sum_{i=1}^{n_\mathcal{B}} 
-        (x_i - \mu_\mathcal{B})^2$
-      \EndIf
-      \State \Return 
-      $\displaystyle \lb \frac{\gamma_j}{(\sigma^2_\mathcal{B})_j + \epsilon} 
-      \lb (x_k)_j - \lb \mu_\mathcal{B} \rb_j \rb + \beta_j \rb_{j=1}^n$
-      \Comment{Here, $\gamma, \beta \in \mathbb{R}^{n}$ are learnable parameters.}
-    \end{algorithmic}
-  \end{algorithm}
-\end{frame}
+  \bemph{Goal:} Normalize layer input to zero-mean and unit variance.
 
-\begin{frame}[c]{Normalized Activation layers}
-  The (symplectic) \bemph{normalized activation layers} are defined by the layer transform
-  \begin{equation*}
-		\layertf(p) = \lb a_i \activation(\overline{p}_i) \rb_{i=1}^d
-		\quad \text{with } \overline{p} = \eta_{\gamma, \beta} \lb p \rb \in \R^d
-	\end{equation*}
-
-  with:
   \begin{itemize}
-    \item an activation function $\activation : \R \to \R$
-    \item parameters $a,\gamma, \beta \in \R^d$ 
+    \item Prevent vanishing gradient.
+    \item Smooth optimization landscape.\footcite{Santurkar2018}
   \end{itemize}
+
+  Apply batch normalization transform $\eta_{\gamma, \beta}$ 
+  right before activation function,\\
+  i.e. replace $\activation$ by $\activation \circ \eta_{\gamma, \beta}$
+  in activation layers and gradient layers.
 \end{frame}
 
-\begin{frame}[c]{Normalized Gradient layers}
-  The (symplectic) \bemph{normalized gradient layers} are defined by the layer transform
-  \begin{equation*}
-		\layertf(p) = K^\top \bigg( a_j \activation
-		\lb \overline{p}_j \rb \bigg)_{j=1}^n
-		\quad \text{with } \, \overline{p} = \eta_{\gamma, \beta} \lb Kp + c \rb \in \R^n
-	\end{equation*}
-
-  with:
-  \begin{itemize}
-    \item an activation function $\activation : \R \to \R$
-    \item width $n \in \N$ ($n \gg d$)
-    \item parameters $a,c,\gamma, \beta \in \R^n$ and $K \in \R^{n \times d}$
-  \end{itemize}
-\end{frame}
-
-\section{Convolution for ~\newline SympNets}
-
-\begin{frame}[c]{Convolution vs. Cross-correlation}
+\begin{frame}[c]{Convolution vs. cross-correlation}
   Given two discrete functions $f,g \in \mathbb{R}^\mathbb{Z}$, discrete
   \bemph{convolution} is defined as 
   \begin{equation*}
@@ -367,70 +319,6 @@
   \end{tikzpicture}
 \end{frame}
 
-\begin{frame}{Padding}
-  \begin{definition}[Constant padding]
-    Given the padding values $l,r \in \mathbb{R}^m$, we define constant padding 
-    $c_{\text{pad},m}$ as
-    \begin{equation*}
-      c_{\text{pad},m} : \mathbb{R}^d \to \mathbb{R}^{d+2m},
-      \quad c_{\text{pad},m}(x) = c_{\text{pad},m}(x;l,r) := \lb l^T, x^T, r^T \rb^T
-      .
-    \end{equation*}
-  \end{definition}
-
-  \vspace{0.3cm}
-  Example:
-  $l,r \in \R^3$,
-  $x \in \R^6$
-
-  \vspace{0.3cm}
-  \centering
-  \begin{tikzpicture}
-    \node [draw, minimum width=1cm,fill=lightgray] at (0, 0) {\scriptsize$l_1$};
-    \node [draw, minimum width=1cm,fill=lightgray] at (1, 0) {\scriptsize$l_2$};
-    \node [draw, minimum width=1cm,fill=lightgray] at (2, 0) {\scriptsize$l_3$};
-    \foreach \i in {1,2,3,4,5,6} {
-      \node [draw, minimum width=1cm] at (\i+2, 0) {$x_\i$};
-    }
-    \node [draw, minimum width=1cm,fill=lightgray] at (9, 0) {$r_1$};
-    \node [draw, minimum width=1cm,fill=lightgray] at (10, 0) {$r_2$};
-    \node [draw, minimum width=1cm,fill=lightgray] at (11, 0) {$r_3$};
-  \end{tikzpicture}
-\end{frame}
-
-\begin{frame}{Padding}
-  \begin{definition}[Symmetric padding]
-    We define symmetric padding as
-    \begin{equation*}
-      s_{\text{pad},m} : \mathbb{R}^d \to \mathbb{R}^{d+2m},
-      \quad s_{\text{pad},m}(x) := (
-        \underbrace{x_m, x_{m-1} \dots, x_1}_{m \text{ values}}, \,
-        \underbrace{x_1, x_2 \dots, x_d}_{d \text{ values}}, \,
-        \underbrace{x_d, x_{d-1} \dots, x_{d-m+1}}_{m \text{ values}}
-      )^T
-      .
-    \end{equation*}
-  \end{definition}
-
-  \vspace{0.3cm}
-  Example:
-  $x \in \R^6$
-
-  \vspace{0.3cm}
-  \centering
-  \begin{tikzpicture}
-    \node [draw, minimum width=1cm,fill=lightgray] at (0, 0) {$x_3$};
-    \node [draw, minimum width=1cm,fill=lightgray] at (1, 0) {$x_2$};
-    \node [draw, minimum width=1cm,fill=lightgray] at (2, 0) {$x_1$};
-    \foreach \i in {1,2,3,4,5,6} {
-      \node [draw, minimum width=1cm] at (\i+2, 0) {$x_\i$};
-    }
-    \node [draw, minimum width=1cm,fill=lightgray] at (9, 0) {$x_6$};
-    \node [draw, minimum width=1cm,fill=lightgray] at (10, 0) {$x_5$};
-    \node [draw, minimum width=1cm,fill=lightgray] at (11, 0) {$x_4$};
-  \end{tikzpicture}
-\end{frame}
-
 \begin{frame}[c]{Symmetric kernel}
   \begin{equation*}
     k = \begin{pmatrix}
@@ -481,15 +369,15 @@
   with:
   \begin{itemize}
     \item a symmetric kernel $k \in \R^{2m+1}$, 
-    parametrized by $m+1$ learnable parameters
-    \item padding
-    $\chi_{\text{pad},m} = c_{\text{pad},m}$ or $\chi_{\text{pad},m} = s_{\text{pad},m}$
+    parametrized by $m+1$ learnable parameters.
+    \item a suitable padding operation 
+    $\chi_{\text{pad},m} : \mathbb{R}^d \to \mathbb{R}^{d+2m}$.
   \end{itemize}
 \end{frame}
 
 \section{Numerical experiments}
 
-\begin{frame}{Experiment setup}
+\begin{frame}[c]{Experiment setup}
   \onslide<1-> {
   Given some phase space samples $x_1, \dots, x_n \in \R^{2d}$, we generate data samples 
   \begin{equation*}
@@ -500,14 +388,6 @@
   }
 
   \onslide<2-> {
-  \vspace{0.3cm}
-  The data samples $\mathcal{T}$ are split into a training data set 
-  $\mathcal{T}_{\text{train}}$ and test data set $\mathcal{T}_{\text{test}}$,\\
-  i.e. $\mathcal{T}_{\text{train}} \cup \mathcal{T}_{\text{test}} = \mathcal{T}$
-  and $\mathcal{T}_{\text{train}} \cap \mathcal{T}_{\text{test}} = \emptyset$.
-  }
-
-  \onslide<3-> {
   \vspace{0.6cm}
   \bemph{Goal:} Given some initial values,
   the trained neural network is used as a numerical integrator
@@ -522,16 +402,13 @@
     H(q,p) = \frac{p^2}{2ml^2} + mgl (1-\cos(q))
     .
   \end{equation*}
-  For the experiment, we choose $m=1, g=1$ and $l=1$.
   }
 
   \onslide<2-> {
   \vspace{0.6cm}
   Training and test data uniformly sampled from
-  \begin{equation*}
-    \mathcal{D} = [-\frac{\pi}{2}, \frac{\pi}{2}] \times [-\sqrt{2}, \sqrt{2}]
-  \end{equation*}
-  with fixed time $t = 0.1$,\\
+  $[-\frac{\pi}{2}, \frac{\pi}{2}] \times [-\sqrt{2}, \sqrt{2}]$,\\
+  fixed time $t = 0.1$,
   $n_{\text{train}} = 40$ and $n_{\text{test}} = 400$.
   }
 \end{frame}
@@ -786,7 +663,7 @@
 \end{frame}
 
 \begin{frame}[c]{Linear wave equation}
-  $G(u) = g(u) =0$. We set $c=1, l=1$ and use $100$ grid points for the discretization.
+  $G(u) = g(u) =0$. We use $100$ grid points for the discretization.
 
   \vspace{0.3cm}
   \begin{itemize}
@@ -1022,9 +899,8 @@
 
     \caption{
       \bemph{CG-SympNet architecture.} Convolution layers with kernel size $3$, FD basis
-      and symmetric padding.
-      Convolution Gradient layers with kernel size $100$, stride $100$ and $\tanh$ activation
-      function.
+      and symmetric padding. For the Convolution Gradient layers, $\tanh$ is used
+      as the activation function.
     }
   \end{figure}
 \end{frame}
