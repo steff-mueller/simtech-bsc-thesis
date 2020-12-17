@@ -205,7 +205,7 @@
     \layertf(p) = Sp
   \end{equation*}
   with a symmetric matrix $S \in \R^{d \times d}$ parametrized\\
-  by $A \in \R^{d \times d}$ via $S=A^T+A$.
+  by $A \in \R^{d \times d}$ via $S=A^\top+A$.
   \vspace{1cm}
 \end{frame}
 
@@ -255,7 +255,7 @@
   Apply batch normalization transform $\eta_{\gamma, \beta}$ 
   right before activation function,\\
   i.e. replace $\activation$ by $\activation \circ \eta_{\gamma, \beta}$
-  in activation layers and gradient layers.
+  in the layer transform of the activation layers and gradient layers.
 \end{frame}
 
 \begin{frame}[c]{Convolution vs. cross-correlation}
